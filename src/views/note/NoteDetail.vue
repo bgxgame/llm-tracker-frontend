@@ -37,6 +37,7 @@ onMounted(async () => {
       roadmapApi.getNodes()
     ])
     
+    // 注意：根据你的拦截器逻辑，此处直接解构
     note.value = noteData.note
     artifacts.value = noteData.artifacts
     roadmapNodes.value = nodesData
@@ -49,8 +50,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50/50 flex flex-col">
-    <!-- 1. 顶部导航条 -->
+  <div class="min-h-screen bg-slate-50/50 flex flex-col hide-scrollbar">
+    <!-- 1. 顶部导航条：保留原始样式 -->
     <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-8 py-4">
       <div class="max-w-7xl mx-auto flex items-center justify-between">
         <button @click="goBack" class="group flex items-center gap-3 text-slate-400 hover:text-blue-600 transition-all font-black text-[10px] uppercase tracking-[0.2em]">
@@ -80,7 +81,7 @@ onMounted(async () => {
           class="h-16 w-full flex items-center justify-center border-b border-slate-100 hover:bg-slate-50 transition-colors"
         >
           <span v-if="!isCatalogOpen" class="text-slate-400 font-black text-xs uppercase tracking-widest rotate-90">Index</span>
-          <span v-else class="text-blue-600 font-black text-xs uppercase tracking-widest">Close Index</span>
+          <span v-else class="text-blue-600 font-black text-xs uppercase tracking-widest">Close</span>
         </button>
 
         <div v-show="isCatalogOpen" class="flex-1 overflow-y-auto p-8 animate-in fade-in duration-700">
@@ -93,14 +94,14 @@ onMounted(async () => {
         </div>
       </aside>
 
-      <!-- 正文主体 -->
+      <!-- 正文主体：保持居中 -->
       <main class="flex-1 min-w-0 bg-white shadow-[inset_1px_0_0_0_rgba(0,0,0,0.02)]">
         <div v-if="loading" class="py-40 text-center flex flex-col items-center gap-6">
           <div class="w-12 h-12 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
 
         <div v-else-if="note" class="max-w-4xl mx-auto py-16 px-8 lg:px-16 transition-all duration-700 animate-in fade-in slide-in-from-bottom-4">
-          <header class="mb-0.1"> <!-- 💡 间距从 mb-16 缩小至 mb-6 -->
+          <header class="mb-6"> 
             <h1 class="text-5xl font-black text-slate-900 leading-tight mb-8">
               {{ note.title }}
             </h1>
@@ -123,7 +124,7 @@ onMounted(async () => {
             />
           </article>
 
-          <!-- 附件成果 -->
+          <!-- 附件成果：修复内容显示 -->
           <footer v-if="artifacts.length > 0" class="mt-24 pt-16 border-t-2 border-dashed border-slate-100">
             <h3 class="text-2xl font-black text-slate-900 mb-10 tracking-tight flex items-center gap-4">
               Artifacts
@@ -152,7 +153,7 @@ onMounted(async () => {
 <style lang="postcss" scoped>
 @reference "@/style.css";
 
-/* 移除预览组件自带的顶部外边距 */
+/* 💡 深度优化：移除预览组件自带的冗余边距 */
 :deep(.md-editor-preview) {
   padding-top: 0 !important;
 }
@@ -166,7 +167,7 @@ onMounted(async () => {
 }
 
 :deep(.md-editor-catalog-active > .md-editor-catalog-link span) {
-  @apply pl-4 border-l-2 border-blue-600 ml-0.5;
+  @apply pl-4 border-l-2 border-blue-600 -ml-0.5;
 }
 
 :deep(.md-editor-preview) {
@@ -176,18 +177,22 @@ onMounted(async () => {
   color: #1e293b;
 }
 
+/* 极客感代码块 */
 :deep(.md-editor-preview pre) {
   @apply rounded-3xl bg-slate-950 p-10! shadow-2xl my-14 border border-slate-800 relative;
 }
 
+/* 公式块适配 */
 :deep(.katex-display) {
   @apply my-12 p-10 bg-slate-50 rounded-4xl border border-slate-100 overflow-x-auto;
 }
 
+/* 行内代码 */
 :deep(.md-editor-preview code:not(pre code)) {
   @apply bg-slate-100 text-slate-900 px-2 py-0.5 rounded font-mono text-[0.9em] border border-slate-200 mx-1;
 }
 
+/* 标题样式 */
 :deep(.md-editor-preview h1, .md-editor-preview h2, .md-editor-preview h3) {
   @apply font-black tracking-tight text-slate-900 mt-16 mb-8;
 }
