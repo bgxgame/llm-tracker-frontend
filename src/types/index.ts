@@ -1,9 +1,19 @@
+// src/types/index.ts
+
 // 基础返回结构
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
   msg?: string;
+}
+
+// 💡 补全并导出 User 接口
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  created_at?: string;
 }
 
 // 路线图节点

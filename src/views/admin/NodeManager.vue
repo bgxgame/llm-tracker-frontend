@@ -26,9 +26,7 @@ const closeEdit = () => {
   document.body.style.overflow = 'auto'
 }
 
-const triggerDelete = () => {
-  isDeleteConfirmOpen.value = true
-}
+const triggerDelete = () => isDeleteConfirmOpen.value = true
 
 const confirmDelete = async () => {
   if (!currentEditNode.value.id) return
@@ -37,31 +35,20 @@ const confirmDelete = async () => {
     isDeleteConfirmOpen.value = false
     closeEdit()
     fetchNodes()
-  } catch (err) {
-    alert("Delete operation failed")
-  }
+  } catch (err) { alert("删除失败") }
 }
 
 const handleSave = async () => {
   const node = currentEditNode.value
   try {
     if (node.id) {
-      await roadmapApi.updateNode(node.id, {
-        title: node.title!,
-        description: node.description || "",
-        status: node.status!,
-        node_type: node.node_type!,
-        parent_id: node.parent_id,
-        sort_order: node.sort_order || 0
-      })
+      await roadmapApi.updateNode(node.id, node)
     } else {
       await roadmapApi.createNode(node)
     }
     closeEdit()
     fetchNodes()
-  } catch (err) {
-    alert("Save failed")
-  }
+  } catch (err) { alert("保存失败") }
 }
 </script>
 
@@ -70,147 +57,137 @@ const handleSave = async () => {
     <!-- 1. 顶部标题栏 -->
     <header class="flex justify-between items-end mb-16 px-4">
       <div>
-        <h1 class="text-5xl font-black text-slate-900 tracking-tighter">Nodes Management</h1>
-        <p class="text-slate-500 font-bold mt-2 uppercase text-[10px] tracking-widest italic">Management & Supervision</p>
+        <h1 class="text-5xl font-black text-slate-900 tracking-tighter">路径管理</h1>
+        <p class="text-slate-500 font-bold mt-2 uppercase text-[10px] tracking-widest italic">Trajectory Supervision</p>
       </div>
-      <button @click="openEdit()" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl active:scale-95">
-        + Add New Step
+      <button @click="openEdit()"
+        class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl active:scale-95">
+        + 新增学习节点
       </button>
     </header>
 
     <!-- 2. 列表数据区 -->
     <div class="bg-white rounded-4xl border border-slate-100 overflow-hidden shadow-sm">
       <table class="w-full text-left border-collapse">
-        <thead class="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-b border-slate-100">
+        <thead
+          class="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100">
           <tr>
-            <th class="px-8 py-6">#Order</th>
-            <th class="px-8 py-6">Node Identity</th>
-            <th class="px-8 py-6">Dependency</th>
-            <th class="px-8 py-6">Status</th>
-            <th class="px-8 py-6 text-right">Action</th>
+            <th class="px-8 py-6">排序号</th>
+            <th class="px-8 py-6">节点名称</th>
+            <th class="px-8 py-6">前置依赖</th>
+            <th class="px-8 py-6">当前状态</th>
+            <th class="px-8 py-6 text-right">操作</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr v-for="node in nodes" :key="node.id" class="hover:bg-blue-50/20 transition-colors">
+          <tr v-for="node in nodes" :key="node.id" class="hover:bg-blue-50/20 transition-colors group">
             <td class="px-8 py-6 font-mono text-xs text-slate-500 font-bold">#{{ node.sort_order }}</td>
-            <td class="px-8 py-6 text-sm font-black text-slate-800 tracking-tight">{{ node.title }}</td>
-            <td class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-               {{ node.parent_id ? '↑ ' + (nodes.find(n => n.id === node.parent_id)?.title) : 'Root Neuron' }}
+            <td class="px-8 py-6">
+              <div class="flex items-center gap-3">
+                <span :class="node.node_type === 'theory' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'"
+                  class="text-[8px] font-black px-2 py-0.5 rounded uppercase">{{ node.node_type }}</span>
+                <span class="text-sm font-black text-slate-800 tracking-tight">{{ node.title }}</span>
+              </div>
             </td>
-            <td class="px-8 py-6 text-[10px] font-black uppercase tracking-widest">
-              <span :class="{'text-emerald-600': node.status === 'completed', 'text-blue-600': node.status === 'in_progress'}" class="flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+            <td class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase">
+              {{node.parent_id ? '↑ ' + (nodes.find(n => n.id === node.parent_id)?.title) : '根节点'}}
+            </td>
+            <td class="px-8 py-6">
+              <span
+                :class="{ 'text-emerald-600': node.status === 'completed', 'text-blue-600': node.status === 'in_progress' }"
+                class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></span>
                 {{ node.status }}
               </span>
             </td>
-            <td class="px-8 py-6 text-right">
-              <button @click="openEdit(node)" class="text-[10px] font-black text-blue-700 hover:text-slate-900 uppercase tracking-widest underline decoration-2 underline-offset-4 transition-colors">Edit</button>
+            <td class="px-8 py-6 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+              <button @click="openEdit(node)"
+                class="text-[10px] font-black text-blue-700 hover:text-slate-900 uppercase tracking-widest underline decoration-2 underline-offset-4">编辑</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- 3. 抽屉式编辑弹窗 -->
+    <!-- 3. 抽屉编辑页 -->
     <Teleport to="body">
       <Transition name="drawer">
         <div v-if="isEditModalOpen" class="fixed inset-0 z-100 flex justify-end overflow-hidden">
-          <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-sm" @click="closeEdit"></div>
-          
-          <div class="drawer-content relative w-full max-w-lg bg-white shadow-2xl p-16 flex flex-col h-full will-change-transform">
-            <h2 class="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-12 flex items-center gap-4 border-b border-slate-100 pb-6">
-              <span class="w-2 h-8 bg-blue-600 rounded-full"></span>
-              Configure Node
+          <div class="absolute inset-0 bg-slate-950/20 backdrop-blur-sm" @click="closeEdit"></div>
+          <!-- 💡 优化点：max-w-md 缩减宽度, p-10 缩减边距 -->
+          <div
+            class="drawer-panel relative w-full max-w-md bg-white shadow-2xl p-10 flex flex-col h-full will-change-transform">
+            <h2
+              class="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-8 flex items-center gap-4 border-b border-slate-100 pb-6">
+              <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
+              配置节点
             </h2>
-            
-            <div class="space-y-8 flex-1 overflow-y-auto pr-4 custom-scrollbar">
-              <!-- Title -->
-              <div class="flex flex-col gap-3">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Title</label>
-                <input v-model="currentEditNode.title" class="admin-input" type="text" placeholder="e.g. Transformer" />
+            <!-- 💡 优化点：space-y-6 更加紧凑 -->
+            <div class="space-y-6 flex-1 overflow-y-auto pr-4 custom-scrollbar">
+              <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">标题</label>
+                <input v-model="currentEditNode.title" class="admin-input" type="text" placeholder="输入节点标题..." />
               </div>
-
-              <!-- Description -->
-              <div class="flex flex-col gap-3">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
-                <textarea v-model="currentEditNode.description" rows="3" class="admin-input" placeholder="Note context..."></textarea>
+              <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">描述</label>
+                <textarea v-model="currentEditNode.description" rows="3" class="admin-input"
+                  placeholder="输入简要描述..."></textarea>
               </div>
-
-              <!-- Type & Order -->
-              <div class="grid grid-cols-2 gap-6">
-                <div class="flex flex-col gap-3">
-                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
-                  <div class="relative">
-                    <select v-model="currentEditNode.node_type" class="admin-input admin-select">
-                      <option value="theory">THEORY</option>
-                      <option value="coding">CODING</option>
-                    </select>
-                  </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">分类</label>
+                  <select v-model="currentEditNode.node_type" class="admin-input admin-select">
+                    <option value="theory">理论 (THEORY)</option>
+                    <option value="coding">代码 (CODING)</option>
+                  </select>
                 </div>
-                <div class="flex flex-col gap-3">
-                  <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Sort Order</label>
+                <div class="flex flex-col gap-2">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">排序权重</label>
                   <input v-model.number="currentEditNode.sort_order" type="number" class="admin-input" />
                 </div>
               </div>
-
-              <!-- Status -->
-              <div class="flex flex-col gap-3">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Learning Status</label>
-                <div class="relative">
-                  <select v-model="currentEditNode.status" class="admin-input admin-select">
-                    <option value="todo">TODO</option>
-                    <option value="in_progress">IN PROGRESS</option>
-                    <option value="completed">COMPLETED</option>
-                  </select>
-                </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">学习状态</label>
+                <select v-model="currentEditNode.status" class="admin-input admin-select">
+                  <option value="todo">待开始 (TODO)</option>
+                  <option value="in_progress">进行中 (IN PROGRESS)</option>
+                  <option value="completed">已完成 (COMPLETED)</option>
+                </select>
               </div>
-
-              <!-- Dependency -->
-              <div class="flex flex-col gap-3">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Parent Dependency</label>
-                <div class="relative">
-                  <select v-model="currentEditNode.parent_id" class="admin-input admin-select">
-                    <option :value="null">ROOT LEVEL</option>
-                    <option v-for="n in nodes.filter(n => n.id !== currentEditNode.id)" :key="n.id" :value="n.id">{{ n.title }}</option>
-                  </select>
-                </div>
+              <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">前置节点</label>
+                <select v-model="currentEditNode.parent_id" class="admin-input admin-select">
+                  <option :value="null">无 (作为根节点)</option>
+                  <option v-for="n in nodes.filter(n => n.id !== currentEditNode.id)" :key="n.id" :value="n.id">{{
+                    n.title }}</option>
+                </select>
               </div>
             </div>
-
-            <!-- 操作按钮 -->
-            <div class="mt-12 space-y-4">
-              <button @click="handleSave" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] hover:bg-slate-900 transition-all shadow-xl active:scale-95">
-                Save Node
-              </button>
-              <button 
-                v-if="currentEditNode.id"
-                @click="triggerDelete" 
-                class="w-full bg-white text-red-500 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] border border-red-100 hover:bg-red-50 transition-all active:scale-95"
-              >
-                Delete Permanent
-              </button>
+            <div class="mt-10 space-y-3">
+              <button @click="handleSave"
+                class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-500/10">保存更改</button>
+              <button v-if="currentEditNode.id" @click="triggerDelete"
+                class="w-full bg-white text-red-500 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-red-50 hover:bg-red-50 transition-all">永久删除节点</button>
             </div>
           </div>
         </div>
       </Transition>
     </Teleport>
 
-    <!-- 删除模态框保持现状 -->
+    <!-- 确认删除弹窗保持现状 -->
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="isDeleteConfirmOpen" class="fixed inset-0 z-110 flex items-center justify-center p-6">
           <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-md" @click="isDeleteConfirmOpen = false"></div>
-          <div class="relative w-full max-w-sm bg-white rounded-4xl p-10 shadow-2xl text-center">
-            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-8">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h3 class="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tighter">Dangerous Action</h3>
-            <p class="text-slate-500 text-sm leading-relaxed mb-10">确定要删除 "{{ currentEditNode.title }}" 吗？</p>
+          <div class="modal-panel relative w-full max-w-sm bg-white rounded-4xl p-10 shadow-2xl text-center">
+            <h3 class="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tighter">危险操作</h3>
+            <p class="text-slate-500 text-sm leading-relaxed mb-10 px-4 font-medium">确定要删除 "{{ currentEditNode.title }}"
+              吗？</p>
             <div class="flex flex-col gap-3">
-              <button @click="confirmDelete" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 shadow-xl">Yes, Delete Permanent</button>
-              <button @click="isDeleteConfirmOpen = false" class="w-full bg-slate-100 text-slate-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">Cancel</button>
+              <button @click="confirmDelete"
+                class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl">确认删除</button>
+              <button @click="isDeleteConfirmOpen = false"
+                class="w-full bg-slate-100 text-slate-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest">取消</button>
             </div>
           </div>
         </div>
@@ -222,63 +199,84 @@ const handleSave = async () => {
 <style lang="postcss" scoped>
 @reference "@/style.css";
 
-/* 💡 极致强化的输入框样式 */
+/* 💡 优化：更精致的小巧输入框样式 */
 .admin-input {
   display: block;
   width: 100%;
-  background-color: #f8fafc; /* bg-slate-50 */
-  /* 强制实线描边，确保不消失 */
-  border: 2px solid #e2e8f0 !important; 
-  border-radius: 1rem;
-  padding: 1.25rem 1.5rem;
-  font-size: 0.875rem;
+  background-color: #f8fafc;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 0.85rem;
+  /* 圆角略微缩小 */
+  padding: 0.8rem 1.2rem;
+  /* 💡 核心修改：大幅减小垂直高度 */
+  font-size: 0.85rem;
   font-weight: 700;
   color: #1e293b;
   outline: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.admin-input:hover {
-  border-color: #cbd5e1 !important; /* hover: border-slate-300 */
-}
-
 .admin-input:focus {
-  background-color: #ffffff;
-  border-color: #2563eb !important; /* focus: border-blue-600 */
-  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.08); /* 蓝色发光 */
+  background-color: #fff;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.05);
 }
 
-/* 💡 自定义 Select */
 .admin-select {
-  appearance: none;
-  cursor: pointer;
-  /* 自定义箭头 */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+  @apply appearance-none cursor-pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 1.25rem center;
-  background-size: 1rem;
+  background-position: right 1rem center;
+  /* 💡 箭头位置微调 */
+  background-size: 0.9rem;
 }
 
-/* 抽屉动画 */
-.drawer-enter-active, .drawer-leave-active {
-  transition: opacity 0.4s ease;
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: opacity 0.5s ease;
 }
-.drawer-enter-active .drawer-content,
-.drawer-leave-active .drawer-content {
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+.drawer-enter-active .drawer-panel,
+.drawer-leave-active .drawer-panel {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.drawer-enter-from, .drawer-leave-to {
+
+.drawer-enter-from,
+.drawer-leave-to {
   opacity: 0;
 }
-.drawer-enter-from .drawer-content,
-.drawer-leave-to .drawer-content {
+
+.drawer-enter-from .drawer-panel,
+.drawer-leave-to .drawer-panel {
   transform: translateX(100%);
 }
 
-/* 模态框动画 */
-.modal-enter-active, .modal-leave-active { transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
-.modal-enter-from, .modal-leave-to { opacity: 0; transform: scale(0.9); }
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
 
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+.modal-enter-active .modal-panel,
+.modal-leave-active .modal-panel {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal-panel,
+.modal-leave-to .modal-panel {
+  transform: scale(0.8) translateY(20px);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 99px;
+}
 </style>
