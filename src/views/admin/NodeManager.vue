@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { roadmapApi } from '@/api/roadmap'
 import type { RoadmapNode } from '@/types'
+import draggable from 'vuedraggable'
 
 const nodes = ref<RoadmapNode[]>([])
 const isEditModalOpen = ref(false)
@@ -10,10 +11,41 @@ const currentEditNode = ref<Partial<RoadmapNode>>({})
 
 const fetchNodes = async () => {
   const data = await roadmapApi.getNodes()
-  nodes.value = data
+  // 初始加载时按 sort_order 排序
+  nodes.value = data.sort((a, b) => a.sort_order - b.sort_order)
 }
 
 onMounted(fetchNodes)
+
+// 💡 核心逻辑：拖拽结束后，不仅更新排序，还自动建立“前置依赖链”
+const handleDragEnd = async () => {
+  try {
+    const updates = nodes.value.map((node, index) => {
+      // 1. 计算新的排序号
+      const newSortOrder = index
+      
+      // 2. 核心逻辑：自动计算前置节点
+      // 如果是第一个节点，前置为 null；否则前置为数组中它的上一个节点的 ID
+      const newParentId = index === 0 ? null : nodes.value[index - 1].id
+
+      // 3. 同步本地状态（确保界面逻辑一致）
+      node.sort_order = newSortOrder
+      node.parent_id = newParentId
+
+      // 4. 调用 API 同步至后端
+      return roadmapApi.updateNode(node.id, {
+        ...node,
+        sort_order: newSortOrder,
+        parent_id: newParentId
+      })
+    })
+
+    await Promise.all(updates)
+    console.log('排序与依赖链已自动更新同步')
+  } catch (err) {
+    alert("自动更新依赖链失败，请刷新页面")
+  }
+}
 
 const openEdit = (node: RoadmapNode | null = null) => {
   currentEditNode.value = node ? { ...node } : { title: '', node_type: 'theory', status: 'todo', sort_order: 0, parent_id: null }
@@ -44,7 +76,14 @@ const handleSave = async () => {
     if (node.id) {
       await roadmapApi.updateNode(node.id, node)
     } else {
-      await roadmapApi.createNode(node)
+      // 新增节点时，默认将其排在最后并以前一个节点为父节点
+      const lastNode = nodes.value[nodes.value.length - 1]
+      const newNode = {
+        ...node,
+        sort_order: nodes.value.length,
+        parent_id: lastNode ? lastNode.id : null
+      }
+      await roadmapApi.createNode(newNode)
     }
     closeEdit()
     fetchNodes()
@@ -72,40 +111,55 @@ const handleSave = async () => {
         <thead
           class="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100">
           <tr>
-            <th class="px-8 py-6">排序号</th>
+            <th class="px-8 py-6 w-20">排序</th>
             <th class="px-8 py-6">节点名称</th>
-            <th class="px-8 py-6">前置依赖</th>
+            <th class="px-8 py-6">前置依赖 (自动)</th>
             <th class="px-8 py-6">当前状态</th>
             <th class="px-8 py-6 text-right">操作</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-50">
-          <tr v-for="node in nodes" :key="node.id" class="hover:bg-blue-50/20 transition-colors group">
-            <td class="px-8 py-6 font-mono text-xs text-slate-500 font-bold">#{{ node.sort_order }}</td>
-            <td class="px-8 py-6">
-              <div class="flex items-center gap-3">
-                <span :class="node.node_type === 'theory' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'"
-                  class="text-[8px] font-black px-2 py-0.5 rounded uppercase">{{ node.node_type }}</span>
-                <span class="text-sm font-black text-slate-800 tracking-tight">{{ node.title }}</span>
-              </div>
-            </td>
-            <td class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase">
-              {{node.parent_id ? '↑ ' + (nodes.find(n => n.id === node.parent_id)?.title) : '根节点'}}
-            </td>
-            <td class="px-8 py-6">
-              <span
-                :class="{ 'text-emerald-600': node.status === 'completed', 'text-blue-600': node.status === 'in_progress' }"
-                class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></span>
-                {{ node.status }}
-              </span>
-            </td>
-            <td class="px-8 py-6 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-              <button @click="openEdit(node)"
-                class="text-[10px] font-black text-blue-700 hover:text-slate-900 uppercase tracking-widest underline decoration-2 underline-offset-4">编辑</button>
-            </td>
-          </tr>
-        </tbody>
+        <draggable 
+          v-model="nodes" 
+          tag="tbody" 
+          item-key="id" 
+          handle=".drag-handle" 
+          ghost-class="drag-ghost"
+          @end="handleDragEnd"
+          class="divide-y divide-slate-50"
+        >
+          <template #item="{ element: node }">
+            <tr class="hover:bg-blue-50/20 transition-colors group">
+              <td class="px-8 py-6">
+                <div class="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-blue-600 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                </div>
+              </td>
+              <td class="px-8 py-6">
+                <div class="flex items-center gap-3">
+                  <span :class="node.node_type === 'theory' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'"
+                    class="text-[8px] font-black px-2 py-0.5 rounded uppercase">{{ node.node_type }}</span>
+                  <span class="text-sm font-black text-slate-800 tracking-tight">{{ node.title }}</span>
+                </div>
+              </td>
+              <!-- 💡 展示自动计算出的父节点名称 -->
+              <td class="px-8 py-6 text-[10px] font-black text-slate-400 uppercase">
+                {{ node.parent_id ? '↑ ' + (nodes.find(n => n.id === node.parent_id)?.title) : '根节点 (Root)' }}
+              </td>
+              <td class="px-8 py-6">
+                <span
+                  :class="{ 'text-emerald-600': node.status === 'completed', 'text-blue-600': node.status === 'in_progress' }"
+                  class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></span>
+                  {{ node.status }}
+                </span>
+              </td>
+              <td class="px-8 py-6 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                <button @click="openEdit(node)"
+                  class="text-[10px] font-black text-blue-700 hover:text-slate-900 uppercase tracking-widest underline decoration-2 underline-offset-4">编辑</button>
+              </td>
+            </tr>
+          </template>
+        </draggable>
       </table>
     </div>
 
@@ -114,7 +168,6 @@ const handleSave = async () => {
       <Transition name="drawer">
         <div v-if="isEditModalOpen" class="fixed inset-0 z-100 flex justify-end overflow-hidden">
           <div class="absolute inset-0 bg-slate-950/20 backdrop-blur-sm" @click="closeEdit"></div>
-          <!-- 💡 优化点：max-w-md 缩减宽度, p-10 缩减边距 -->
           <div
             class="drawer-panel relative w-full max-w-md bg-white shadow-2xl p-10 flex flex-col h-full will-change-transform">
             <h2
@@ -122,7 +175,6 @@ const handleSave = async () => {
               <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
               配置节点
             </h2>
-            <!-- 💡 优化点：space-y-6 更加紧凑 -->
             <div class="space-y-6 flex-1 overflow-y-auto pr-4 custom-scrollbar">
               <div class="flex flex-col gap-2">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">标题</label>
@@ -141,9 +193,10 @@ const handleSave = async () => {
                     <option value="coding">代码 (CODING)</option>
                   </select>
                 </div>
-                <div class="flex flex-col gap-2">
-                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">排序权重</label>
-                  <input v-model.number="currentEditNode.sort_order" type="number" class="admin-input" />
+                <!-- 💡 排序权重在拖拽模式下变为只读展示，防止干扰 -->
+                <div class="flex flex-col gap-2 opacity-60">
+                  <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">排序权重 (自动)</label>
+                  <input :value="currentEditNode.sort_order" disabled type="number" class="admin-input cursor-not-allowed" />
                 </div>
               </div>
               <div class="flex flex-col gap-2">
@@ -154,13 +207,11 @@ const handleSave = async () => {
                   <option value="completed">已完成 (COMPLETED)</option>
                 </select>
               </div>
-              <div class="flex flex-col gap-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">前置节点</label>
-                <select v-model="currentEditNode.parent_id" class="admin-input admin-select">
-                  <option :value="null">无 (作为根节点)</option>
-                  <option v-for="n in nodes.filter(n => n.id !== currentEditNode.id)" :key="n.id" :value="n.id">{{
-                    n.title }}</option>
-                </select>
+              <!-- 💡 抽屉里不再需要手动选择前置节点，提示用户由拖拽决定 -->
+              <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tight">
+                  💡 提示：前置依赖关系现已根据列表顺序自动维护。如需调整，请在主列表中直接拖拽节点。
+                </p>
               </div>
             </div>
             <div class="mt-10 space-y-3">
@@ -174,7 +225,7 @@ const handleSave = async () => {
       </Transition>
     </Teleport>
 
-    <!-- 确认删除弹窗保持现状 -->
+    <!-- 确认删除弹窗 -->
     <Teleport to="body">
       <Transition name="modal">
         <div v-if="isDeleteConfirmOpen" class="fixed inset-0 z-110 flex items-center justify-center p-6">
@@ -199,16 +250,17 @@ const handleSave = async () => {
 <style lang="postcss" scoped>
 @reference "@/style.css";
 
-/* 💡 优化：更精致的小巧输入框样式 */
+.drag-ghost {
+  @apply bg-blue-50/50 opacity-40 border-2 border-dashed border-blue-200;
+}
+
 .admin-input {
   display: block;
   width: 100%;
   background-color: #f8fafc;
   border: 2px solid #e2e8f0 !important;
   border-radius: 0.85rem;
-  /* 圆角略微缩小 */
   padding: 0.8rem 1.2rem;
-  /* 💡 核心修改：大幅减小垂直高度 */
   font-size: 0.85rem;
   font-weight: 700;
   color: #1e293b;
@@ -227,7 +279,6 @@ const handleSave = async () => {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 1rem center;
-  /* 💡 箭头位置微调 */
   background-size: 0.9rem;
 }
 
