@@ -32,6 +32,59 @@ export interface WorkspaceMember {
   joined_at: string;
 }
 
+export interface WorkspaceRoleCounts {
+  owner: number;
+  admin: number;
+  member: number;
+  viewer: number;
+}
+
+export interface WorkspaceOverviewMetrics {
+  members_total: number;
+  notes_total: number;
+  roadmap_total: number;
+  roadmap_completed: number;
+  roadmap_in_progress: number;
+  roadmap_todo: number;
+  completion_rate: number;
+}
+
+export interface WorkspaceRecentNote {
+  id: number;
+  title: string;
+  summary: string | null;
+  created_at: string;
+}
+
+export interface WorkspaceActivity {
+  type: 'member_joined' | 'note_created' | 'roadmap_updated' | string;
+  title: string;
+  description: string;
+  occurred_at: string;
+  href: string;
+}
+
+export interface WorkspaceOnboardingChecklistItem {
+  key: string;
+  title: string;
+  description: string;
+  done: boolean;
+  cta_label: string;
+  cta_path: string;
+}
+
+export interface WorkspaceOverview {
+  workspace: WorkspaceMembership;
+  metrics: WorkspaceOverviewMetrics;
+  team: {
+    role_counts: WorkspaceRoleCounts;
+    recent_members: WorkspaceMember[];
+  };
+  notes: WorkspaceRecentNote[];
+  activity: WorkspaceActivity[];
+  onboarding: WorkspaceOnboardingChecklistItem[];
+}
+
 export interface AuthSession {
   user: User;
   workspaces: WorkspaceMembership[];

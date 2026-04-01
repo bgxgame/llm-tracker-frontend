@@ -1,11 +1,68 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useAuthStore } from '@/store/auth'
+import { useLocaleStore } from '@/store/locale'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const localeStore = useLocaleStore()
 const isCollapsed = ref(false)
+
+const copy = computed(() =>
+  localeStore.isChinese
+    ? {
+        badge: 'Workspace Ops Console',
+        title: 'AI Workspace',
+        description: '在同一套商业化中台里运行 roadmap、notes、team permissions 和协作运营。',
+        activeWorkspace: '当前 Workspace',
+        account: '当前账号',
+        site: '官网',
+        logout: '退出登录',
+        items: [
+          { to: '/admin/dashboard', label: 'Dashboard 总览' },
+          { to: '/admin/workspace', label: 'Workspace 与 Team' },
+          { to: '/admin/roadmap', label: 'Roadmap 运营' },
+          { to: '/admin/notes', label: 'Research Notes' },
+        ],
+      }
+    : {
+        badge: 'Workspace Ops Console',
+        title: 'AI Workspace',
+        description: 'Run roadmap, notes, team permissions, and execution from one commercial operating layer.',
+        activeWorkspace: 'Active workspace',
+        account: 'Account',
+        site: 'Site',
+        logout: 'Logout',
+        items: [
+          { to: '/admin/dashboard', label: 'Dashboard' },
+          { to: '/admin/workspace', label: 'Workspace and team' },
+          { to: '/admin/roadmap', label: 'Roadmap ops' },
+          { to: '/admin/notes', label: 'Research notes' },
+        ],
+      }
+)
+
+const roleLabel = computed(() => {
+  const role = authStore.activeRole
+  if (!role) {
+    return '--'
+  }
+
+  if (!localeStore.isChinese) {
+    return role
+  }
+
+  const mapping: Record<string, string> = {
+    owner: 'owner',
+    admin: 'admin',
+    member: 'member',
+    viewer: 'viewer',
+  }
+
+  return mapping[role] ?? role
+})
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
@@ -31,53 +88,58 @@ const handleLogout = () => {
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.28),_transparent_34%)] opacity-70"></div>
 
       <button
-        @click="toggleSidebar"
         class="absolute -right-3 top-10 z-50 flex h-7 w-7 items-center justify-center rounded-full border-2 border-slate-950 bg-blue-600 text-[11px] font-black text-white transition-all hover:bg-white hover:text-blue-600"
+        @click="toggleSidebar"
       >
         <span :class="[isCollapsed ? 'rotate-180' : '']" class="transition-transform duration-500">&gt;</span>
       </button>
 
       <div class="relative px-8 pb-8 pt-9">
-        <div class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-blue-200">
-          Ops Console
+        <div class="flex items-center justify-between gap-3">
+          <div class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-blue-200">
+            {{ copy.badge }}
+          </div>
+          <LanguageSwitcher v-show="!isCollapsed" tone="dark" />
         </div>
         <h2 class="mt-5 text-3xl font-black tracking-[-0.08em] text-white">
           A<span v-show="!isCollapsed">I Workspace</span>
         </h2>
         <p v-show="!isCollapsed" class="mt-3 max-w-[14rem] text-sm leading-6 text-slate-400">
-          Run planning, notes, and team execution from one commercial-grade control layer.
+          {{ copy.description }}
         </p>
       </div>
 
       <div v-show="!isCollapsed" class="relative px-6">
         <div class="rounded-[1.75rem] border border-white/10 bg-white/6 p-4 backdrop-blur">
-          <div class="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Active workspace</div>
+          <div class="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">{{ copy.activeWorkspace }}</div>
           <select v-model="workspaceSwitcher" class="workspace-select mt-3 w-full">
-            <option v-for="workspace in authStore.workspaces" :key="workspace.workspace_id" :value="String(workspace.workspace_id)">
+            <option
+              v-for="workspace in authStore.workspaces"
+              :key="workspace.workspace_id"
+              :value="String(workspace.workspace_id)"
+            >
               {{ workspace.workspace_name }} / {{ workspace.role }}
             </option>
           </select>
           <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-400">
             <span>{{ authStore.activeWorkspace?.workspace_slug }}</span>
             <span class="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-blue-200">
-              {{ authStore.activeRole }}
+              {{ roleLabel }}
             </span>
           </div>
         </div>
       </div>
 
       <nav class="relative mt-8 flex-1 px-4">
-        <router-link to="/admin/workspace" class="admin-nav-item" active-class="active">
+        <router-link
+          v-for="item in copy.items"
+          :key="item.to"
+          :to="item.to"
+          class="admin-nav-item"
+          active-class="active"
+        >
           <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"></div>
-          <span v-show="!isCollapsed">Workspace and team</span>
-        </router-link>
-        <router-link to="/admin/roadmap" class="admin-nav-item" active-class="active">
-          <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"></div>
-          <span v-show="!isCollapsed">Roadmap operations</span>
-        </router-link>
-        <router-link to="/admin/notes" class="admin-nav-item" active-class="active">
-          <div class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"></div>
-          <span v-show="!isCollapsed">Research notes</span>
+          <span v-show="!isCollapsed">{{ item.label }}</span>
         </router-link>
       </nav>
 
@@ -88,15 +150,17 @@ const handleLogout = () => {
               {{ authStore.user?.username?.charAt(0)?.toUpperCase() }}
             </div>
             <div v-show="!isCollapsed" class="min-w-0">
-              <div class="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Account</div>
+              <div class="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">{{ copy.account }}</div>
               <div class="mt-1 truncate text-sm font-black text-slate-100">{{ authStore.user?.username }}</div>
               <div class="mt-1 truncate text-xs text-slate-400">{{ authStore.user?.email }}</div>
             </div>
           </div>
 
           <div v-show="!isCollapsed" class="mt-5 grid grid-cols-2 gap-3">
-            <router-link to="/" class="footer-link">Site</router-link>
-            <button @click="handleLogout" class="footer-link text-red-300 hover:bg-red-500 hover:text-white">Logout</button>
+            <router-link to="/" class="footer-link">{{ copy.site }}</router-link>
+            <button class="footer-link text-red-300 hover:bg-red-500 hover:text-white" @click="handleLogout">
+              {{ copy.logout }}
+            </button>
           </div>
         </div>
       </div>

@@ -22,9 +22,14 @@ const router = createRouter({
     {
       path: '/admin',
       component: () => import('@/views/admin/AdminLayout.vue'),
-      redirect: '/admin/workspace',
+      redirect: '/admin/dashboard',
       meta: { requiresAuth: true },
       children: [
+        {
+          path: 'dashboard',
+          name: 'admin-dashboard',
+          component: () => import('@/views/admin/AdminDashboard.vue'),
+        },
         {
           path: 'workspace',
           name: 'admin-workspace',
@@ -61,7 +66,7 @@ router.beforeEach((to) => {
   }
 
   if (authStore.isLoggedIn && (to.name === 'login' || to.name === 'register')) {
-    return { name: 'admin-workspace' }
+    return { name: 'admin-dashboard' }
   }
 })
 

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/store/auth'
+import { useLocaleStore } from '@/store/locale'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const localeStore = useLocaleStore()
 
 const form = ref({
   username: '',
@@ -17,11 +20,83 @@ const form = ref({
 const loading = ref(false)
 const errorMessage = ref('')
 
+const copy = computed(() =>
+  localeStore.isChinese
+    ? {
+        badge: 'Launch your workspace',
+        title: '创建账号，启动你的第一套团队空间',
+        summary: '把 roadmap、研究笔记、协作权限和执行资产放进同一个产品级 workspace。',
+        username: '用户名',
+        usernamePlaceholder: 'team-operator',
+        email: '邮箱',
+        emailPlaceholder: 'team@company.com',
+        password: '密码',
+        passwordPlaceholder: '至少 6 位',
+        confirm: '确认密码',
+        confirmPlaceholder: '再次输入密码',
+        submit: '创建账号',
+        submitting: '正在开通 workspace...',
+        loginHint: '已经有账号？',
+        loginAction: '去登录',
+        benefitsTitle: '注册后你会得到什么',
+        benefits: [
+          {
+            label: 'Workspace structure',
+            copy: '每个新用户都会从可扩展的 workspace 架构起步，方便后续扩成团队产品。',
+          },
+          {
+            label: 'Role-based collaboration',
+            copy: '从第一天开始就支持 owner、admin、member、viewer 多角色协作。',
+          },
+          {
+            label: 'Execution memory',
+            copy: '把 roadmap、notes 和 research artifacts 连接起来，而不是散落在多个工具中。',
+          },
+        ],
+        mismatch: '两次输入的密码不一致',
+        error: '无法创建账号',
+      }
+    : {
+        badge: 'Launch your workspace',
+        title: 'Create an account and launch your first team space',
+        summary: 'Set up one shared place for roadmap planning, research notes, permissions, and execution assets.',
+        username: 'Username',
+        usernamePlaceholder: 'team-operator',
+        email: 'Email',
+        emailPlaceholder: 'team@company.com',
+        password: 'Password',
+        passwordPlaceholder: 'At least 6 characters',
+        confirm: 'Confirm',
+        confirmPlaceholder: 'Repeat password',
+        submit: 'Create account',
+        submitting: 'Provisioning workspace...',
+        loginHint: 'Already have access?',
+        loginAction: 'Sign in',
+        benefitsTitle: 'What you unlock',
+        benefits: [
+          {
+            label: 'Workspace structure',
+            copy: 'Every new user starts with an extensible workspace foundation that can grow into a team product.',
+          },
+          {
+            label: 'Role-based collaboration',
+            copy: 'Support owners, admins, members, and viewers from day one.',
+          },
+          {
+            label: 'Execution memory',
+            copy: 'Keep roadmap, notes, and research artifacts connected instead of scattering them across tools.',
+          },
+        ],
+        mismatch: 'Passwords do not match',
+        error: 'Unable to create account',
+      }
+)
+
 const handleRegister = async () => {
   errorMessage.value = ''
 
   if (form.value.password !== form.value.confirmPassword) {
-    errorMessage.value = 'Passwords do not match'
+    errorMessage.value = copy.value.mismatch
     return
   }
 
@@ -40,9 +115,9 @@ const handleRegister = async () => {
     })
 
     authStore.login(session)
-    router.push('/admin/workspace')
+    router.push('/admin/dashboard')
   } catch (error: any) {
-    errorMessage.value = error.message || 'Unable to create account'
+    errorMessage.value = error.message || copy.value.error
   } finally {
     loading.value = false
   }
@@ -51,35 +126,37 @@ const handleRegister = async () => {
 
 <template>
   <div class="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(37,99,235,0.16),_transparent_28%),linear-gradient(180deg,_#f8fbff_0%,_#eef5ff_100%)] px-6 py-10">
-    <div class="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+    <div class="mx-auto mb-6 flex max-w-6xl justify-end">
+      <LanguageSwitcher />
+    </div>
+
+    <div class="mx-auto grid min-h-[calc(100vh-8rem)] max-w-6xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
       <div class="w-full max-w-xl rounded-[2.5rem] border border-white/80 bg-white/92 p-10 shadow-[0_30px_100px_rgba(37,99,235,0.12)] backdrop-blur lg:p-14">
         <header class="mb-10">
-          <div class="text-[11px] font-black uppercase tracking-[0.32em] text-blue-600">Start your workspace</div>
-          <h1 class="mt-4 text-4xl font-black tracking-[-0.05em] text-slate-950">Create an account and launch your first team space</h1>
-          <p class="mt-3 text-sm leading-6 text-slate-500">
-            Set up one shared place for roadmap planning, research notes, and execution assets.
-          </p>
+          <div class="text-[11px] font-black uppercase tracking-[0.32em] text-blue-600">{{ copy.badge }}</div>
+          <h1 class="mt-4 text-4xl font-black tracking-[-0.05em] text-slate-950">{{ copy.title }}</h1>
+          <p class="mt-3 text-sm leading-6 text-slate-500">{{ copy.summary }}</p>
         </header>
 
         <div class="space-y-5">
           <div class="space-y-2">
-            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Username</label>
-            <input v-model="form.username" type="text" class="admin-input" placeholder="team-operator" />
+            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.username }}</label>
+            <input v-model="form.username" type="text" class="admin-input" :placeholder="copy.usernamePlaceholder" />
           </div>
 
           <div class="space-y-2">
-            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Email</label>
-            <input v-model="form.email" type="email" class="admin-input" placeholder="team@company.com" />
+            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.email }}</label>
+            <input v-model="form.email" type="email" class="admin-input" :placeholder="copy.emailPlaceholder" />
           </div>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="space-y-2">
-              <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Password</label>
-              <input v-model="form.password" type="password" class="admin-input" placeholder="At least 6 characters" />
+              <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.password }}</label>
+              <input v-model="form.password" type="password" class="admin-input" :placeholder="copy.passwordPlaceholder" />
             </div>
             <div class="space-y-2">
-              <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Confirm</label>
-              <input v-model="form.confirmPassword" type="password" class="admin-input" placeholder="Repeat password" />
+              <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.confirm }}</label>
+              <input v-model="form.confirmPassword" type="password" class="admin-input" :placeholder="copy.confirmPlaceholder" />
             </div>
           </div>
 
@@ -88,44 +165,27 @@ const handleRegister = async () => {
           </div>
 
           <button
-            @click="handleRegister"
             :disabled="loading"
             class="mt-4 w-full rounded-2xl bg-blue-600 py-4 text-xs font-black uppercase tracking-[0.32em] text-white shadow-[0_20px_50px_rgba(37,99,235,0.25)] transition-all hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+            @click="handleRegister"
           >
-            {{ loading ? 'Provisioning workspace...' : 'Create account' }}
+            {{ loading ? copy.submitting : copy.submit }}
           </button>
 
           <p class="text-center text-sm font-semibold text-slate-400">
-            Already have access?
-            <span class="cursor-pointer text-blue-600 hover:underline" @click="router.push('/login')">Sign in</span>
+            {{ copy.loginHint }}
+            <span class="cursor-pointer text-blue-600 hover:underline" @click="router.push('/login')">{{ copy.loginAction }}</span>
           </p>
         </div>
       </div>
 
-      <section class="hidden lg:block px-6">
+      <section class="hidden px-6 lg:block">
         <div class="rounded-[2.75rem] border border-white/70 bg-slate-950 p-10 text-white shadow-[0_35px_120px_rgba(15,23,42,0.18)]">
-          <div class="text-[11px] font-black uppercase tracking-[0.3em] text-blue-300">What you unlock</div>
-          <h2 class="mt-6 text-5xl font-black leading-none tracking-[-0.06em]">
-            A commercial-grade foundation for AI teams.
-          </h2>
+          <div class="text-[11px] font-black uppercase tracking-[0.3em] text-blue-300">{{ copy.benefitsTitle }}</div>
           <div class="mt-10 space-y-5">
-            <div class="benefit-card">
-              <div class="benefit-label">Workspace structure</div>
-              <p class="benefit-copy">
-                Every user starts with a dedicated workspace that can grow into a team operating hub.
-              </p>
-            </div>
-            <div class="benefit-card">
-              <div class="benefit-label">Role-based collaboration</div>
-              <p class="benefit-copy">
-                Invite admins, members, and viewers with clear access boundaries from day one.
-              </p>
-            </div>
-            <div class="benefit-card">
-              <div class="benefit-label">Execution memory</div>
-              <p class="benefit-copy">
-                Keep roadmaps, notes, and research artifacts connected so the team compounds knowledge instead of losing it.
-              </p>
+            <div v-for="benefit in copy.benefits" :key="benefit.label" class="benefit-card">
+              <div class="benefit-label">{{ benefit.label }}</div>
+              <p class="benefit-copy">{{ benefit.copy }}</p>
             </div>
           </div>
         </div>

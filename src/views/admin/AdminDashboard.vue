@@ -1,73 +1,172 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { noteApi } from '@/api/note'
-import { roadmapApi } from '@/api/roadmap'
 import { workspaceApi } from '@/api/workspace'
 import { useAuthStore } from '@/store/auth'
-import type { Note, RoadmapNode, WorkspaceMember } from '@/types'
+import { useLocaleStore } from '@/store/locale'
+import type { WorkspaceActivity, WorkspaceOverview, WorkspaceRole } from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const localeStore = useLocaleStore()
 
 const loading = ref(false)
 const errorMessage = ref('')
-const nodes = ref<RoadmapNode[]>([])
-const notes = ref<Note[]>([])
-const members = ref<WorkspaceMember[]>([])
+const overview = ref<WorkspaceOverview | null>(null)
 
-const currentWorkspace = computed(() => authStore.activeWorkspace)
-const currentRole = computed(() => authStore.activeRole ?? 'viewer')
-const completedNodes = computed(() => nodes.value.filter((node) => node.status === 'completed').length)
-const inProgressNodes = computed(() => nodes.value.filter((node) => node.status === 'in_progress').length)
-const todoNodes = computed(() => nodes.value.filter((node) => node.status === 'todo').length)
-const completionRate = computed(() => {
-  if (nodes.value.length === 0) {
-    return 0
-  }
-
-  return Math.round((completedNodes.value / nodes.value.length) * 100)
-})
-
-const recentNotes = computed(() =>
-  [...notes.value]
-    .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
-    .slice(0, 5)
+const copy = computed(() =>
+  localeStore.isChinese
+    ? {
+        eyebrow: 'Workspace Dashboard',
+        titleSuffix: 'command center',
+        summary:
+          '把团队协作、roadmap 进度、研究沉淀和近期动态收进同一块运营总览，帮助这个产品从工具走向可规模化 SaaS。',
+        currentRole: '当前角色',
+        completionRate: '完成率',
+        metrics: {
+          members: '团队成员',
+          roadmap: 'Roadmap 节点',
+          notes: '研究笔记',
+          progress: '进行中',
+        },
+        metricCopy: {
+          members: '当前 workspace 协作者数量',
+          roadmap: '正在管理的执行节点总数',
+          notes: '已沉淀的知识条目',
+          progress: '仍在推进中的节点',
+        },
+        onboardingEyebrow: 'Onboarding checklist',
+        onboardingTitle: '把 workspace 从空壳推进到可运营状态',
+        roadmapEyebrow: 'Roadmap health',
+        roadmapTitle: '用一眼能看懂的方式管理执行阶段',
+        overallCompletion: '整体完成度',
+        suggestedNextMove: 'Suggested next move',
+        teamEyebrow: 'Team snapshot',
+        teamTitle: '当前成员结构',
+        teamAction: '管理 Team',
+        notesEyebrow: 'Recent notes',
+        notesTitle: '最近沉淀的研究笔记',
+        notesAction: '查看全部 Notes',
+        activityEyebrow: 'Recent activity',
+        activityTitle: '近期协作动态',
+        emptyNotes: '当前还没有研究笔记，可以先从 roadmap 节点开始沉淀第一条 note。',
+        noSummary: '这条笔记已经进入 workspace，但还没有补充摘要。',
+        emptyActivity: '还没有足够的动态，先创建 roadmap、邀请成员或记录第一条笔记。',
+        emptyMembers: '这个 workspace 还没有更多成员加入。',
+        loading: '正在加载 workspace overview...',
+        errorFallback: '无法加载 dashboard 数据',
+        readonly: '当前为只读角色，可查看概览与动态',
+        writable: '当前角色可推进 roadmap 与 notes',
+        completed: '已完成',
+        inProgress: '进行中',
+        todo: '待开始',
+        done: 'Done',
+        next: 'Next',
+      }
+    : {
+        eyebrow: 'Workspace Dashboard',
+        titleSuffix: 'command center',
+        summary:
+          'Keep team collaboration, roadmap progress, research memory, and recent activity inside one operating overview built for a scalable SaaS product.',
+        currentRole: 'Current role',
+        completionRate: 'Completion rate',
+        metrics: {
+          members: 'Team members',
+          roadmap: 'Roadmap nodes',
+          notes: 'Research notes',
+          progress: 'In progress',
+        },
+        metricCopy: {
+          members: 'Active collaborators in this workspace',
+          roadmap: 'Tracked execution nodes',
+          notes: 'Captured knowledge entries',
+          progress: 'Nodes still moving forward',
+        },
+        onboardingEyebrow: 'Onboarding checklist',
+        onboardingTitle: 'Turn the workspace into an operational system',
+        roadmapEyebrow: 'Roadmap health',
+        roadmapTitle: 'See execution stages at a glance',
+        overallCompletion: 'Overall completion',
+        suggestedNextMove: 'Suggested next move',
+        teamEyebrow: 'Team snapshot',
+        teamTitle: 'Current team structure',
+        teamAction: 'Manage team',
+        notesEyebrow: 'Recent notes',
+        notesTitle: 'Latest research notes',
+        notesAction: 'View all notes',
+        activityEyebrow: 'Recent activity',
+        activityTitle: 'Latest collaboration signals',
+        emptyNotes: 'No notes yet. Start from a roadmap node and capture the first research entry.',
+        noSummary: 'This note is already in the workspace, but it does not have a summary yet.',
+        emptyActivity: 'Not enough activity yet. Create roadmap steps, invite teammates, or add the first note.',
+        emptyMembers: 'No additional members have joined this workspace yet.',
+        loading: 'Loading workspace overview...',
+        errorFallback: 'Unable to load dashboard data',
+        readonly: 'This role is read-only and focused on visibility',
+        writable: 'This role can move roadmap and notes forward',
+        completed: 'Completed',
+        inProgress: 'In progress',
+        todo: 'Todo',
+        done: 'Done',
+        next: 'Next',
+      }
 )
 
-const roleCounts = computed(() => {
-  return members.value.reduce<Record<string, number>>((accumulator, member) => {
-    accumulator[member.role] = (accumulator[member.role] ?? 0) + 1
-    return accumulator
-  }, {})
+const roleLabelMap = computed<Record<WorkspaceRole, string>>(() =>
+  localeStore.isChinese
+    ? {
+        owner: 'Owner',
+        admin: 'Admin',
+        member: 'Member',
+        viewer: 'Viewer',
+      }
+    : {
+        owner: 'Owner',
+        admin: 'Admin',
+        member: 'Member',
+        viewer: 'Viewer',
+      }
+)
+
+const currentWorkspace = computed(() => overview.value?.workspace ?? authStore.activeWorkspace)
+const currentRole = computed(() => (authStore.activeRole ? roleLabelMap.value[authStore.activeRole] : 'Viewer'))
+const metrics = computed(() => overview.value?.metrics)
+const team = computed(() => overview.value?.team)
+const recentNotes = computed(() => overview.value?.notes ?? [])
+const activityItems = computed(() => overview.value?.activity ?? [])
+const onboardingItems = computed(() => overview.value?.onboarding ?? [])
+
+const suggestedNextMove = computed(() => {
+  if (!metrics.value) {
+    return ''
+  }
+
+  if (metrics.value.roadmap_total === 0) {
+    return localeStore.isChinese
+      ? '先搭建最小 roadmap，让团队知道应该沿着什么路径推进。'
+      : 'Build a minimal roadmap first so the team sees a clear path forward.'
+  }
+
+  if (metrics.value.members_total <= 1) {
+    return localeStore.isChinese
+      ? '下一步最值得做的是邀请第一批协作者，让这个 workspace 真正进入协作状态。'
+      : 'The best next move is inviting the first teammate so this workspace becomes collaborative.'
+  }
+
+  if (metrics.value.notes_total < metrics.value.roadmap_total) {
+    return localeStore.isChinese
+      ? 'roadmap 已有结构，接下来应该补齐节点下的研究笔记和复盘。'
+      : 'The roadmap has shape. Next, seed notes and reviews under the active nodes.'
+  }
+
+  return localeStore.isChinese
+    ? '当前 workspace 已经具备稳定运营基础，可以继续扩大团队并沉淀更多可复用知识。'
+    : 'This workspace has a solid operating baseline. Keep expanding the team and compounding reusable knowledge.'
 })
 
-const onboardingChecklist = computed(() => [
-  {
-    title: '建立路线图结构',
-    description: '至少创建 3 个 roadmap 节点，让团队知道能力建设和项目推进的主线。',
-    done: nodes.value.length >= 3,
-    actionLabel: '去配置路线图',
-    action: () => router.push('/admin/roadmap'),
-  },
-  {
-    title: '邀请第一批成员',
-    description: '把协作者拉进 workspace，开始用角色权限管理真实协作。',
-    done: members.value.length >= 2,
-    actionLabel: '去管理团队',
-    action: () => router.push('/admin/workspace'),
-  },
-  {
-    title: '沉淀第一批研究笔记',
-    description: '至少完成 3 条研究笔记，让工作区开始形成可复用知识。',
-    done: notes.value.length >= 3,
-    actionLabel: '去写笔记',
-    action: () => router.push('/admin/notes'),
-  },
-])
-
-const fetchDashboard = async () => {
+const fetchOverview = async () => {
   if (!authStore.activeWorkspaceId) {
+    overview.value = null
     return
   }
 
@@ -75,26 +174,49 @@ const fetchDashboard = async () => {
   errorMessage.value = ''
 
   try {
-    const [roadmapData, notesData, membersData] = await Promise.all([
-      roadmapApi.getNodes(),
-      noteApi.getAllNotes(),
-      workspaceApi.listMembers(authStore.activeWorkspaceId),
-    ])
-
-    nodes.value = roadmapData
-    notes.value = notesData
-    members.value = membersData
+    overview.value = await workspaceApi.getOverview(authStore.activeWorkspaceId)
   } catch (error: any) {
-    errorMessage.value = error.message || 'Unable to load workspace dashboard'
+    overview.value = null
+    errorMessage.value = error.message || copy.value.errorFallback
   } finally {
     loading.value = false
   }
 }
 
+const formatDate = (value: string) =>
+  new Date(value).toLocaleDateString(localeStore.locale, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+const activityBadge = (item: WorkspaceActivity) => {
+  if (localeStore.isChinese) {
+    if (item.type === 'member_joined') return '成员加入'
+    if (item.type === 'note_created') return '新建笔记'
+    if (item.type === 'roadmap_updated') return '更新节点'
+    return '动态'
+  }
+
+  if (item.type === 'member_joined') return 'Member joined'
+  if (item.type === 'note_created') return 'Note created'
+  if (item.type === 'roadmap_updated') return 'Roadmap updated'
+  return 'Activity'
+}
+
+const openLink = (href: string) => {
+  if (href.startsWith('/note/')) {
+    router.push(href)
+    return
+  }
+
+  router.push(href)
+}
+
 watch(
   () => authStore.activeWorkspaceId,
   () => {
-    fetchDashboard()
+    fetchOverview()
   },
   { immediate: true }
 )
@@ -104,58 +226,64 @@ watch(
   <div class="mx-auto max-w-7xl px-8 py-10 lg:px-12">
     <header class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
       <div>
-        <div class="text-[11px] font-black uppercase tracking-[0.34em] text-blue-600">Workspace overview</div>
+        <div class="text-[11px] font-black uppercase tracking-[0.34em] text-blue-600">{{ copy.eyebrow }}</div>
         <h1 class="mt-4 text-5xl font-black tracking-[-0.06em] text-slate-950">
-          {{ currentWorkspace?.workspace_name || 'Workspace' }} command center
+          {{ currentWorkspace?.workspace_name || 'Workspace' }} {{ copy.titleSuffix }}
         </h1>
         <p class="mt-4 max-w-3xl text-base leading-8 text-slate-500">
-          在一个总览里看清团队成员、路线图推进、研究沉淀和下一步动作，让这个项目从工具逐步长成真正的知识型 SaaS 产品。
+          {{ copy.summary }}
         </p>
       </div>
 
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="hero-card">
-          <div class="hero-label">Current role</div>
+          <div class="hero-label">{{ copy.currentRole }}</div>
           <div class="hero-value">{{ currentRole }}</div>
-          <div class="hero-copy">当前 workspace 权限层级</div>
+          <div class="hero-copy">{{ authStore.hasWriteAccess ? copy.writable : copy.readonly }}</div>
         </div>
         <div class="hero-card">
-          <div class="hero-label">Completion rate</div>
-          <div class="hero-value">{{ completionRate }}%</div>
-          <div class="hero-copy">路线图已完成占比</div>
+          <div class="hero-label">{{ copy.completionRate }}</div>
+          <div class="hero-value">{{ metrics?.completion_rate ?? 0 }}%</div>
+          <div class="hero-copy">{{ currentWorkspace?.workspace_slug || 'workspace' }}</div>
         </div>
       </div>
     </header>
 
-    <div v-if="errorMessage" class="mt-8 rounded-[1.75rem] border border-red-100 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600">
+    <div
+      v-if="errorMessage"
+      class="mt-8 rounded-[1.75rem] border border-red-100 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600"
+    >
       {{ errorMessage }}
     </div>
 
-    <div v-if="loading" class="mt-10 rounded-[2rem] border border-slate-100 bg-white px-6 py-16 text-center text-sm font-semibold text-slate-400 shadow-[0_18px_70px_rgba(15,23,42,0.04)]">
-      Loading workspace dashboard...
+    <div
+      v-if="loading"
+      class="mt-10 rounded-[2rem] border border-slate-100 bg-white px-6 py-16 text-center text-sm font-semibold text-slate-400 shadow-[0_18px_70px_rgba(15,23,42,0.04)]"
+    >
+      {{ copy.loading }}
     </div>
 
-    <template v-else>
+    <template v-else-if="overview">
       <section class="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <article class="metric-card">
-          <div class="metric-label">Team members</div>
-          <div class="metric-value">{{ members.length }}</div>
-          <div class="metric-copy">当前工作区协作者数量</div>
+          <div class="metric-label">{{ copy.metrics.members }}</div>
+          <div class="metric-value">{{ metrics?.members_total ?? 0 }}</div>
+          <div class="metric-copy">{{ copy.metricCopy.members }}</div>
         </article>
         <article class="metric-card">
-          <div class="metric-label">Roadmap nodes</div>
-          <div class="metric-value">{{ nodes.length }}</div>
-          <div class="metric-copy">路径中的总节点数</div>
+          <div class="metric-label">{{ copy.metrics.roadmap }}</div>
+          <div class="metric-value">{{ metrics?.roadmap_total ?? 0 }}</div>
+          <div class="metric-copy">{{ copy.metricCopy.roadmap }}</div>
         </article>
         <article class="metric-card">
-          <div class="metric-label">Research notes</div>
-          <div class="metric-value">{{ notes.length }}</div>
-          <div class="metric-copy">已沉淀的研究记录</div>
+          <div class="metric-label">{{ copy.metrics.notes }}</div>
+          <div class="metric-value">{{ metrics?.notes_total ?? 0 }}</div>
+          <div class="metric-copy">{{ copy.metricCopy.notes }}</div>
         </article>
         <article class="metric-card">
-          <div class="metric-label">In progress</div>
-          <div class="metric-value">{{ inProgressNodes }}</div>
-          <div class="metric-copy">当前正在推进的节点</div>
+          <div class="metric-label">{{ copy.metrics.progress }}</div>
+          <div class="metric-value">{{ metrics?.roadmap_in_progress ?? 0 }}</div>
+          <div class="metric-copy">{{ copy.metricCopy.progress }}</div>
         </article>
       </section>
 
@@ -163,16 +291,16 @@ watch(
         <div class="panel">
           <div class="flex items-center justify-between gap-4">
             <div>
-              <div class="panel-eyebrow">Onboarding checklist</div>
-              <h2 class="panel-title">把 workspace 从空壳推到可运营状态</h2>
+              <div class="panel-eyebrow">{{ copy.onboardingEyebrow }}</div>
+              <h2 class="panel-title">{{ copy.onboardingTitle }}</h2>
             </div>
             <div class="rounded-full bg-slate-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-              {{ onboardingChecklist.filter((item) => item.done).length }}/{{ onboardingChecklist.length }} complete
+              {{ onboardingItems.filter((item) => item.done).length }}/{{ onboardingItems.length }}
             </div>
           </div>
 
           <div class="mt-8 space-y-4">
-            <div v-for="item in onboardingChecklist" :key="item.title" class="rounded-[1.6rem] border border-slate-100 bg-slate-50/70 p-5">
+            <div v-for="item in onboardingItems" :key="item.key" class="rounded-[1.6rem] border border-slate-100 bg-slate-50/70 p-5">
               <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div class="flex items-center gap-3">
@@ -180,61 +308,54 @@ watch(
                       :class="item.done ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'"
                       class="rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em]"
                     >
-                      {{ item.done ? 'Done' : 'Next' }}
+                      {{ item.done ? copy.done : copy.next }}
                     </span>
                     <h3 class="text-lg font-black tracking-tight text-slate-950">{{ item.title }}</h3>
                   </div>
                   <p class="mt-3 text-sm leading-7 text-slate-500">{{ item.description }}</p>
                 </div>
-                <button
-                  @click="item.action()"
-                  class="rounded-2xl bg-slate-950 px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-white transition-all hover:bg-blue-600"
-                >
-                  {{ item.actionLabel }}
-                </button>
+                <button class="secondary-button" @click="openLink(item.cta_path)">{{ item.cta_label }}</button>
               </div>
             </div>
           </div>
         </div>
 
         <div class="panel">
-          <div class="panel-eyebrow">Roadmap health</div>
-          <h2 class="panel-title">看清这个工作区当前处在什么阶段</h2>
+          <div class="panel-eyebrow">{{ copy.roadmapEyebrow }}</div>
+          <h2 class="panel-title">{{ copy.roadmapTitle }}</h2>
 
           <div class="mt-8 space-y-5">
             <div>
               <div class="mb-3 flex items-center justify-between text-sm font-bold text-slate-500">
-                <span>整体完成度</span>
-                <span>{{ completionRate }}%</span>
+                <span>{{ copy.overallCompletion }}</span>
+                <span>{{ metrics?.completion_rate ?? 0 }}%</span>
               </div>
               <div class="h-3 rounded-full bg-slate-100">
-                <div class="h-3 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400" :style="{ width: `${completionRate}%` }"></div>
+                <div
+                  class="h-3 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400"
+                  :style="{ width: `${metrics?.completion_rate ?? 0}%` }"
+                ></div>
               </div>
             </div>
 
             <div class="grid gap-4 sm:grid-cols-3">
               <div class="status-card status-card-complete">
-                <div class="status-label">Completed</div>
-                <div class="status-value">{{ completedNodes }}</div>
+                <div class="status-label">{{ copy.completed }}</div>
+                <div class="status-value">{{ metrics?.roadmap_completed ?? 0 }}</div>
               </div>
               <div class="status-card status-card-progress">
-                <div class="status-label">In progress</div>
-                <div class="status-value">{{ inProgressNodes }}</div>
+                <div class="status-label">{{ copy.inProgress }}</div>
+                <div class="status-value">{{ metrics?.roadmap_in_progress ?? 0 }}</div>
               </div>
               <div class="status-card status-card-todo">
-                <div class="status-label">Todo</div>
-                <div class="status-value">{{ todoNodes }}</div>
+                <div class="status-label">{{ copy.todo }}</div>
+                <div class="status-value">{{ metrics?.roadmap_todo ?? 0 }}</div>
               </div>
             </div>
 
             <div class="rounded-[1.6rem] border border-slate-100 bg-slate-50/70 p-5">
-              <div class="text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">Suggested next move</div>
-              <p class="mt-3 text-sm leading-7 text-slate-600">
-                <span v-if="nodes.length === 0">先搭建最小路线图，把团队能力建设主线明确下来。</span>
-                <span v-else-if="members.length <= 1">你已经有结构了，下一步应该把第一批成员拉进来一起协作。</span>
-                <span v-else-if="notes.length < nodes.length">路径已经成型，建议开始补齐节点下的研究笔记和复盘。</span>
-                <span v-else>当前 workspace 已经进入稳定使用阶段，可以继续扩展团队和沉淀更多可复用资产。</span>
-              </p>
+              <div class="text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.suggestedNextMove }}</div>
+              <p class="mt-3 text-sm leading-7 text-slate-600">{{ suggestedNextMove }}</p>
             </div>
           </div>
         </div>
@@ -244,39 +365,34 @@ watch(
         <div class="panel">
           <div class="flex items-center justify-between gap-4">
             <div>
-              <div class="panel-eyebrow">Team snapshot</div>
-              <h2 class="panel-title">当前成员结构</h2>
+              <div class="panel-eyebrow">{{ copy.teamEyebrow }}</div>
+              <h2 class="panel-title">{{ copy.teamTitle }}</h2>
             </div>
-            <button
-              @click="router.push('/admin/workspace')"
-              class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 transition-all hover:border-slate-300 hover:text-slate-950"
-            >
-              Manage team
-            </button>
+            <button class="ghost-button" @click="router.push('/admin/workspace')">{{ copy.teamAction }}</button>
           </div>
 
           <div class="mt-8 grid gap-4 sm:grid-cols-2">
             <div class="role-card">
               <div class="role-label">Owners</div>
-              <div class="role-value">{{ roleCounts.owner ?? 0 }}</div>
+              <div class="role-value">{{ team?.role_counts.owner ?? 0 }}</div>
             </div>
             <div class="role-card">
               <div class="role-label">Admins</div>
-              <div class="role-value">{{ roleCounts.admin ?? 0 }}</div>
+              <div class="role-value">{{ team?.role_counts.admin ?? 0 }}</div>
             </div>
             <div class="role-card">
               <div class="role-label">Members</div>
-              <div class="role-value">{{ roleCounts.member ?? 0 }}</div>
+              <div class="role-value">{{ team?.role_counts.member ?? 0 }}</div>
             </div>
             <div class="role-card">
               <div class="role-label">Viewers</div>
-              <div class="role-value">{{ roleCounts.viewer ?? 0 }}</div>
+              <div class="role-value">{{ team?.role_counts.viewer ?? 0 }}</div>
             </div>
           </div>
 
           <div class="mt-8 space-y-3">
             <div
-              v-for="member in members.slice(0, 5)"
+              v-for="member in team?.recent_members ?? []"
               :key="member.user_id"
               class="flex items-center justify-between rounded-[1.4rem] border border-slate-100 bg-slate-50/70 px-4 py-4"
             >
@@ -284,13 +400,19 @@ watch(
                 <div class="font-black text-slate-900">{{ member.username }}</div>
                 <div class="mt-1 text-sm text-slate-500">{{ member.email }}</div>
               </div>
-              <span class="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
-                {{ member.role }}
-              </span>
+              <div class="text-right">
+                <span class="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+                  {{ roleLabelMap[member.role as WorkspaceRole] ?? member.role }}
+                </span>
+                <div class="mt-2 text-[11px] font-semibold text-slate-400">{{ formatDate(member.joined_at) }}</div>
+              </div>
             </div>
 
-            <div v-if="members.length === 0" class="rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm font-semibold text-slate-400">
-              还没有成员加入这个 workspace。
+            <div
+              v-if="(team?.recent_members.length ?? 0) === 0"
+              class="rounded-[1.4rem] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center text-sm font-semibold text-slate-400"
+            >
+              {{ copy.emptyMembers }}
             </div>
           </div>
         </div>
@@ -298,15 +420,10 @@ watch(
         <div class="panel">
           <div class="flex items-center justify-between gap-4">
             <div>
-              <div class="panel-eyebrow">Recent notes</div>
-              <h2 class="panel-title">最近沉淀的研究记录</h2>
+              <div class="panel-eyebrow">{{ copy.notesEyebrow }}</div>
+              <h2 class="panel-title">{{ copy.notesTitle }}</h2>
             </div>
-            <button
-              @click="router.push('/admin/notes')"
-              class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 transition-all hover:border-slate-300 hover:text-slate-950"
-            >
-              View all notes
-            </button>
+            <button class="ghost-button" @click="router.push('/admin/notes')">{{ copy.notesAction }}</button>
           </div>
 
           <div class="mt-8 space-y-4">
@@ -318,17 +435,54 @@ watch(
             >
               <div class="flex items-center justify-between gap-4">
                 <div class="text-lg font-black tracking-tight text-slate-950">{{ note.title }}</div>
-                <div class="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">
-                  {{ new Date(note.created_at).toLocaleDateString() }}
-                </div>
+                <div class="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">{{ formatDate(note.created_at) }}</div>
               </div>
               <div class="mt-3 text-sm leading-7 text-slate-500">
-                {{ note.summary || 'This note is capturing new context for the workspace.' }}
+                {{ note.summary || copy.noSummary }}
               </div>
             </article>
 
-            <div v-if="recentNotes.length === 0" class="rounded-[1.6rem] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center text-sm font-semibold text-slate-400">
-              当前还没有研究笔记，可以从路线图节点开始写第一条沉淀。
+            <div
+              v-if="recentNotes.length === 0"
+              class="rounded-[1.6rem] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center text-sm font-semibold text-slate-400"
+            >
+              {{ copy.emptyNotes }}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-10">
+        <div class="panel">
+          <div class="panel-eyebrow">{{ copy.activityEyebrow }}</div>
+          <h2 class="panel-title">{{ copy.activityTitle }}</h2>
+
+          <div class="mt-8 space-y-4">
+            <article
+              v-for="item in activityItems"
+              :key="`${item.type}-${item.occurred_at}-${item.title}`"
+              class="rounded-[1.6rem] border border-slate-100 bg-slate-50/70 p-5 transition-all hover:border-slate-200"
+            >
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div class="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+                    {{ activityBadge(item) }}
+                  </div>
+                  <h3 class="mt-3 text-lg font-black tracking-tight text-slate-950">{{ item.title }}</h3>
+                  <p class="mt-2 text-sm leading-7 text-slate-500">{{ item.description }}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">{{ formatDate(item.occurred_at) }}</div>
+                  <button class="ghost-button" @click="openLink(item.href)">Open</button>
+                </div>
+              </div>
+            </article>
+
+            <div
+              v-if="activityItems.length === 0"
+              class="rounded-[1.6rem] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center text-sm font-semibold text-slate-400"
+            >
+              {{ copy.emptyActivity }}
             </div>
           </div>
         </div>
@@ -418,5 +572,13 @@ watch(
 
 .role-value {
   @apply mt-3 text-3xl font-black tracking-[-0.05em] text-slate-950;
+}
+
+.ghost-button {
+  @apply rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 transition-all hover:border-slate-300 hover:text-slate-950;
+}
+
+.secondary-button {
+  @apply rounded-2xl bg-slate-950 px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-white transition-all hover:bg-blue-600;
 }
 </style>
