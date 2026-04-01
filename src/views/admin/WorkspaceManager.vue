@@ -21,8 +21,9 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         eyebrow: 'Workspace control',
-        title: '像运营产品一样管理团队访问，而不是像表格一样堆权限。',
-        summary: '创建 workspace、管理角色、邀请成员，让 roadmap 和 notes 从一开始就有清晰的协作边界。',
+        title: '像产品一样管理团队访问，而不是像表格一样堆权限。',
+        summary:
+          '创建 workspace、管理角色、邀请成员，让 roadmap 和 notes 从一开始就有清晰的协作边界与治理结构。',
         metrics: {
           workspaces: 'Workspaces',
           role: '当前角色',
@@ -31,13 +32,20 @@ const copy = computed(() =>
         createEyebrow: 'Create workspace',
         createTitle: '几分钟内启动新的团队环境',
         createSummary: '每个 workspace 都是独立协作边界，适合不同团队、项目线或客户环境。',
-        createPlaceholder: '增长实验室、Core Platform、Agent Infra...',
+        createPlaceholder: 'Growth Lab、Core Platform、Agent Infra...',
         createAction: '创建 workspace',
         creating: '创建中...',
         listEyebrow: 'Your workspaces',
         listTitle: '切换上下文，不丢失治理边界',
         teamEyebrow: 'Team access',
-        teamSummary: '支持按用户名或邮箱邀请成员，并通过角色管理读写与成员权限。',
+        teamSummary: '支持按用户名或邮箱邀请成员，并用角色管理读写与成员治理权限。',
+        guideTitle: 'Role guide',
+        guide: [
+          'Owner: 完整治理权限，可管理角色与空间结构',
+          'Admin: 可管理成员与日常协作运营',
+          'Member: 可写入 roadmap 与 notes',
+          'Viewer: 只读查看，不会出现误导性写操作',
+        ],
         manageEnabled: '可管理成员',
         readOnly: '只读访问',
         invitePlaceholder: '用用户名或邮箱邀请成员',
@@ -62,7 +70,8 @@ const copy = computed(() =>
     : {
         eyebrow: 'Workspace control',
         title: 'Run team access like a product, not a spreadsheet.',
-        summary: 'Create workspaces, manage roles, and keep roadmap plus notes scoped to the right collaboration boundary.',
+        summary:
+          'Create workspaces, manage roles, and keep roadmap plus notes scoped to the right collaboration boundary.',
         metrics: {
           workspaces: 'Workspaces',
           role: 'Active role',
@@ -70,7 +79,8 @@ const copy = computed(() =>
         },
         createEyebrow: 'Create workspace',
         createTitle: 'Spin up a new team environment in minutes',
-        createSummary: 'Every workspace becomes its own collaboration boundary for a team, project line, or client context.',
+        createSummary:
+          'Every workspace becomes its own collaboration boundary for a team, project line, or client context.',
         createPlaceholder: 'Growth Lab, Core Platform, Agent Infra...',
         createAction: 'Create workspace',
         creating: 'Creating...',
@@ -78,6 +88,13 @@ const copy = computed(() =>
         listTitle: 'Switch context without losing governance',
         teamEyebrow: 'Team access',
         teamSummary: 'Invite users by username or email and manage read, write, and team permissions with roles.',
+        guideTitle: 'Role guide',
+        guide: [
+          'Owner: full governance across members and workspace structure',
+          'Admin: manages team operations and member access',
+          'Member: can move roadmap and notes forward',
+          'Viewer: read-only visibility without write prompts',
+        ],
         manageEnabled: 'Manage enabled',
         readOnly: 'Read only',
         invitePlaceholder: 'Invite by username or email',
@@ -323,6 +340,19 @@ const removeMember = async (member: WorkspaceMember) => {
                 </span>
               </div>
             </button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-eyebrow">{{ copy.guideTitle }}</div>
+          <div class="mt-5 space-y-3">
+            <div
+              v-for="item in copy.guide"
+              :key="item"
+              class="rounded-[1.4rem] border border-slate-100 bg-slate-50/70 px-4 py-4 text-sm font-semibold leading-7 text-slate-600"
+            >
+              {{ item }}
+            </div>
           </div>
         </div>
       </div>

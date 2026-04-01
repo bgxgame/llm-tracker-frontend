@@ -25,7 +25,7 @@ const copy = computed(() =>
     ? {
         badge: 'Launch your workspace',
         title: '创建账号，启动你的第一套团队空间',
-        summary: '把 roadmap、研究笔记、协作权限和执行资产放进同一个产品级 workspace。',
+        summary: '把 roadmap、Research Notes、权限协作和执行资产放进同一个产品级 workspace。',
         username: '用户名',
         usernamePlaceholder: 'team-operator',
         email: '邮箱',
@@ -41,16 +41,16 @@ const copy = computed(() =>
         benefitsTitle: '注册后你会得到什么',
         benefits: [
           {
-            label: 'Workspace structure',
-            copy: '每个新用户都会从可扩展的 workspace 架构起步，方便后续扩成团队产品。',
+            label: 'Workspace foundation',
+            copy: '每个新用户都会从可扩展的 workspace 结构起步，方便后续成长为团队产品。',
           },
           {
             label: 'Role-based collaboration',
-            copy: '从第一天开始就支持 owner、admin、member、viewer 多角色协作。',
+            copy: '从第一天开始就支持 Owner、Admin、Member、Viewer 多角色协作。',
           },
           {
             label: 'Execution memory',
-            copy: '把 roadmap、notes 和 research artifacts 连接起来，而不是散落在多个工具中。',
+            copy: '把 roadmap、notes 和 research artifacts 连起来，而不是散落在多个工具里。',
           },
         ],
         mismatch: '两次输入的密码不一致',
@@ -75,7 +75,7 @@ const copy = computed(() =>
         benefitsTitle: 'What you unlock',
         benefits: [
           {
-            label: 'Workspace structure',
+            label: 'Workspace foundation',
             copy: 'Every new user starts with an extensible workspace foundation that can grow into a team product.',
           },
           {

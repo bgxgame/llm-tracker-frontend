@@ -21,7 +21,7 @@ const copy = computed(() =>
           pricing: '收费方式',
         },
         heroBadge: 'Knowledge Ops for AI Teams',
-        heroTitle: '把 roadmap、研究笔记、交付资产和团队协作，沉淀进同一个 workspace。',
+        heroTitle: '把 Roadmap、Research Notes、交付资产和团队协作，沉淀进同一个 workspace。',
         heroSummary:
           '这不是另一个文档工具，而是一套帮助 AI 团队管理知识、推进执行、沉淀方法论的商业化工作系统。',
         primary: authStore.isLoggedIn ? '进入 Dashboard' : '开始试用',
@@ -29,21 +29,21 @@ const copy = computed(() =>
         stats: [
           { value: 'Workspace', label: '把团队协作边界和知识边界放到一起' },
           { value: 'Roadmap', label: '让能力建设和项目推进路径可视化' },
-          { value: 'Artifacts', label: '把 Repo、Demo、论文与结论连起来' },
+          { value: 'Artifacts', label: '把 Repo、Demo、论文与结论连接起来' },
         ],
         problemsTitle: '为什么通用文档工具不够',
         problems: [
           {
-            title: '上下文散在多个工具里',
-            description: '知识留在文档，过程留在聊天，结果留在仓库，最后团队看不到完整链路。',
+            title: '上下文散在太多工具里',
+            description: '知识留在文档，过程留在聊天，结果留在仓库，团队最终看不到完整链路。',
           },
           {
-            title: '研究推进缺少运营视角',
-            description: '团队知道自己很忙，但看不清哪些节点在推进，哪些成果可以复用。',
+            title: 'Research 推进缺少运营视角',
+            description: '团队知道自己很忙，但看不清哪些节点在推进、哪些成果可复用。',
           },
           {
-            title: '新成员很难复制经验',
-            description: 'onboarding、方法论和项目复盘无法自然沉淀成组织资产。',
+            title: '新成员很难继承经验',
+            description: 'Onboarding、方法论和项目复盘无法自然沉淀成组织资产。',
           },
         ],
         featureTitle: '像 SaaS 一样经营团队知识，而不是像文件夹一样堆内容',
@@ -56,12 +56,12 @@ const copy = computed(() =>
           {
             eyebrow: 'Dashboard',
             title: '用运营视图看整体健康度',
-            description: '在同一页里看到成员、roadmap、notes 和近期动态。',
+            description: '在同一页里看到成员、Roadmap、Notes 和近期动态。',
           },
           {
             eyebrow: 'Notes',
             title: '让研究笔记回到正确上下文',
-            description: '每条 note 都能挂在清晰的 roadmap 节点与交付链路下。',
+            description: '每条 note 都能挂在清晰的 Roadmap 节点和交付链路下。',
           },
           {
             eyebrow: 'Permissions',
@@ -72,7 +72,7 @@ const copy = computed(() =>
         audienceTitle: '适合这些正在沉淀 AI 能力的团队',
         audiences: [
           { title: 'AI 创业团队', description: '把知识、方法和执行资产沉淀成可复用的运营系统。' },
-          { title: '训练营与教学团队', description: '组织课程路径、学员产出和复盘内容。' },
+          { title: '训练营与教学团队', description: '组织课程路径、学员输出和复盘内容。' },
           { title: '研究实验室与技术组', description: '围绕实验、论文和项目建立长期知识资产。' },
         ],
         pricingTitle: '从小团队开始，逐步升级为组织级产品',
@@ -94,11 +94,12 @@ const copy = computed(() =>
             name: 'Enterprise',
             price: '定制报价',
             description: '适合训练营、实验室和跨部门组织',
-            bullets: ['更复杂的组织治理', '多团队知识运营', '落地支持与迁移服务'],
+            bullets: ['更复杂的组织治理', '多团队 knowledge ops', '落地支持与迁移服务'],
           },
         ],
         ctaTitle: '把团队知识、执行进度和交付成果，真正变成可经营的产品能力。',
-        ctaSummary: '如果你想把它做成像 Notion 一样可卖的产品，workspace、permissions、dashboard 和 knowledge ops 就是最值得持续做深的方向。',
+        ctaSummary:
+          '如果你想把它做成像 Notion 一样可卖的产品，workspace、permissions、dashboard 和 knowledge ops 就是最值得持续做深的方向。',
       }
     : {
         nav: {
@@ -184,7 +185,8 @@ const copy = computed(() =>
           },
         ],
         ctaTitle: 'Turn team knowledge, execution progress, and delivery outputs into product-grade capability.',
-        ctaSummary: 'If you want this product to become as sellable as Notion, workspace, permissions, dashboards, and knowledge ops are the right depth to keep building.',
+        ctaSummary:
+          'If you want this product to become as sellable as Notion, workspace, permissions, dashboards, and knowledge ops are the right depth to keep building.',
       }
 )
 </script>

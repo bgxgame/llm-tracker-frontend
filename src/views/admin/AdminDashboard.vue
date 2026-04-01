@@ -20,20 +20,20 @@ const copy = computed(() =>
         eyebrow: 'Workspace Dashboard',
         titleSuffix: 'command center',
         summary:
-          '把团队协作、roadmap 进度、研究沉淀和近期动态收进同一块运营总览，帮助这个产品从工具走向可规模化 SaaS。',
+          '把团队协作、Roadmap 进度、Research Notes 和最近动态收进同一块运营总览，让这个产品从工具页进一步走向可经营的 SaaS。',
         currentRole: '当前角色',
         completionRate: '完成率',
         metrics: {
           members: '团队成员',
           roadmap: 'Roadmap 节点',
-          notes: '研究笔记',
+          notes: 'Research Notes',
           progress: '进行中',
         },
         metricCopy: {
-          members: '当前 workspace 协作者数量',
+          members: '当前 workspace 内的协作者规模',
           roadmap: '正在管理的执行节点总数',
-          notes: '已沉淀的知识条目',
-          progress: '仍在推进中的节点',
+          notes: '已经沉淀下来的研究与复盘',
+          progress: '仍在向前推进的节点',
         },
         onboardingEyebrow: 'Onboarding checklist',
         onboardingTitle: '把 workspace 从空壳推进到可运营状态',
@@ -49,14 +49,15 @@ const copy = computed(() =>
         notesAction: '查看全部 Notes',
         activityEyebrow: 'Recent activity',
         activityTitle: '近期协作动态',
-        emptyNotes: '当前还没有研究笔记，可以先从 roadmap 节点开始沉淀第一条 note。',
+        activityAction: '查看全部动态',
+        emptyNotes: '当前还没有研究笔记，可以先从某个 roadmap 节点开始沉淀第一条 note。',
         noSummary: '这条笔记已经进入 workspace，但还没有补充摘要。',
-        emptyActivity: '还没有足够的动态，先创建 roadmap、邀请成员或记录第一条笔记。',
-        emptyMembers: '这个 workspace 还没有更多成员加入。',
+        emptyActivity: '还没有足够的动态。先邀请成员、创建笔记，或推动 roadmap 节点进入下一阶段。',
+        emptyMembers: '这个 workspace 里还没有更多成员加入。',
         loading: '正在加载 workspace overview...',
         errorFallback: '无法加载 dashboard 数据',
-        readonly: '当前为只读角色，可查看概览与动态',
-        writable: '当前角色可推进 roadmap 与 notes',
+        readonly: '当前为只读角色，可查看总览与动态，但不会被误导去执行写操作。',
+        writable: '当前角色可继续推进 roadmap 与 notes。',
         completed: '已完成',
         inProgress: '进行中',
         todo: '待开始',
@@ -67,7 +68,7 @@ const copy = computed(() =>
         eyebrow: 'Workspace Dashboard',
         titleSuffix: 'command center',
         summary:
-          'Keep team collaboration, roadmap progress, research memory, and recent activity inside one operating overview built for a scalable SaaS product.',
+          'Keep team collaboration, roadmap progress, research notes, and recent activity inside one operating overview built for a commercial SaaS workflow.',
         currentRole: 'Current role',
         completionRate: 'Completion rate',
         metrics: {
@@ -96,14 +97,15 @@ const copy = computed(() =>
         notesAction: 'View all notes',
         activityEyebrow: 'Recent activity',
         activityTitle: 'Latest collaboration signals',
+        activityAction: 'View all activity',
         emptyNotes: 'No notes yet. Start from a roadmap node and capture the first research entry.',
         noSummary: 'This note is already in the workspace, but it does not have a summary yet.',
-        emptyActivity: 'Not enough activity yet. Create roadmap steps, invite teammates, or add the first note.',
+        emptyActivity: 'Not enough activity yet. Invite teammates, add notes, or move roadmap work forward.',
         emptyMembers: 'No additional members have joined this workspace yet.',
         loading: 'Loading workspace overview...',
         errorFallback: 'Unable to load dashboard data',
-        readonly: 'This role is read-only and focused on visibility',
-        writable: 'This role can move roadmap and notes forward',
+        readonly: 'This role is read-only and focused on visibility.',
+        writable: 'This role can move roadmap and notes forward.',
         completed: 'Completed',
         inProgress: 'In progress',
         todo: 'Todo',
@@ -155,12 +157,12 @@ const suggestedNextMove = computed(() => {
 
   if (metrics.value.notes_total < metrics.value.roadmap_total) {
     return localeStore.isChinese
-      ? 'roadmap 已有结构，接下来应该补齐节点下的研究笔记和复盘。'
+      ? 'Roadmap 已经有结构，接下来应该补齐节点下的研究笔记和复盘。'
       : 'The roadmap has shape. Next, seed notes and reviews under the active nodes.'
   }
 
   return localeStore.isChinese
-    ? '当前 workspace 已经具备稳定运营基础，可以继续扩大团队并沉淀更多可复用知识。'
+    ? '当前 workspace 已具备稳定运营基础，可以继续扩大团队并沉淀更多可复用知识。'
     : 'This workspace has a solid operating baseline. Keep expanding the team and compounding reusable knowledge.'
 })
 
@@ -205,11 +207,6 @@ const activityBadge = (item: WorkspaceActivity) => {
 }
 
 const openLink = (href: string) => {
-  if (href.startsWith('/note/')) {
-    router.push(href)
-    return
-  }
-
   router.push(href)
 }
 
@@ -300,7 +297,11 @@ watch(
           </div>
 
           <div class="mt-8 space-y-4">
-            <div v-for="item in onboardingItems" :key="item.key" class="rounded-[1.6rem] border border-slate-100 bg-slate-50/70 p-5">
+            <div
+              v-for="item in onboardingItems"
+              :key="item.key"
+              class="rounded-[1.6rem] border border-slate-100 bg-slate-50/70 p-5"
+            >
               <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div class="flex items-center gap-3">
@@ -454,8 +455,13 @@ watch(
 
       <section class="mt-10">
         <div class="panel">
-          <div class="panel-eyebrow">{{ copy.activityEyebrow }}</div>
-          <h2 class="panel-title">{{ copy.activityTitle }}</h2>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <div class="panel-eyebrow">{{ copy.activityEyebrow }}</div>
+              <h2 class="panel-title">{{ copy.activityTitle }}</h2>
+            </div>
+            <button class="ghost-button" @click="router.push('/admin/activity')">{{ copy.activityAction }}</button>
+          </div>
 
           <div class="mt-8 space-y-4">
             <article
