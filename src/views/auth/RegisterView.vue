@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { authApi } from '@/api/auth'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
 
@@ -23,9 +23,9 @@ const errorMessage = ref('')
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: 'Launch your workspace',
+        badge: 'Launch Workspace',
         title: '创建账号，启动你的第一套团队空间',
-        summary: '把 roadmap、Research Notes、权限协作和执行资产放进同一个产品级 workspace。',
+        summary: '你会获得一个从第一天就支持权限治理、研究笔记、roadmap 和 dashboard 的 workspace 基础层。',
         username: '用户名',
         usernamePlaceholder: 'team-operator',
         email: '邮箱',
@@ -34,61 +34,61 @@ const copy = computed(() =>
         passwordPlaceholder: '至少 6 位',
         confirm: '确认密码',
         confirmPlaceholder: '再次输入密码',
-        submit: '创建账号',
-        submitting: '正在开通 workspace...',
-        loginHint: '已经有账号？',
-        loginAction: '去登录',
-        benefitsTitle: '注册后你会得到什么',
-        benefits: [
+        submit: '创建账号并进入',
+        submitting: '正在初始化团队空间...',
+        sideTitle: '注册后立即获得',
+        sideCards: [
           {
-            label: 'Workspace foundation',
-            copy: '每个新用户都会从可扩展的 workspace 结构起步，方便后续成长为团队产品。',
+            title: 'Workspace foundation',
+            body: '默认拥有可继续扩展的 workspace 架构，为后续商业化治理和团队协作留足空间。',
           },
           {
-            label: 'Role-based collaboration',
-            copy: '从第一天开始就支持 Owner、Admin、Member、Viewer 多角色协作。',
+            title: 'Role-based collaboration',
+            body: 'Owner、Admin、Member、Viewer 四层角色已经是产品的一部分，而不是后补功能。',
           },
           {
-            label: 'Execution memory',
-            copy: '把 roadmap、notes 和 research artifacts 连起来，而不是散落在多个工具里。',
+            title: 'Knowledge operating loop',
+            body: '把笔记、路线图、活动和团队执行链路，从一开始就放进同一个系统里。',
           },
         ],
+        loginLead: '已经有账号？',
+        loginAction: '去登录',
         mismatch: '两次输入的密码不一致',
-        error: '无法创建账号',
+        error: '创建账号失败，请稍后重试',
       }
     : {
-        badge: 'Launch your workspace',
+        badge: 'Launch Workspace',
         title: 'Create an account and launch your first team space',
-        summary: 'Set up one shared place for roadmap planning, research notes, permissions, and execution assets.',
+        summary: 'Start with a workspace foundation that already supports governance, research notes, roadmap tracking, and a team dashboard.',
         username: 'Username',
         usernamePlaceholder: 'team-operator',
         email: 'Email',
         emailPlaceholder: 'team@company.com',
         password: 'Password',
         passwordPlaceholder: 'At least 6 characters',
-        confirm: 'Confirm',
+        confirm: 'Confirm password',
         confirmPlaceholder: 'Repeat password',
-        submit: 'Create account',
+        submit: 'Create account and enter',
         submitting: 'Provisioning workspace...',
-        loginHint: 'Already have access?',
-        loginAction: 'Sign in',
-        benefitsTitle: 'What you unlock',
-        benefits: [
+        sideTitle: 'What you unlock immediately',
+        sideCards: [
           {
-            label: 'Workspace foundation',
-            copy: 'Every new user starts with an extensible workspace foundation that can grow into a team product.',
+            title: 'Workspace foundation',
+            body: 'Start with an extensible workspace model that leaves room for governance and product growth.',
           },
           {
-            label: 'Role-based collaboration',
-            copy: 'Support owners, admins, members, and viewers from day one.',
+            title: 'Role-based collaboration',
+            body: 'Owner, Admin, Member, and Viewer roles are built into the product instead of bolted on later.',
           },
           {
-            label: 'Execution memory',
-            copy: 'Keep roadmap, notes, and research artifacts connected instead of scattering them across tools.',
+            title: 'Knowledge operating loop',
+            body: 'Bring notes, roadmap, activity, and execution into one system from the start.',
           },
         ],
+        loginLead: 'Already have access?',
+        loginAction: 'Sign in',
         mismatch: 'Passwords do not match',
-        error: 'Unable to create account',
+        error: 'Unable to create the account right now',
       }
 )
 
@@ -125,107 +125,87 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(37,99,235,0.16),_transparent_28%),linear-gradient(180deg,_#f8fbff_0%,_#eef5ff_100%)] px-6 py-10">
-    <div class="mx-auto mb-6 flex max-w-6xl justify-end">
+  <div class="page-shell px-5 py-6 md:px-8 md:py-8">
+    <div class="product-shell mb-6 flex justify-end">
       <LanguageSwitcher />
     </div>
 
-    <div class="mx-auto grid min-h-[calc(100vh-8rem)] max-w-6xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-      <div class="w-full max-w-xl rounded-[2.5rem] border border-white/80 bg-white/92 p-10 shadow-[0_30px_100px_rgba(37,99,235,0.12)] backdrop-blur lg:p-14">
-        <header class="mb-10">
-          <div class="text-[11px] font-black uppercase tracking-[0.32em] text-blue-600">{{ copy.badge }}</div>
-          <h1 class="mt-4 text-4xl font-black tracking-[-0.05em] text-slate-950">{{ copy.title }}</h1>
-          <p class="mt-3 text-sm leading-6 text-slate-500">{{ copy.summary }}</p>
-        </header>
-
-        <div class="space-y-5">
-          <div class="space-y-2">
-            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.username }}</label>
-            <input v-model="form.username" type="text" class="admin-input" :placeholder="copy.usernamePlaceholder" />
+    <div class="product-shell grid min-h-[calc(100vh-7.5rem)] items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+      <section>
+        <div class="product-panel rounded-[2.4rem] p-8 md:p-10">
+          <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-white/80 text-[var(--brand)]">
+            <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
+            {{ copy.badge }}
           </div>
 
-          <div class="space-y-2">
-            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.email }}</label>
-            <input v-model="form.email" type="email" class="admin-input" :placeholder="copy.emailPlaceholder" />
-          </div>
+          <h1 class="product-title mt-8 text-4xl leading-[0.96] md:text-5xl">{{ copy.title }}</h1>
+          <p class="mt-4 max-w-xl text-base leading-8 text-[var(--ink-soft)]">{{ copy.summary }}</p>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <form class="mt-10 space-y-5" @submit.prevent="handleRegister">
             <div class="space-y-2">
-              <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.password }}</label>
-              <input v-model="form.password" type="password" class="admin-input" :placeholder="copy.passwordPlaceholder" />
+              <label class="product-label">{{ copy.username }}</label>
+              <input v-model="form.username" class="product-input" type="text" :placeholder="copy.usernamePlaceholder" />
             </div>
+
             <div class="space-y-2">
-              <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.confirm }}</label>
-              <input v-model="form.confirmPassword" type="password" class="admin-input" :placeholder="copy.confirmPlaceholder" />
+              <label class="product-label">{{ copy.email }}</label>
+              <input v-model="form.email" class="product-input" type="email" :placeholder="copy.emailPlaceholder" />
             </div>
-          </div>
 
-          <div v-if="errorMessage" class="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-            {{ errorMessage }}
-          </div>
+            <div class="grid gap-5 md:grid-cols-2">
+              <div class="space-y-2">
+                <label class="product-label">{{ copy.password }}</label>
+                <input v-model="form.password" class="product-input" type="password" :placeholder="copy.passwordPlaceholder" />
+              </div>
 
-          <button
-            :disabled="loading"
-            class="mt-4 w-full rounded-2xl bg-blue-600 py-4 text-xs font-black uppercase tracking-[0.32em] text-white shadow-[0_20px_50px_rgba(37,99,235,0.25)] transition-all hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
-            @click="handleRegister"
-          >
-            {{ loading ? copy.submitting : copy.submit }}
-          </button>
+              <div class="space-y-2">
+                <label class="product-label">{{ copy.confirm }}</label>
+                <input
+                  v-model="form.confirmPassword"
+                  class="product-input"
+                  type="password"
+                  :placeholder="copy.confirmPlaceholder"
+                />
+              </div>
+            </div>
 
-          <p class="text-center text-sm font-semibold text-slate-400">
-            {{ copy.loginHint }}
-            <span class="cursor-pointer text-blue-600 hover:underline" @click="router.push('/login')">{{ copy.loginAction }}</span>
+            <div v-if="errorMessage" class="product-error px-4 py-3 text-sm font-semibold">
+              {{ errorMessage }}
+            </div>
+
+            <button class="product-button-primary mt-2 w-full" :disabled="loading" type="submit">
+              {{ loading ? copy.submitting : copy.submit }}
+            </button>
+          </form>
+
+          <p class="mt-6 text-sm font-semibold text-[var(--ink-soft)]">
+            {{ copy.loginLead }}
+            <button class="text-[var(--brand)] transition-colors hover:text-[var(--brand-deep)]" type="button" @click="router.push('/login')">
+              {{ copy.loginAction }}
+            </button>
           </p>
         </div>
-      </div>
+      </section>
 
-      <section class="hidden px-6 lg:block">
-        <div class="rounded-[2.75rem] border border-white/70 bg-slate-950 p-10 text-white shadow-[0_35px_120px_rgba(15,23,42,0.18)]">
-          <div class="text-[11px] font-black uppercase tracking-[0.3em] text-blue-300">{{ copy.benefitsTitle }}</div>
-          <div class="mt-10 space-y-5">
-            <div v-for="benefit in copy.benefits" :key="benefit.label" class="benefit-card">
-              <div class="benefit-label">{{ benefit.label }}</div>
-              <p class="benefit-copy">{{ benefit.copy }}</p>
-            </div>
+      <section>
+        <div class="rounded-[2.4rem] bg-[linear-gradient(180deg,#15242c_0%,#122029_100%)] p-8 text-white shadow-[0_36px_120px_rgba(20,33,43,0.18)] md:p-10">
+          <div class="product-eyebrow border border-white/10 bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.76)]">
+            <span class="h-2.5 w-2.5 rounded-full bg-[var(--accent)]"></span>
+            {{ copy.sideTitle }}
+          </div>
+
+          <div class="mt-8 space-y-4">
+            <article
+              v-for="card in copy.sideCards"
+              :key="card.title"
+              class="rounded-[1.6rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-5"
+            >
+              <h2 class="font-[var(--font-display)] text-2xl font-black tracking-[-0.05em]">{{ card.title }}</h2>
+              <p class="mt-3 text-sm leading-7 text-[rgba(255,255,255,0.68)]">{{ card.body }}</p>
+            </article>
           </div>
         </div>
       </section>
     </div>
   </div>
 </template>
-
-<style lang="postcss" scoped>
-@reference "@/style.css";
-
-.benefit-card {
-  @apply rounded-[1.8rem] border border-white/10 bg-white/5 p-6;
-}
-
-.benefit-label {
-  @apply text-[11px] font-black uppercase tracking-[0.24em] text-blue-200;
-}
-
-.benefit-copy {
-  @apply mt-3 text-sm leading-7 text-slate-300;
-}
-
-.admin-input {
-  display: block;
-  width: 100%;
-  background-color: #f8fbff;
-  border: 2px solid #dbeafe !important;
-  border-radius: 1rem;
-  padding: 1rem 1.15rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #0f172a;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.admin-input:focus {
-  background-color: white;
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.1);
-}
-</style>

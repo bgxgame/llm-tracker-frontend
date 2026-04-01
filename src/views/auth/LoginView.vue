@@ -1,67 +1,86 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { authApi } from '@/api/auth'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
-import { authApi } from '@/api/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
-const form = ref({ username: '', password: '' })
+
+const form = ref({
+  username: '',
+  password: '',
+})
+
 const loading = ref(false)
 const errorMessage = ref('')
 
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: 'AI Research Workspace',
-        heroTitle: '把分散的 LLM Research、Roadmap 和团队协作，收进同一个可经营的 workspace。',
-        heroSummary: '不再让知识散落在文档、聊天、代码仓和个人笔记里，而是沉淀成团队真正可复用的工作系统。',
-        cards: [
-          { label: 'Shared context', value: 'Roadmap + Notes + Assets' },
-          { label: 'Workspace roles', value: 'Owner / Admin / Member / Viewer' },
-          { label: 'Faster execution', value: '更少混乱，更多交付' },
-        ],
-        welcome: 'Welcome back',
-        title: '登录你的 workspace',
-        summary: '继续推进团队的 research ops、计划执行和知识沉淀。',
+        badge: 'Workspace Access',
+        title: '进入你的 Workspace Ops Console',
+        summary: '继续管理团队 roadmap、研究笔记、近期活动和协作权限，不再让关键上下文散落在别处。',
         username: '用户名',
-        usernamePlaceholder: 'your-team-handle',
+        usernamePlaceholder: 'team-operator',
         password: '密码',
         passwordPlaceholder: '输入你的密码',
         submit: '进入 Workspace',
-        submitting: '登录中...',
-        why: '为什么团队会使用它',
-        whySummary: '用一个 workspace 替代碎片化文档、私有笔记和断开的 AI 实验流程。',
-        signup: '第一次使用？',
-        signupAction: '创建账号',
-        error: '无法登录',
+        submitting: '正在进入...',
+        sideTitle: '登录后你会回到什么体验',
+        sideCards: [
+          {
+            title: 'Dashboard first',
+            body: '登录后默认进入 command center，先看团队指标、onboarding 和 recent activity。',
+          },
+          {
+            title: 'Role-aware access',
+            body: '不同角色看到不同能力边界，Viewer 也不会再被误导到写操作入口。',
+          },
+          {
+            title: 'Commercial workflow',
+            body: '从一个清晰的 admin shell 继续推进知识运营，而不是回到零散工具堆。',
+          },
+        ],
+        helperTitle: '为什么团队会频繁打开它',
+        helperBody: '因为这里不是单纯“记笔记”的地方，而是运营 workspace、跟踪交付和沉淀方法论的主入口。',
+        registerLead: '还没有账号？',
+        registerAction: '创建团队空间',
+        error: '登录失败，请稍后重试',
       }
     : {
-        badge: 'AI Research Workspace',
-        heroTitle: 'Turn scattered LLM research, roadmap, and collaboration into one commercial workspace.',
-        heroSummary: 'Stop losing context across docs, chat, repos, and personal notes. Operate from one shared system.',
-        cards: [
-          { label: 'Shared context', value: 'Roadmap + Notes + Assets' },
-          { label: 'Workspace roles', value: 'Owner / Admin / Member / Viewer' },
-          { label: 'Faster execution', value: 'Less chaos, more shipping' },
-        ],
-        welcome: 'Welcome back',
-        title: 'Sign in to your workspace',
-        summary: 'Continue your team research ops, planning pipeline, and execution workflow.',
+        badge: 'Workspace Access',
+        title: 'Enter your Workspace Ops Console',
+        summary: 'Return to roadmap execution, research notes, recent activity, and permission-aware collaboration from one place.',
         username: 'Username',
-        usernamePlaceholder: 'your-team-handle',
+        usernamePlaceholder: 'team-operator',
         password: 'Password',
         passwordPlaceholder: 'Enter your password',
         submit: 'Enter workspace',
         submitting: 'Signing in...',
-        why: 'Why teams use it',
-        whySummary: 'Replace fragmented docs, private notes, and disconnected AI experiments with one operating layer.',
-        signup: 'New here?',
-        signupAction: 'Create account',
-        error: 'Unable to sign in',
+        sideTitle: 'What waits after sign-in',
+        sideCards: [
+          {
+            title: 'Dashboard first',
+            body: 'Land in the command center by default and immediately see team metrics, onboarding, and recent activity.',
+          },
+          {
+            title: 'Role-aware access',
+            body: 'Every role sees the right operating surface, and viewers are not nudged toward write actions.',
+          },
+          {
+            title: 'Commercial workflow',
+            body: 'Keep operating from one admin shell instead of returning to a fragmented tool stack.',
+          },
+        ],
+        helperTitle: 'Why teams return here often',
+        helperBody: 'This is not just where notes live. It is the main surface for operating a workspace, tracking delivery, and compounding methods.',
+        registerLead: 'Need an account?',
+        registerAction: 'Create team space',
+        error: 'Unable to sign in right now',
       }
 )
 
@@ -87,110 +106,82 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_32%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_100%)] px-6 py-10">
-    <div class="mx-auto mb-6 flex max-w-6xl justify-end">
+  <div class="page-shell px-5 py-6 md:px-8 md:py-8">
+    <div class="product-shell mb-6 flex justify-end">
       <LanguageSwitcher />
     </div>
 
-    <div class="mx-auto grid min-h-[calc(100vh-8rem)] max-w-6xl items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
-      <section class="hidden px-6 lg:block">
-        <div class="inline-flex items-center rounded-full border border-blue-200 bg-white/80 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-blue-600 shadow-sm">
-          {{ copy.badge }}
-        </div>
-        <h1 class="mt-8 max-w-2xl text-6xl font-black leading-none tracking-[-0.06em] text-slate-950">
-          {{ copy.heroTitle }}
-        </h1>
-        <p class="mt-6 max-w-xl text-lg leading-8 text-slate-600">{{ copy.heroSummary }}</p>
-        <div class="mt-10 grid max-w-2xl grid-cols-3 gap-4">
-          <div v-for="item in copy.cards" :key="item.label" class="feature-card">
-            <div class="feature-label">{{ item.label }}</div>
-            <div class="feature-value">{{ item.value }}</div>
+    <div class="product-shell grid min-h-[calc(100vh-7.5rem)] items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+      <section class="order-2 lg:order-1">
+        <div class="rounded-[2.4rem] bg-[var(--surface-dark)] p-8 text-white shadow-[0_36px_120px_rgba(20,33,43,0.18)] md:p-10">
+          <div class="product-eyebrow border border-white/10 bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.76)]">
+            <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
+            {{ copy.sideTitle }}
+          </div>
+
+          <div class="mt-8 space-y-4">
+            <article
+              v-for="card in copy.sideCards"
+              :key="card.title"
+              class="rounded-[1.6rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-5"
+            >
+              <h2 class="font-[var(--font-display)] text-2xl font-black tracking-[-0.05em]">{{ card.title }}</h2>
+              <p class="mt-3 text-sm leading-7 text-[rgba(255,255,255,0.68)]">{{ card.body }}</p>
+            </article>
           </div>
         </div>
       </section>
 
-      <div class="w-full max-w-xl justify-self-center rounded-[2.5rem] border border-white/80 bg-white/92 p-10 shadow-[0_30px_100px_rgba(37,99,235,0.12)] backdrop-blur lg:p-14">
-        <header class="mb-10">
-          <div class="text-[11px] font-black uppercase tracking-[0.32em] text-blue-600">{{ copy.welcome }}</div>
-          <h2 class="mt-4 text-4xl font-black tracking-[-0.05em] text-slate-950">{{ copy.title }}</h2>
-          <p class="mt-3 text-sm leading-6 text-slate-500">{{ copy.summary }}</p>
-        </header>
-
-        <div class="space-y-5">
-          <div class="space-y-2">
-            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.username }}</label>
-            <input v-model="form.username" type="text" class="admin-input" :placeholder="copy.usernamePlaceholder" />
-          </div>
-          <div class="space-y-2">
-            <label class="ml-1 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">{{ copy.password }}</label>
-            <input
-              v-model="form.password"
-              type="password"
-              class="admin-input"
-              :placeholder="copy.passwordPlaceholder"
-              @keyup.enter="handleLogin"
-            />
+      <section class="order-1 lg:order-2">
+        <div class="product-panel rounded-[2.4rem] p-8 md:p-10">
+          <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-white/80 text-[var(--brand)]">
+            <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
+            {{ copy.badge }}
           </div>
 
-          <div v-if="errorMessage" class="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
-            {{ errorMessage }}
+          <h1 class="product-title mt-8 text-4xl leading-[0.96] md:text-5xl">{{ copy.title }}</h1>
+          <p class="mt-4 max-w-xl text-base leading-8 text-[var(--ink-soft)]">{{ copy.summary }}</p>
+
+          <form class="mt-10 space-y-5" @submit.prevent="handleLogin">
+            <div class="space-y-2">
+              <label class="product-label">{{ copy.username }}</label>
+              <input v-model="form.username" class="product-input" type="text" :placeholder="copy.usernamePlaceholder" />
+            </div>
+
+            <div class="space-y-2">
+              <label class="product-label">{{ copy.password }}</label>
+              <input
+                v-model="form.password"
+                class="product-input"
+                type="password"
+                :placeholder="copy.passwordPlaceholder"
+              />
+            </div>
+
+            <div v-if="errorMessage" class="product-error px-4 py-3 text-sm font-semibold">
+              {{ errorMessage }}
+            </div>
+
+            <button class="product-button-primary mt-2 w-full" :disabled="loading" type="submit">
+              {{ loading ? copy.submitting : copy.submit }}
+            </button>
+          </form>
+
+          <div class="product-muted-card mt-6 px-5 py-4">
+            <div class="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--accent)]">
+              {{ copy.helperTitle }}
+            </div>
+            <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ copy.helperBody }}</p>
           </div>
 
-          <button
-            :disabled="loading"
-            class="mt-4 w-full rounded-2xl bg-blue-600 py-4 text-xs font-black uppercase tracking-[0.32em] text-white shadow-[0_20px_50px_rgba(37,99,235,0.25)] transition-all hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
-            @click="handleLogin"
-          >
-            {{ loading ? copy.submitting : copy.submit }}
-          </button>
-
-          <div class="rounded-[1.5rem] border border-slate-100 bg-slate-50 px-5 py-4">
-            <div class="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">{{ copy.why }}</div>
-            <p class="mt-2 text-sm leading-6 text-slate-600">{{ copy.whySummary }}</p>
-          </div>
-
-          <p class="text-center text-sm font-semibold text-slate-400">
-            {{ copy.signup }}
-            <span class="cursor-pointer text-blue-600 hover:underline" @click="router.push('/register')">{{ copy.signupAction }}</span>
+          <p class="mt-6 text-sm font-semibold text-[var(--ink-soft)]">
+            {{ copy.registerLead }}
+            <button class="text-[var(--brand)] transition-colors hover:text-[var(--brand-deep)]" type="button" @click="router.push('/register')">
+              {{ copy.registerAction }}
+            </button>
           </p>
         </div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
-
-<style lang="postcss" scoped>
-@reference "@/style.css";
-
-.feature-card {
-  @apply rounded-[2rem] border border-white/80 bg-white/75 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.06)] backdrop-blur;
-}
-
-.feature-label {
-  @apply text-[11px] font-black uppercase tracking-[0.22em] text-slate-400;
-}
-
-.feature-value {
-  @apply mt-4 text-2xl font-black tracking-tight text-slate-900;
-}
-
-.admin-input {
-  display: block;
-  width: 100%;
-  border: 2px solid #dbeafe !important;
-  background-color: #f8fbff;
-  border-radius: 1rem;
-  padding: 1rem 1.15rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #0f172a;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.admin-input:focus {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.1);
-  background-color: white;
-}
-</style>

@@ -18,27 +18,33 @@ const options: Array<{ value: AppLocale; label: string }> = [
   { value: 'en-US', label: 'EN' },
 ]
 
-const wrapperClass = computed(() =>
+const shellClass = computed(() =>
   props.tone === 'dark'
-    ? 'border-white/10 bg-white/5 text-white'
-    : 'border-slate-200 bg-white/90 text-slate-500 shadow-sm'
+    ? 'border-white/10 bg-[rgba(255,255,255,0.08)] text-white'
+    : 'border-[rgba(20,33,43,0.10)] bg-white/70 text-[var(--ink-main)] shadow-[0_10px_30px_rgba(20,33,43,0.06)]'
 )
 
 const activeClass = computed(() =>
-  props.tone === 'dark' ? 'bg-white text-slate-950' : 'bg-slate-950 text-white'
+  props.tone === 'dark'
+    ? 'bg-white text-[var(--ink-strong)] shadow-[0_10px_20px_rgba(15,23,42,0.18)]'
+    : 'bg-[var(--ink-strong)] text-white shadow-[0_10px_20px_rgba(20,33,43,0.12)]'
 )
+
 const inactiveClass = computed(() =>
-  props.tone === 'dark' ? 'text-slate-300 hover:text-white' : 'text-slate-500 hover:text-slate-900'
+  props.tone === 'dark'
+    ? 'text-[rgba(255,255,255,0.72)] hover:text-white'
+    : 'text-[var(--ink-soft)] hover:text-[var(--ink-strong)]'
 )
 </script>
 
 <template>
-  <div :class="wrapperClass" class="inline-flex items-center gap-1 rounded-full border p-1">
+  <div :class="shellClass" class="inline-flex items-center gap-1 rounded-full border p-1.5 backdrop-blur">
     <button
       v-for="option in options"
       :key="option.value"
       :class="localeStore.locale === option.value ? activeClass : inactiveClass"
-      class="rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] transition-all"
+      class="rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.24em] transition-all"
+      type="button"
       @click="localeStore.setLocale(option.value)"
     >
       {{ option.label }}
