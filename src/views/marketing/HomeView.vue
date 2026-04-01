@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import { BRAND } from '@/config/brand'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
 
@@ -20,7 +21,7 @@ const copy = computed(() =>
           workflow: '团队场景',
           pricing: '收费方式',
         },
-        badge: 'Workspace Intelligence for AI Teams',
+        badge: `${BRAND.name} · Workspace Intelligence for AI Teams`,
         title: '把 Roadmap、研究笔记、团队协作和交付资产，重构成一套可运营的 Workspace 产品。',
         summary:
           'LLM Tracker 不只是记录内容，而是把 AI 团队每天产生的方法、结论、进度和责任，沉淀成可以持续复用的商业系统。',
@@ -59,17 +60,17 @@ const copy = computed(() =>
             description: 'Onboarding、复盘和方法论没有沉淀成组织资产，训练成本每次都重新支付。',
           },
         ],
-        featureTitle: '不是“多一个页面”，而是一套更像商业 SaaS 的知识运营层',
+        featureTitle: '一个 Workspace 连接项目、研究与团队执行',
         features: [
           {
             eyebrow: 'Dashboard',
-            title: '团队总览直接可用',
-            description: '成员、路线图、笔记、活动时间线统一在一个 command center 里查看。',
+            title: '团队总览开箱即用',
+            description: '成员、路线图、笔记和活动时间线统一在一个首页里查看。',
           },
           {
             eyebrow: 'Permissions',
-            title: '权限天然支持商业化',
-            description: 'Owner、Admin、Member、Viewer 角色从一开始就为团队治理设计。',
+            title: '让正确的人看到正确的内容',
+            description: 'Owner、Admin、Member、Viewer 四层角色让协作更清晰，也更少混乱。',
           },
           {
             eyebrow: 'Research Notes',
@@ -97,7 +98,7 @@ const copy = computed(() =>
             description: '围绕实验、项目和论文建立长期可继承的知识系统，而不是临时资料堆。',
           },
         ],
-        pricingTitle: '先跑通一个团队，再升级成可售卖的产品结构',
+        pricingTitle: '从一个团队开始，按协作规模逐步升级',
         pricing: [
           {
             name: 'Starter',
@@ -108,8 +109,8 @@ const copy = computed(() =>
           {
             name: 'Team',
             price: '¥299 / workspace / 月',
-            description: '适合正在形成固定协作流程的团队',
-            bullets: ['权限治理与 admin command center', '活动与 onboarding 视图', '更清晰的团队运营结构'],
+            description: '适合需要统一项目、知识与协作节奏的团队',
+            bullets: ['权限治理与团队协作', '活动与 onboarding 视图', '更清晰的项目执行结构'],
             featured: true,
           },
           {
@@ -119,9 +120,9 @@ const copy = computed(() =>
             bullets: ['多 workspace 治理', '更正式的协作流程', '迁移与落地支持'],
           },
         ],
-        ctaTitle: '如果你想把它做成像 Notion 一样能卖的产品，方向不是“多做功能”，而是把团队工作流产品化。',
+        ctaTitle: '让团队在一个 Workspace 里同步目标、研究与执行。',
         ctaSummary:
-          'Workspace、权限、dashboard、activity 和 knowledge ops，会是这条商业化路径里最有价值的护城河。',
+          '少切换工具，少丢上下文，更快把想法推进成清晰、可追踪、可交付的结果。',
       }
     : {
         nav: {
@@ -129,7 +130,7 @@ const copy = computed(() =>
           workflow: 'Use Cases',
           pricing: 'Pricing',
         },
-        badge: 'Workspace Intelligence for AI Teams',
+        badge: `${BRAND.name} · Workspace Intelligence for AI Teams`,
         title: 'Turn roadmap, research notes, collaboration, and delivery assets into a product-grade workspace.',
         summary:
           'LLM Tracker is not another place to write things down. It is where AI teams compound methods, decisions, progress, and ownership into a reusable operating system.',
@@ -168,17 +169,17 @@ const copy = computed(() =>
             description: 'Onboarding, retrospectives, and methods do not become durable organizational memory.',
           },
         ],
-        featureTitle: 'This is not one more page. It is a SaaS-style operating layer for team knowledge.',
+        featureTitle: 'One workspace for projects, research, and team execution',
         features: [
           {
             eyebrow: 'Dashboard',
-            title: 'Command center by default',
+            title: 'A clear home for the team',
             description: 'Members, roadmap, notes, and recent activity are visible from one workspace home.',
           },
           {
             eyebrow: 'Permissions',
-            title: 'Commercial governance built in',
-            description: 'Owner, Admin, Member, and Viewer roles support product-grade collaboration from day one.',
+            title: 'The right access for the right people',
+            description: 'Owner, Admin, Member, and Viewer roles keep collaboration clear from day one.',
           },
           {
             eyebrow: 'Research Notes',
@@ -206,7 +207,7 @@ const copy = computed(() =>
             description: 'Build durable knowledge systems around experiments, projects, and papers instead of ad hoc folders.',
           },
         ],
-        pricingTitle: 'Start with one team, then grow into a sellable product layer',
+        pricingTitle: 'Start with one team and scale as collaboration grows',
         pricing: [
           {
             name: 'Starter',
@@ -217,8 +218,8 @@ const copy = computed(() =>
           {
             name: 'Team',
             price: '$39 / workspace / month',
-            description: 'For teams shaping a repeatable way of working',
-            bullets: ['Permission governance and admin command center', 'Activity and onboarding visibility', 'Cleaner operating structure for teams'],
+            description: 'For teams that need one place for project work, knowledge, and collaboration',
+            bullets: ['Permission governance and team collaboration', 'Activity and onboarding visibility', 'A clearer operating structure for work'],
             featured: true,
           },
           {
@@ -228,9 +229,9 @@ const copy = computed(() =>
             bullets: ['Multi-workspace governance', 'Formal collaboration workflows', 'Migration and rollout support'],
           },
         ],
-        ctaTitle: 'If you want this to become a sellable product like Notion, productize the workflow instead of stacking features.',
+        ctaTitle: 'Keep goals, research, and execution in one workspace.',
         ctaSummary:
-          'Workspace, permissions, dashboards, activity, and knowledge ops are the layers that create real commercial leverage.',
+          'Spend less time switching tools, lose less context, and move ideas into trackable, deliverable work faster.',
       }
 )
 </script>
@@ -243,17 +244,17 @@ const copy = computed(() =>
       <header class="product-shell relative z-10 flex items-center justify-between gap-4 py-5">
         <router-link to="/" class="flex items-center gap-3 transition-opacity hover:opacity-80">
           <span class="flex h-11 w-11 items-center justify-center rounded-[1.35rem] bg-[var(--ink-strong)] text-sm font-black tracking-[0.18em] text-white shadow-[0_20px_40px_rgba(20,33,43,0.16)]">
-            LT
-          </span>
-          <span>
-            <span class="block font-[var(--font-display)] text-sm font-black uppercase tracking-[0.32em] text-[var(--ink-strong)]">
-              LLM Tracker
+              {{ BRAND.mark }}
             </span>
-            <span class="block text-[10px] font-black uppercase tracking-[0.34em] text-[var(--ink-soft)]">
-              Workspace Ops
+            <span>
+              <span class="block font-[var(--font-display)] text-sm font-black uppercase tracking-[0.32em] text-[var(--ink-strong)]">
+                {{ BRAND.name }}
+              </span>
+              <span class="block text-[10px] font-black uppercase tracking-[0.34em] text-[var(--ink-soft)]">
+                {{ BRAND.descriptor }}
+              </span>
             </span>
-          </span>
-        </router-link>
+          </router-link>
 
         <nav class="hidden items-center gap-7 text-[11px] font-black uppercase tracking-[0.24em] text-[var(--ink-soft)] lg:flex">
           <a href="#product" class="transition-colors hover:text-[var(--ink-strong)]">{{ copy.nav.product }}</a>
@@ -517,7 +518,7 @@ const copy = computed(() =>
       <div class="product-shell overflow-hidden rounded-[2.4rem] bg-[var(--ink-strong)] px-8 py-10 text-white shadow-[0_34px_120px_rgba(20,33,43,0.18)] md:px-12 md:py-14">
         <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
           <div class="max-w-4xl">
-            <div class="text-[11px] font-black uppercase tracking-[0.28em] text-[rgba(255,255,255,0.56)]">Commercial Direction</div>
+            <div class="text-[11px] font-black uppercase tracking-[0.28em] text-[rgba(255,255,255,0.56)]">Unified Workflow</div>
             <h2 class="mt-5 font-[var(--font-display)] text-4xl font-black leading-[0.95] tracking-[-0.06em] md:text-6xl">
               {{ copy.ctaTitle }}
             </h2>

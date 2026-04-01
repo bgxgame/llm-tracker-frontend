@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api/auth'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import { BRAND } from '@/config/brand'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
 
@@ -21,7 +22,7 @@ const errorMessage = ref('')
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: 'Workspace Access',
+        badge: `${BRAND.name} · Workspace Access`,
         title: '进入你的 Workspace Ops Console',
         summary: '继续管理团队 roadmap、研究笔记、近期活动和协作权限，不再让关键上下文散落在别处。',
         username: '用户名',
@@ -41,8 +42,8 @@ const copy = computed(() =>
             body: '不同角色看到不同能力边界，Viewer 也不会再被误导到写操作入口。',
           },
           {
-            title: 'Commercial workflow',
-            body: '从一个清晰的 admin shell 继续推进知识运营，而不是回到零散工具堆。',
+            title: 'One operating flow',
+            body: '从统一的 workspace 继续推进团队工作，而不是回到零散工具堆。',
           },
         ],
         helperTitle: '为什么团队会频繁打开它',
@@ -52,7 +53,7 @@ const copy = computed(() =>
         error: '登录失败，请稍后重试',
       }
     : {
-        badge: 'Workspace Access',
+        badge: `${BRAND.name} · Workspace Access`,
         title: 'Enter your Workspace Ops Console',
         summary: 'Return to roadmap execution, research notes, recent activity, and permission-aware collaboration from one place.',
         username: 'Username',
@@ -72,8 +73,8 @@ const copy = computed(() =>
             body: 'Every role sees the right operating surface, and viewers are not nudged toward write actions.',
           },
           {
-            title: 'Commercial workflow',
-            body: 'Keep operating from one admin shell instead of returning to a fragmented tool stack.',
+            title: 'One operating flow',
+            body: 'Keep working from one workspace instead of returning to a fragmented tool stack.',
           },
         ],
         helperTitle: 'Why teams return here often',

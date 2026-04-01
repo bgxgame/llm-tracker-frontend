@@ -3,9 +3,12 @@
 :root {
   color-scheme: light;
   --font-sans:
-    "Aptos", "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+    "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei UI", "Helvetica Neue", sans-serif;
   --font-display:
-    "Aptos Display", "Segoe UI Variable Display", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+    "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei UI", "Helvetica Neue", sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
   --page: #f4f1eb;
   --page-strong: #ece6dc;
   --surface: rgba(255, 251, 245, 0.82);
@@ -47,8 +50,10 @@
       linear-gradient(180deg, #faf7f0 0%, var(--page) 38%, #f8f5ef 100%);
     color: var(--ink-strong);
     font-family: var(--font-sans);
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   * {

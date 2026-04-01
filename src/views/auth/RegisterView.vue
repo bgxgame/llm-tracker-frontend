@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api/auth'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import { BRAND } from '@/config/brand'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
 
@@ -23,7 +24,7 @@ const errorMessage = ref('')
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: 'Launch Workspace',
+        badge: `${BRAND.name} · Launch Workspace`,
         title: '创建账号，启动你的第一套团队空间',
         summary: '你会获得一个从第一天就支持权限治理、研究笔记、roadmap 和 dashboard 的 workspace 基础层。',
         username: '用户名',
@@ -40,7 +41,7 @@ const copy = computed(() =>
         sideCards: [
           {
             title: 'Workspace foundation',
-            body: '默认拥有可继续扩展的 workspace 架构，为后续商业化治理和团队协作留足空间。',
+            body: '默认拥有可继续扩展的 workspace 架构，让团队从一开始就能稳定协作。',
           },
           {
             title: 'Role-based collaboration',
@@ -57,7 +58,7 @@ const copy = computed(() =>
         error: '创建账号失败，请稍后重试',
       }
     : {
-        badge: 'Launch Workspace',
+        badge: `${BRAND.name} · Launch Workspace`,
         title: 'Create an account and launch your first team space',
         summary: 'Start with a workspace foundation that already supports governance, research notes, roadmap tracking, and a team dashboard.',
         username: 'Username',
