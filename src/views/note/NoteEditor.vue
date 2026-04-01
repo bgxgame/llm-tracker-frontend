@@ -43,67 +43,79 @@ const noteWordCount = computed(() =>
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        eyebrow: 'Research editor',
-        editTitle: '更新一条 workspace note',
-        createTitle: '创建新的 research note',
+        eyebrow: '笔记编辑',
+        editTitle: '更新团队笔记',
+        createTitle: '创建团队笔记',
         summaryPrefix: '把',
-        summarySuffix: '的研究结论、上下文和交付资产收进同一个编辑台。',
+        summarySuffix: '中的研究过程、关键决策和交付内容整理成一条清晰记录。',
         metrics: {
-          role: 'Workspace role',
-          words: 'Word count',
-          artifacts: 'Artifacts',
+          role: '当前角色',
+          words: '字数',
+          artifacts: '资料数',
         },
-        noNode: '尚未选择 roadmap 节点',
-        editingEnabled: '编辑已开启',
-        readOnly: '只读访问',
-        readonlyHint: '你当前可以查看这条 note，但不能创建、编辑或附加交付资产。',
-        loadError: '无法加载 note editor',
-        titleRequired: '需要填写 note 标题',
-        nodeRequired: '请先把这条 note 关联到一个 roadmap 节点',
-        saveError: '无法保存 note',
-        attachValidation: 'Artifact 标题和 URL 不能为空',
-        attachError: '无法附加 artifact',
-        removeConfirmPrefix: '确定要把 “',
-        removeConfirmSuffix: '” 从这条 note 中移除吗？',
-        removeError: '无法移除 artifact',
-        loading: '正在加载 note workspace...',
-        tagsLabel: 'Tags',
-        tagsPlaceholder: 'evaluation, rag, onboarding',
-        nodeLabel: 'Linked roadmap node',
-        chooseNode: '选择一个 roadmap 节点',
-        back: '返回 Notes',
+        noNode: '尚未选择节点',
+        editingEnabled: '可编辑',
+        readOnly: '只读',
+        readonlyHint: '你当前可以查看这条笔记，但不能创建、编辑或附加资料。',
+        loadError: '加载笔记编辑页失败',
+        titleRequired: '请填写笔记标题',
+        nodeRequired: '请先把这条笔记关联到一个路线图节点',
+        saveError: '保存笔记失败',
+        attachValidation: '资料标题和链接不能为空',
+        attachError: '添加资料失败',
+        removeConfirmPrefix: '确认移除“',
+        removeConfirmSuffix: '”吗？',
+        removeError: '移除资料失败',
+        loading: '正在加载编辑内容...',
+        tagsLabel: '标签',
+        tagsPlaceholder: '评估, 检索增强, 入职',
+        nodeLabel: '关联路线图节点',
+        chooseNode: '选择一个节点',
+        back: '返回笔记列表',
         saving: '保存中...',
         saveChanges: '保存修改',
-        createNote: '创建 Note',
-        editorPlaceholder: '记录上下文、决策、实验、结论和下一步动作...',
-        artifactsEyebrow: 'Artifacts',
-        artifactsTitle: '附加交付结果',
-        artifactsSummary: '关联 demo、仓库、评测表、模型快照或文档，让知识和产出一起沉淀。',
+        createNote: '创建笔记',
+        editorPlaceholder: '记录背景、决策、实验、结论和下一步动作...',
+        artifactsEyebrow: '关联资料',
+        artifactsTitle: '把演示、仓库和文档挂到这条笔记下',
+        artifactsSummary: '关联演示、代码仓库、评测表、模型快照或文档，让结论和交付结果放在一起。',
         remove: '移除',
-        noArtifacts: '还没有附加任何 artifacts。',
-        artifactTitle: 'Artifact 标题',
-        artifactType: 'Artifact 类型',
-        artifactUrl: 'Artifact URL',
-        artifactTitlePlaceholder: 'Production demo, GitHub repo, benchmark',
-        attachArtifact: '附加 Artifact',
-        attaching: '附加中...',
-        saveFirst: '先保存 Note 再附加 Artifact',
+        noArtifacts: '还没有关联资料。',
+        artifactTitle: '资料标题',
+        artifactType: '资料类型',
+        artifactUrl: '资料链接',
+        artifactTitlePlaceholder: '例如：线上演示、代码仓库、评测表',
+        attachArtifact: '添加资料',
+        attaching: '添加中...',
+        saveFirst: '请先保存笔记',
+        artifactTypes: {
+          code: '代码',
+          model: '模型',
+          demo: '演示',
+          image: '图片',
+        },
+        roleLabels: {
+          owner: '所有者',
+          admin: '管理员',
+          member: '成员',
+          viewer: '访客',
+        },
       }
     : {
-        eyebrow: 'Research editor',
-        editTitle: 'Update a workspace note',
-        createTitle: 'Create a new research note',
-        summaryPrefix: 'Structure research for',
-        summarySuffix: 'and keep context, decisions, and delivery assets in one editor.',
+        eyebrow: 'Note editor',
+        editTitle: 'Update team note',
+        createTitle: 'Create team note',
+        summaryPrefix: 'Capture the research, decisions, and delivery context in',
+        summarySuffix: 'as one clear record.',
         metrics: {
-          role: 'Workspace role',
-          words: 'Word count',
+          role: 'Role',
+          words: 'Words',
           artifacts: 'Artifacts',
         },
-        noNode: 'No roadmap node selected',
-        editingEnabled: 'Editing enabled',
-        readOnly: 'Read-only access',
-        readonlyHint: 'Your current workspace role can review this note, but cannot create, edit, or attach delivery assets.',
+        noNode: 'No node selected',
+        editingEnabled: 'Editable',
+        readOnly: 'Read only',
+        readonlyHint: 'You can review this note, but cannot create, edit, or attach resources with the current role.',
         loadError: 'Unable to load the note editor',
         titleRequired: 'A note title is required',
         nodeRequired: 'Please link this note to a roadmap node',
@@ -111,39 +123,51 @@ const copy = computed(() =>
         attachValidation: 'Artifact title and URL are required',
         attachError: 'Unable to attach artifact',
         removeConfirmPrefix: 'Remove "',
-        removeConfirmSuffix: '" from this note?',
+        removeConfirmSuffix: '"?',
         removeError: 'Unable to remove artifact',
-        loading: 'Loading note workspace...',
+        loading: 'Loading editor...',
         tagsLabel: 'Tags',
         tagsPlaceholder: 'evaluation, rag, onboarding',
         nodeLabel: 'Linked roadmap node',
-        chooseNode: 'Choose a roadmap node',
+        chooseNode: 'Choose a node',
         back: 'Back to notes',
         saving: 'Saving...',
         saveChanges: 'Save changes',
         createNote: 'Create note',
-        editorPlaceholder: 'Document context, decisions, experiments, learnings, and next actions...',
+        editorPlaceholder: 'Document background, decisions, experiments, findings, and next actions...',
         artifactsEyebrow: 'Artifacts',
-        artifactsTitle: 'Attach delivery outputs',
-        artifactsSummary: 'Link demos, repositories, benchmark sheets, model snapshots, or docs that prove the work happened.',
+        artifactsTitle: 'Attach demos, repos, and docs to this note',
+        artifactsSummary: 'Link the proof of work so the note and the output stay together.',
         remove: 'Remove',
-        noArtifacts: 'No artifacts attached yet.',
+        noArtifacts: 'No linked artifacts yet.',
         artifactTitle: 'Artifact title',
         artifactType: 'Artifact type',
         artifactUrl: 'Artifact URL',
-        artifactTitlePlaceholder: 'Production demo, GitHub repo, benchmark',
+        artifactTitlePlaceholder: 'For example: production demo, repo, benchmark',
         attachArtifact: 'Attach artifact',
         attaching: 'Attaching...',
-        saveFirst: 'Save note first to attach artifacts',
+        saveFirst: 'Save the note first',
+        artifactTypes: {
+          code: 'Code',
+          model: 'Model',
+          demo: 'Demo',
+          image: 'Image',
+        },
+        roleLabels: {
+          owner: 'Owner',
+          admin: 'Admin',
+          member: 'Member',
+          viewer: 'Viewer',
+        },
       }
 )
 
-const roleLabelMap = computed<Record<WorkspaceRole, string>>(() => ({
-  owner: 'Owner',
-  admin: 'Admin',
-  member: 'Member',
-  viewer: 'Viewer',
-}))
+const artifactTypeOptions = computed(() => [
+  { value: 'code', label: copy.value.artifactTypes.code },
+  { value: 'model', label: copy.value.artifactTypes.model },
+  { value: 'demo', label: copy.value.artifactTypes.demo },
+  { value: 'image', label: copy.value.artifactTypes.image },
+])
 
 const editorLocale = computed(() => (localeStore.isChinese ? 'zh-CN' : 'en-US'))
 
@@ -300,72 +324,65 @@ const cancelEditing = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[linear-gradient(180deg,_#f8fbff_0%,_#ffffff_28%)]">
-    <div class="mx-auto max-w-[1600px] px-6 py-8 lg:px-10">
-      <div class="overflow-hidden rounded-[2.25rem] border border-slate-100 bg-white shadow-[0_24px_90px_rgba(15,23,42,0.07)]">
-        <div
-          class="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.12),_transparent_35%),linear-gradient(180deg,_#ffffff_0%,_#f8fbff_100%)] px-8 py-7"
-        >
-          <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+  <div class="min-h-screen bg-[linear-gradient(180deg,#faf7f0_0%,#f4f1eb_100%)]">
+    <div class="mx-auto max-w-[1500px] px-6 py-8 lg:px-10">
+      <div class="rounded-[2rem] border border-[rgba(20,33,43,0.08)] bg-[rgba(255,251,245,0.84)] shadow-[0_24px_70px_rgba(20,33,43,0.05)]">
+        <div class="border-b border-[rgba(20,33,43,0.08)] px-8 py-7">
+          <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div class="max-w-3xl">
-              <div class="text-[11px] font-black uppercase tracking-[0.32em] text-blue-600">{{ copy.eyebrow }}</div>
-              <h1 class="mt-4 text-4xl font-black tracking-[-0.05em] text-slate-950">
+              <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-white/80 text-[var(--brand)]">
+                <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
+                {{ copy.eyebrow }}
+              </div>
+              <h1 class="product-title mt-6 text-4xl leading-[0.96] md:text-5xl">
                 {{ isEditMode ? copy.editTitle : copy.createTitle }}
               </h1>
-              <p class="mt-4 text-base leading-8 text-slate-500">
+              <p class="mt-4 text-base leading-8 text-[var(--ink-soft)]">
                 {{ copy.summaryPrefix }}
-                <span class="font-black text-slate-800">{{ currentWorkspace?.workspace_name }}</span>
+                <span class="font-black text-[var(--ink-strong)]">{{ currentWorkspace?.workspace_name }}</span>
                 {{ copy.summarySuffix }}
               </p>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[28rem]">
-              <div class="metric-card">
+            <div class="grid gap-3 sm:grid-cols-3 xl:min-w-[24rem]">
+              <article class="metric-card">
                 <div class="metric-label">{{ copy.metrics.role }}</div>
-                <div class="metric-value">{{ roleLabelMap[currentRole] }}</div>
-              </div>
-              <div class="metric-card">
+                <div class="metric-value">{{ copy.roleLabels[currentRole] }}</div>
+              </article>
+              <article class="metric-card">
                 <div class="metric-label">{{ copy.metrics.words }}</div>
                 <div class="metric-value">{{ noteWordCount }}</div>
-              </div>
-              <div class="metric-card">
+              </article>
+              <article class="metric-card">
                 <div class="metric-label">{{ copy.metrics.artifacts }}</div>
                 <div class="metric-value">{{ artifacts.length }}</div>
-              </div>
+              </article>
             </div>
           </div>
 
           <div class="mt-6 flex flex-wrap items-center gap-3">
-            <span class="rounded-full bg-slate-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-              {{ currentNode ? currentNode.title : copy.noNode }}
-            </span>
-            <span
-              :class="hasWriteAccess ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'"
-              class="rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
-            >
+            <span class="pill">{{ currentNode ? currentNode.title : copy.noNode }}</span>
+            <span :class="hasWriteAccess ? 'pill pill-brand' : 'pill'" class="!uppercase">
               {{ hasWriteAccess ? copy.editingEnabled : copy.readOnly }}
             </span>
           </div>
         </div>
 
-        <div v-if="errorMessage" class="border-b border-red-100 bg-red-50 px-8 py-4 text-sm font-semibold text-red-600">
+        <div v-if="errorMessage" class="border-b border-[rgba(187,45,59,0.12)] bg-[rgba(187,45,59,0.08)] px-8 py-4 text-sm font-semibold text-[var(--danger)]">
           {{ errorMessage }}
         </div>
 
-        <div
-          v-if="!hasWriteAccess"
-          class="border-b border-amber-100 bg-amber-50 px-8 py-4 text-sm font-semibold text-amber-700"
-        >
+        <div v-if="!hasWriteAccess" class="border-b border-[rgba(216,110,59,0.12)] bg-[rgba(216,110,59,0.08)] px-8 py-4 text-sm font-semibold text-[var(--brand-deep)]">
           {{ copy.readonlyHint }}
         </div>
 
-        <div v-if="loading" class="px-8 py-20 text-center text-sm font-semibold text-slate-400">
+        <div v-if="loading" class="px-8 py-20 text-center text-sm font-semibold text-[var(--ink-soft)]">
           {{ copy.loading }}
         </div>
 
-        <div v-else class="grid min-h-[calc(100vh-14rem)] xl:grid-cols-[minmax(0,1fr)_360px]">
-          <main class="border-r border-slate-100">
-            <div class="border-b border-slate-100 px-8 py-6">
+        <div v-else class="grid min-h-[calc(100vh-14rem)] xl:grid-cols-[minmax(0,1fr)_330px]">
+          <main class="border-r border-[rgba(20,33,43,0.08)]">
+            <div class="border-b border-[rgba(20,33,43,0.08)] px-8 py-6">
               <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div class="flex-1">
                   <input
@@ -378,37 +395,29 @@ const cancelEditing = () => {
                   <div class="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
                     <div class="space-y-2">
                       <label class="field-label">{{ copy.tagsLabel }}</label>
-                      <input
-                        v-model="form.tags"
-                        :disabled="!hasWriteAccess"
-                        type="text"
-                        class="field-input"
-                        :placeholder="copy.tagsPlaceholder"
-                      />
+                      <input v-model="form.tags" :disabled="!hasWriteAccess" type="text" class="product-input" :placeholder="copy.tagsPlaceholder" />
                     </div>
                     <div class="space-y-2">
                       <label class="field-label">{{ copy.nodeLabel }}</label>
-                      <select v-model="form.node_id" :disabled="!hasWriteAccess" class="field-input">
+                      <select v-model="form.node_id" :disabled="!hasWriteAccess" class="product-input">
                         <option :value="null">{{ copy.chooseNode }}</option>
-                        <option v-for="node in nodes" :key="node.id" :value="node.id">
-                          {{ node.title }}
-                        </option>
+                        <option v-for="node in nodes" :key="node.id" :value="node.id">{{ node.title }}</option>
                       </select>
                     </div>
                   </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
-                  <button @click="cancelEditing" class="secondary-button">{{ copy.back }}</button>
-                  <button @click="handleSave" :disabled="!hasWriteAccess || submitting" class="primary-button">
+                  <button class="product-button-secondary" type="button" @click="cancelEditing">{{ copy.back }}</button>
+                  <button class="product-button-primary" :disabled="!hasWriteAccess || submitting" type="button" @click="handleSave">
                     {{ submitting ? copy.saving : isEditMode ? copy.saveChanges : copy.createNote }}
                   </button>
                 </div>
               </div>
             </div>
 
-            <div class="h-[calc(100vh-22rem)] min-h-[40rem] overflow-hidden bg-slate-50/50 p-6">
-              <div class="h-full overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+            <div class="h-[calc(100vh-22rem)] min-h-[36rem] overflow-hidden p-6">
+              <div class="h-full overflow-hidden rounded-[1.6rem] border border-[rgba(20,33,43,0.08)] bg-white shadow-[0_14px_36px_rgba(20,33,43,0.04)]">
                 <MdEditor
                   v-model="form.content"
                   :language="editorLocale"
@@ -423,13 +432,11 @@ const cancelEditing = () => {
             </div>
           </main>
 
-          <aside class="flex flex-col bg-slate-50/70">
-            <div class="border-b border-slate-100 px-6 py-6">
-              <div class="text-[11px] font-black uppercase tracking-[0.32em] text-blue-600">{{ copy.artifactsEyebrow }}</div>
-              <h2 class="mt-3 text-2xl font-black tracking-[-0.04em] text-slate-950">{{ copy.artifactsTitle }}</h2>
-              <p class="mt-3 text-sm leading-7 text-slate-500">
-                {{ copy.artifactsSummary }}
-              </p>
+          <aside class="flex flex-col bg-[rgba(255,255,255,0.32)]">
+            <div class="border-b border-[rgba(20,33,43,0.08)] px-6 py-6">
+              <div class="text-[11px] font-black uppercase tracking-[0.28em] text-[var(--brand)]">{{ copy.artifactsEyebrow }}</div>
+              <h2 class="mt-3 text-2xl font-black tracking-[-0.04em] text-[var(--ink-strong)]">{{ copy.artifactsTitle }}</h2>
+              <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ copy.artifactsSummary }}</p>
             </div>
 
             <div class="flex-1 overflow-y-auto px-6 py-6">
@@ -437,42 +444,35 @@ const cancelEditing = () => {
                 <article
                   v-for="artifact in artifacts"
                   :key="artifact.id"
-                  class="rounded-[1.6rem] border border-slate-100 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.04)]"
+                  class="rounded-[1.4rem] border border-[rgba(20,33,43,0.08)] bg-white p-5 shadow-[0_10px_24px_rgba(20,33,43,0.04)]"
                 >
                   <div class="flex items-start justify-between gap-4">
                     <div>
-                      <div class="text-[10px] font-black uppercase tracking-[0.24em] text-blue-600">
-                        {{ artifact.artifact_type }}
+                      <div class="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--accent)]">
+                        {{ copy.artifactTypes[artifact.artifact_type as keyof typeof copy.artifactTypes] || artifact.artifact_type }}
                       </div>
-                      <div class="mt-2 text-base font-black tracking-tight text-slate-900">{{ artifact.title }}</div>
+                      <div class="mt-2 text-base font-black tracking-tight text-[var(--ink-strong)]">{{ artifact.title }}</div>
                     </div>
-                    <button
-                      v-if="hasWriteAccess"
-                      @click="deleteArtifact(artifact)"
-                      class="text-[11px] font-black uppercase tracking-[0.2em] text-red-500 transition-all hover:text-red-700"
-                    >
+                    <button v-if="hasWriteAccess" class="text-[11px] font-black text-[var(--danger)]" type="button" @click="deleteArtifact(artifact)">
                       {{ copy.remove }}
                     </button>
                   </div>
                   <a
                     :href="artifact.content_url"
                     target="_blank"
-                    class="mt-4 block break-all text-sm font-semibold text-slate-500 underline decoration-slate-200 underline-offset-4 hover:text-blue-600"
+                    class="mt-4 block break-all text-sm font-semibold text-[var(--ink-soft)] underline decoration-[rgba(20,33,43,0.16)] underline-offset-4 hover:text-[var(--brand)]"
                   >
                     {{ artifact.content_url }}
                   </a>
                 </article>
 
-                <div
-                  v-if="artifacts.length === 0"
-                  class="rounded-[1.6rem] border border-dashed border-slate-200 bg-white/80 px-5 py-8 text-center text-sm font-semibold text-slate-400"
-                >
+                <div v-if="artifacts.length === 0" class="rounded-[1.4rem] border border-dashed border-[rgba(20,33,43,0.12)] bg-white/70 px-4 py-8 text-center text-sm font-semibold text-[var(--ink-soft)]">
                   {{ copy.noArtifacts }}
                 </div>
               </div>
             </div>
 
-            <div v-if="hasWriteAccess" class="border-t border-slate-100 bg-white px-6 py-6">
+            <div v-if="hasWriteAccess" class="border-t border-[rgba(20,33,43,0.08)] bg-white px-6 py-6">
               <div class="space-y-4">
                 <div class="space-y-2">
                   <label class="field-label">{{ copy.artifactTitle }}</label>
@@ -480,28 +480,21 @@ const cancelEditing = () => {
                     v-model="artifactForm.title"
                     :disabled="!noteId"
                     type="text"
-                    class="field-input"
+                    class="product-input"
                     :placeholder="copy.artifactTitlePlaceholder"
                   />
                 </div>
                 <div class="space-y-2">
                   <label class="field-label">{{ copy.artifactType }}</label>
-                  <select v-model="artifactForm.artifact_type" :disabled="!noteId" class="field-input">
-                    <option value="code">Code</option>
-                    <option value="model">Model</option>
-                    <option value="demo">Demo</option>
-                    <option value="image">Image</option>
+                  <select v-model="artifactForm.artifact_type" :disabled="!noteId" class="product-input">
+                    <option v-for="item in artifactTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
                   </select>
                 </div>
                 <div class="space-y-2">
                   <label class="field-label">{{ copy.artifactUrl }}</label>
-                  <input v-model="artifactForm.content_url" :disabled="!noteId" type="text" class="field-input" placeholder="https://..." />
+                  <input v-model="artifactForm.content_url" :disabled="!noteId" type="text" class="product-input" placeholder="https://..." />
                 </div>
-                <button
-                  @click="addArtifact"
-                  :disabled="!noteId || artifactSubmitting"
-                  class="primary-button w-full"
-                >
+                <button class="product-button-primary w-full" :disabled="!noteId || artifactSubmitting" type="button" @click="addArtifact">
                   {{ artifactSubmitting ? copy.attaching : noteId ? copy.attachArtifact : copy.saveFirst }}
                 </button>
               </div>
@@ -517,39 +510,30 @@ const cancelEditing = () => {
 @reference "@/style.css";
 
 .metric-card {
-  @apply rounded-[1.5rem] border border-white/80 bg-white/80 px-4 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.05)];
+  @apply rounded-[1.4rem] border border-[rgba(20,33,43,0.08)] bg-white/80 px-4 py-4 shadow-[0_10px_24px_rgba(20,33,43,0.04)];
 }
 
 .metric-label {
-  @apply text-[10px] font-black uppercase tracking-[0.22em] text-slate-400;
+  @apply text-[10px] font-black uppercase tracking-[0.22em] text-[var(--ink-soft)];
 }
 
 .metric-value {
-  @apply mt-3 text-2xl font-black tracking-[-0.05em] text-slate-950;
+  @apply mt-3 font-[var(--font-display)] text-2xl font-black tracking-[-0.05em] text-[var(--ink-strong)];
+}
+
+.pill {
+  @apply inline-flex rounded-full bg-[rgba(20,33,43,0.06)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[var(--ink-main)];
+}
+
+.pill-brand {
+  @apply bg-[rgba(216,110,59,0.12)] text-[var(--brand)];
 }
 
 .field-label {
-  @apply text-[11px] font-black uppercase tracking-[0.24em] text-slate-400;
+  @apply text-[11px] font-black uppercase tracking-[0.24em] text-[var(--ink-soft)];
 }
 
 .title-input {
-  @apply bg-transparent text-4xl font-black tracking-[-0.05em] text-slate-950 outline-none placeholder:text-slate-300;
-}
-
-.field-input {
-  @apply w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition-all;
-}
-
-.field-input:focus {
-  @apply border-blue-600;
-  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.08);
-}
-
-.primary-button {
-  @apply rounded-2xl bg-blue-600 px-5 py-3 text-[11px] font-black uppercase tracking-[0.26em] text-white shadow-[0_18px_50px_rgba(37,99,235,0.22)] transition-all hover:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-60;
-}
-
-.secondary-button {
-  @apply rounded-2xl border border-slate-200 bg-white px-5 py-3 text-[11px] font-black uppercase tracking-[0.26em] text-slate-500 transition-all hover:bg-slate-50;
+  @apply bg-transparent text-4xl font-[var(--font-display)] font-black tracking-[-0.05em] text-[var(--ink-strong)] outline-none placeholder:text-[rgba(20,33,43,0.28)];
 }
 </style>
