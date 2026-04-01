@@ -21,34 +21,33 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         eyebrow: 'Workspace control',
-        title: '像产品一样管理团队访问，而不是像表格一样堆权限。',
-        summary:
-          '创建 workspace、管理角色、邀请成员，让 roadmap 和 notes 从一开始就有清晰的协作边界与治理结构。',
+        title: '像商业产品一样管理团队权限，而不是像表格一样堆角色。',
+        summary: '创建 workspace、管理角色、邀请成员，让 roadmap 和 notes 从一开始就拥有清晰的协作边界。',
         metrics: {
           workspaces: 'Workspaces',
           role: '当前角色',
           teamSize: '团队规模',
         },
         createEyebrow: 'Create workspace',
-        createTitle: '几分钟内启动新的团队环境',
-        createSummary: '每个 workspace 都是独立协作边界，适合不同团队、项目线或客户环境。',
+        createTitle: '几分钟内启动新的团队空间',
+        createSummary: '每个 workspace 都是独立协作边界，适合不同团队、项目线或客户上下文。',
         createPlaceholder: 'Growth Lab、Core Platform、Agent Infra...',
         createAction: '创建 workspace',
         creating: '创建中...',
         listEyebrow: 'Your workspaces',
-        listTitle: '切换上下文，不丢失治理边界',
+        listTitle: '切换上下文，但不丢失治理结构',
         teamEyebrow: 'Team access',
-        teamSummary: '支持按用户名或邮箱邀请成员，并用角色管理读写与成员治理权限。',
+        teamSummary: '支持按用户名或邮箱邀请成员，并通过角色管理读写权限与团队治理权限。',
         guideTitle: 'Role guide',
         guide: [
-          'Owner: 完整治理权限，可管理角色与空间结构',
-          'Admin: 可管理成员与日常协作运营',
-          'Member: 可写入 roadmap 与 notes',
-          'Viewer: 只读查看，不会出现误导性写操作',
+          'Owner: 拥有完整治理权限，可管理角色与空间结构',
+          'Admin: 负责日常团队运营与成员访问管理',
+          'Member: 可以推进 roadmap 与 notes',
+          'Viewer: 只读查看，不出现误导性的写操作入口',
         ],
         manageEnabled: '可管理成员',
         readOnly: '只读访问',
-        invitePlaceholder: '用用户名或邮箱邀请成员',
+        invitePlaceholder: '输入用户名或邮箱邀请成员',
         inviteAction: '邀请成员',
         inviting: '邀请中...',
         member: '成员',
@@ -70,8 +69,7 @@ const copy = computed(() =>
     : {
         eyebrow: 'Workspace control',
         title: 'Run team access like a product, not a spreadsheet.',
-        summary:
-          'Create workspaces, manage roles, and keep roadmap plus notes scoped to the right collaboration boundary.',
+        summary: 'Create workspaces, manage roles, and keep roadmap plus notes scoped to the right collaboration boundary.',
         metrics: {
           workspaces: 'Workspaces',
           role: 'Active role',
@@ -79,8 +77,7 @@ const copy = computed(() =>
         },
         createEyebrow: 'Create workspace',
         createTitle: 'Spin up a new team environment in minutes',
-        createSummary:
-          'Every workspace becomes its own collaboration boundary for a team, project line, or client context.',
+        createSummary: 'Every workspace becomes its own collaboration boundary for a team, project line, or client context.',
         createPlaceholder: 'Growth Lab, Core Platform, Agent Infra...',
         createAction: 'Create workspace',
         creating: 'Creating...',
@@ -125,21 +122,12 @@ const roleOptions = computed<WorkspaceRole[]>(() =>
   authStore.activeRole === 'owner' ? ['owner', 'admin', 'member', 'viewer'] : ['admin', 'member', 'viewer']
 )
 
-const roleLabel = computed<Record<WorkspaceRole, string>>(() =>
-  localeStore.isChinese
-    ? {
-        owner: 'Owner',
-        admin: 'Admin',
-        member: 'Member',
-        viewer: 'Viewer',
-      }
-    : {
-        owner: 'Owner',
-        admin: 'Admin',
-        member: 'Member',
-        viewer: 'Viewer',
-      }
-)
+const roleLabel = computed<Record<WorkspaceRole, string>>(() => ({
+  owner: 'Owner',
+  admin: 'Admin',
+  member: 'Member',
+  viewer: 'Viewer',
+}))
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString(localeStore.locale, {
@@ -291,7 +279,10 @@ const removeMember = async (member: WorkspaceMember) => {
       </div>
     </header>
 
-    <div v-if="errorMessage" class="mt-8 rounded-[1.75rem] border border-red-100 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600">
+    <div
+      v-if="errorMessage"
+      class="mt-8 rounded-[1.75rem] border border-red-100 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600"
+    >
       {{ errorMessage }}
     </div>
 

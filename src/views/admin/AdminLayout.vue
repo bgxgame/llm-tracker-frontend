@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
+import type { WorkspaceRole } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
@@ -17,9 +18,10 @@ const copy = computed(() =>
     ? {
         badge: 'Workspace Ops Console',
         title: 'AI Workspace',
-        description: '在一套商业化中台里统一管理 roadmap、research notes、team permissions 与团队协作运营。',
+        description: '在一个商业化中台里统一管理 roadmap、research notes、team permissions 与协作推进。',
         searchLabel: 'Global Search',
-        searchPlaceholder: '搜索 roadmap、notes 与 workspace context',
+        searchPlaceholder: '搜索 roadmap、notes 和 workspace context',
+        searchAction: '搜索',
         activeWorkspace: '当前 Workspace',
         account: '当前账号',
         site: '官网',
@@ -39,6 +41,7 @@ const copy = computed(() =>
         description: 'Run roadmap, research notes, team permissions, and execution from one commercial operating layer.',
         searchLabel: 'Global search',
         searchPlaceholder: 'Search roadmap, notes, and workspace context',
+        searchAction: 'Search',
         activeWorkspace: 'Active workspace',
         account: 'Account',
         site: 'Site',
@@ -54,7 +57,20 @@ const copy = computed(() =>
       }
 )
 
-const roleLabel = computed(() => authStore.activeRole ?? '--')
+const roleLabelMap = computed<Record<WorkspaceRole, string>>(() => ({
+  owner: 'Owner',
+  admin: 'Admin',
+  member: 'Member',
+  viewer: 'Viewer',
+}))
+
+const activeRoleLabel = computed(() => {
+  if (!authStore.activeRole) {
+    return '--'
+  }
+
+  return roleLabelMap.value[authStore.activeRole]
+})
 
 watch(
   () => route.query.q,
@@ -104,7 +120,9 @@ const handleLogout = () => {
 
       <div class="relative px-8 pb-8 pt-9">
         <div class="flex items-center justify-between gap-3">
-          <div class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-blue-200">
+          <div
+            class="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-blue-200"
+          >
             {{ copy.badge }}
           </div>
           <LanguageSwitcher v-show="!isCollapsed" tone="dark" />
@@ -128,7 +146,7 @@ const handleLogout = () => {
               :placeholder="copy.searchPlaceholder"
               @keyup.enter="submitSearch"
             />
-            <button class="search-action" @click="submitSearch">Go</button>
+            <button class="search-action" @click="submitSearch">{{ copy.searchAction }}</button>
           </div>
         </div>
       </div>
@@ -142,13 +160,15 @@ const handleLogout = () => {
               :key="workspace.workspace_id"
               :value="String(workspace.workspace_id)"
             >
-              {{ workspace.workspace_name }} / {{ workspace.role }}
+              {{ workspace.workspace_name }} / {{ roleLabelMap[workspace.role] }}
             </option>
           </select>
           <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-400">
             <span>{{ authStore.activeWorkspace?.workspace_slug }}</span>
-            <span class="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-blue-200">
-              {{ roleLabel }}
+            <span
+              class="rounded-full bg-blue-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-blue-200"
+            >
+              {{ activeRoleLabel }}
             </span>
           </div>
         </div>
@@ -170,7 +190,9 @@ const handleLogout = () => {
       <div class="relative mt-auto p-4">
         <div class="rounded-[1.75rem] border border-white/10 bg-white/6 p-4 backdrop-blur">
           <div class="flex items-center gap-4" :class="[isCollapsed ? 'justify-center' : '']">
-            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-sm font-black shadow-lg shadow-blue-600/30">
+            <div
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-sm font-black shadow-lg shadow-blue-600/30"
+            >
               {{ authStore.user?.username?.charAt(0)?.toUpperCase() }}
             </div>
             <div v-show="!isCollapsed" class="min-w-0">

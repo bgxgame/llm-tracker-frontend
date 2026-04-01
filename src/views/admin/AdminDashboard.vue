@@ -4,7 +4,12 @@ import { useRouter } from 'vue-router'
 import { workspaceApi } from '@/api/workspace'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
-import type { WorkspaceActivity, WorkspaceOverview, WorkspaceRole } from '@/types'
+import type {
+  WorkspaceActivity,
+  WorkspaceOnboardingChecklistItem,
+  WorkspaceOverview,
+  WorkspaceRole,
+} from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -18,9 +23,9 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         eyebrow: 'Workspace Dashboard',
-        titleSuffix: 'command center',
+        titleSuffix: 'Ops Console',
         summary:
-          '把团队协作、Roadmap 进度、Research Notes 和最近动态收进同一块运营总览，让这个产品从工具页进一步走向可经营的 SaaS。',
+          '把团队协作、Roadmap 进度、Research Notes 和 Recent Activity 收进同一个运营总览，让 workspace 真正具备 SaaS 级管理感。',
         currentRole: '当前角色',
         completionRate: '完成率',
         metrics: {
@@ -30,43 +35,51 @@ const copy = computed(() =>
           progress: '进行中',
         },
         metricCopy: {
-          members: '当前 workspace 内的协作者规模',
-          roadmap: '正在管理的执行节点总数',
+          members: '当前 workspace 内参与协作的人数',
+          roadmap: '正在被追踪的执行节点总数',
           notes: '已经沉淀下来的研究与复盘',
-          progress: '仍在向前推进的节点',
+          progress: '仍在持续推进的节点',
         },
         onboardingEyebrow: 'Onboarding checklist',
         onboardingTitle: '把 workspace 从空壳推进到可运营状态',
         roadmapEyebrow: 'Roadmap health',
-        roadmapTitle: '用一眼能看懂的方式管理执行阶段',
+        roadmapTitle: '用一眼看懂的方式掌握执行阶段',
         overallCompletion: '整体完成度',
         suggestedNextMove: 'Suggested next move',
         teamEyebrow: 'Team snapshot',
         teamTitle: '当前成员结构',
         teamAction: '管理 Team',
+        teamRoles: {
+          owner: 'Owners',
+          admin: 'Admins',
+          member: 'Members',
+          viewer: 'Viewers',
+        },
         notesEyebrow: 'Recent notes',
         notesTitle: '最近沉淀的研究笔记',
         notesAction: '查看全部 Notes',
         activityEyebrow: 'Recent activity',
         activityTitle: '近期协作动态',
         activityAction: '查看全部动态',
+        openAction: '打开',
         emptyNotes: '当前还没有研究笔记，可以先从某个 roadmap 节点开始沉淀第一条 note。',
         noSummary: '这条笔记已经进入 workspace，但还没有补充摘要。',
         emptyActivity: '还没有足够的动态。先邀请成员、创建笔记，或推动 roadmap 节点进入下一阶段。',
         emptyMembers: '这个 workspace 里还没有更多成员加入。',
+        noWorkspace: '当前还没有激活的 workspace，上下文建立后这里会显示总览。',
         loading: '正在加载 workspace overview...',
         errorFallback: '无法加载 dashboard 数据',
-        readonly: '当前为只读角色，可查看总览与动态，但不会被误导去执行写操作。',
-        writable: '当前角色可继续推进 roadmap 与 notes。',
+        readonly: '当前是只读角色，可查看总览与动态，但不会被误导去执行写操作。',
+        writable: '当前角色可以继续推进 roadmap 与 notes。',
         completed: '已完成',
         inProgress: '进行中',
         todo: '待开始',
-        done: 'Done',
-        next: 'Next',
+        done: '已完成',
+        next: '下一步',
       }
     : {
         eyebrow: 'Workspace Dashboard',
-        titleSuffix: 'command center',
+        titleSuffix: 'Ops Console',
         summary:
           'Keep team collaboration, roadmap progress, research notes, and recent activity inside one operating overview built for a commercial SaaS workflow.',
         currentRole: 'Current role',
@@ -92,16 +105,24 @@ const copy = computed(() =>
         teamEyebrow: 'Team snapshot',
         teamTitle: 'Current team structure',
         teamAction: 'Manage team',
+        teamRoles: {
+          owner: 'Owners',
+          admin: 'Admins',
+          member: 'Members',
+          viewer: 'Viewers',
+        },
         notesEyebrow: 'Recent notes',
         notesTitle: 'Latest research notes',
         notesAction: 'View all notes',
         activityEyebrow: 'Recent activity',
         activityTitle: 'Latest collaboration signals',
         activityAction: 'View all activity',
+        openAction: 'Open',
         emptyNotes: 'No notes yet. Start from a roadmap node and capture the first research entry.',
         noSummary: 'This note is already in the workspace, but it does not have a summary yet.',
         emptyActivity: 'Not enough activity yet. Invite teammates, add notes, or move roadmap work forward.',
         emptyMembers: 'No additional members have joined this workspace yet.',
+        noWorkspace: 'There is no active workspace context yet. The overview will appear here after activation.',
         loading: 'Loading workspace overview...',
         errorFallback: 'Unable to load dashboard data',
         readonly: 'This role is read-only and focused on visibility.',
@@ -114,29 +135,76 @@ const copy = computed(() =>
       }
 )
 
-const roleLabelMap = computed<Record<WorkspaceRole, string>>(() =>
+const roleLabelMap = computed<Record<WorkspaceRole, string>>(() => ({
+  owner: 'Owner',
+  admin: 'Admin',
+  member: 'Member',
+  viewer: 'Viewer',
+}))
+
+const onboardingCopyMap = computed<
+  Record<string, Pick<WorkspaceOnboardingChecklistItem, 'title' | 'description' | 'cta_label'>>
+>(() =>
   localeStore.isChinese
     ? {
-        owner: 'Owner',
-        admin: 'Admin',
-        member: 'Member',
-        viewer: 'Viewer',
+        roadmap_foundation: {
+          title: '建立 roadmap foundation',
+          description: '至少创建 3 个 roadmap 节点，让团队先看到清晰的执行路径。',
+          cta_label: '打开 Roadmap',
+        },
+        invite_team: {
+          title: '邀请首批协作者',
+          description: '至少再加入 1 位成员，让 workspace 真正进入协作状态。',
+          cta_label: '管理 Team',
+        },
+        seed_notes: {
+          title: '沉淀第一批 Research Notes',
+          description: '至少建立 3 条 notes，让决策、实验与发现可以持续复用。',
+          cta_label: '查看 Notes',
+        },
       }
     : {
-        owner: 'Owner',
-        admin: 'Admin',
-        member: 'Member',
-        viewer: 'Viewer',
+        roadmap_foundation: {
+          title: 'Build roadmap foundation',
+          description: 'Create at least 3 roadmap nodes so the team has a visible execution path.',
+          cta_label: 'Open roadmap',
+        },
+        invite_team: {
+          title: 'Invite the first teammates',
+          description: 'Add at least one more teammate so the workspace becomes a real collaboration layer.',
+          cta_label: 'Manage team',
+        },
+        seed_notes: {
+          title: 'Seed the first notes',
+          description: 'Capture at least 3 notes so decisions, experiments, and findings can compound.',
+          cta_label: 'Open notes',
+        },
       }
 )
 
 const currentWorkspace = computed(() => overview.value?.workspace ?? authStore.activeWorkspace)
-const currentRole = computed(() => (authStore.activeRole ? roleLabelMap.value[authStore.activeRole] : 'Viewer'))
+const currentRoleKey = computed<WorkspaceRole>(() => (overview.value?.workspace.role ?? authStore.activeRole ?? 'viewer') as WorkspaceRole)
+const currentRole = computed(() => roleLabelMap.value[currentRoleKey.value])
 const metrics = computed(() => overview.value?.metrics)
 const team = computed(() => overview.value?.team)
 const recentNotes = computed(() => overview.value?.notes ?? [])
 const activityItems = computed(() => overview.value?.activity ?? [])
-const onboardingItems = computed(() => overview.value?.onboarding ?? [])
+const onboardingItems = computed(() =>
+  (overview.value?.onboarding ?? []).map((item) => {
+    const localized = onboardingCopyMap.value[item.key]
+    if (!localized) {
+      return item
+    }
+
+    return {
+      ...item,
+      title: localized.title,
+      description: localized.description,
+      cta_label: localized.cta_label,
+    }
+  })
+)
+const onboardingCompletedCount = computed(() => onboardingItems.value.filter((item) => item.done).length)
 
 const suggestedNextMove = computed(() => {
   if (!metrics.value) {
@@ -151,7 +219,7 @@ const suggestedNextMove = computed(() => {
 
   if (metrics.value.members_total <= 1) {
     return localeStore.isChinese
-      ? '下一步最值得做的是邀请第一批协作者，让这个 workspace 真正进入协作状态。'
+      ? '下一步最值得做的是邀请首批协作者，让这个 workspace 真正进入协作状态。'
       : 'The best next move is inviting the first teammate so this workspace becomes collaborative.'
   }
 
@@ -169,6 +237,7 @@ const suggestedNextMove = computed(() => {
 const fetchOverview = async () => {
   if (!authStore.activeWorkspaceId) {
     overview.value = null
+    errorMessage.value = ''
     return
   }
 
@@ -260,7 +329,14 @@ watch(
       {{ copy.loading }}
     </div>
 
-    <template v-else-if="overview">
+    <div
+      v-else-if="!overview"
+      class="mt-10 rounded-[2rem] border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-sm font-semibold text-slate-400 shadow-[0_18px_70px_rgba(15,23,42,0.04)]"
+    >
+      {{ copy.noWorkspace }}
+    </div>
+
+    <template v-else>
       <section class="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <article class="metric-card">
           <div class="metric-label">{{ copy.metrics.members }}</div>
@@ -291,8 +367,10 @@ watch(
               <div class="panel-eyebrow">{{ copy.onboardingEyebrow }}</div>
               <h2 class="panel-title">{{ copy.onboardingTitle }}</h2>
             </div>
-            <div class="rounded-full bg-slate-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
-              {{ onboardingItems.filter((item) => item.done).length }}/{{ onboardingItems.length }}
+            <div
+              class="rounded-full bg-slate-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500"
+            >
+              {{ onboardingCompletedCount }}/{{ onboardingItems.length }}
             </div>
           </div>
 
@@ -374,19 +452,19 @@ watch(
 
           <div class="mt-8 grid gap-4 sm:grid-cols-2">
             <div class="role-card">
-              <div class="role-label">Owners</div>
+              <div class="role-label">{{ copy.teamRoles.owner }}</div>
               <div class="role-value">{{ team?.role_counts.owner ?? 0 }}</div>
             </div>
             <div class="role-card">
-              <div class="role-label">Admins</div>
+              <div class="role-label">{{ copy.teamRoles.admin }}</div>
               <div class="role-value">{{ team?.role_counts.admin ?? 0 }}</div>
             </div>
             <div class="role-card">
-              <div class="role-label">Members</div>
+              <div class="role-label">{{ copy.teamRoles.member }}</div>
               <div class="role-value">{{ team?.role_counts.member ?? 0 }}</div>
             </div>
             <div class="role-card">
-              <div class="role-label">Viewers</div>
+              <div class="role-label">{{ copy.teamRoles.viewer }}</div>
               <div class="role-value">{{ team?.role_counts.viewer ?? 0 }}</div>
             </div>
           </div>
@@ -479,7 +557,7 @@ watch(
                 </div>
                 <div class="flex items-center gap-3">
                   <div class="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">{{ formatDate(item.occurred_at) }}</div>
-                  <button class="ghost-button" @click="openLink(item.href)">Open</button>
+                  <button class="ghost-button" @click="openLink(item.href)">{{ copy.openAction }}</button>
                 </div>
               </div>
             </article>
