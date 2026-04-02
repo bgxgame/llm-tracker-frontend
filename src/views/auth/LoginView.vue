@@ -22,63 +22,45 @@ const errorMessage = ref('')
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: `${BRAND.name} · 欢迎回来`,
-        title: '继续推进你的团队空间',
-        summary: '登录后直接回到总览台，查看团队进度、最新动态和待处理事项。',
+        badge: `${BRAND.name} 登录`,
+        title: '登录后直接进入你的路线图',
+        summary: '一眼看清当前路径、关键节点和对应笔记。',
         username: '用户名',
         usernamePlaceholder: 'team-operator',
         password: '密码',
         passwordPlaceholder: '输入你的密码',
         submit: '登录',
         submitting: '登录中...',
-        sideTitle: '登录后你会看到',
+        sideTitle: '登录后你能获得',
         sideCards: [
-          {
-            title: '总览优先',
-            body: '先看到完成率、待办和最近动态，不需要先理解整个系统。',
-          },
-          {
-            title: '权限清楚',
-            body: '不同角色进入后看到各自该做的事，不会被多余操作打扰。',
-          },
-          {
-            title: '协作连续',
-            body: '从同一个空间继续推进路线图、笔记和团队协作，而不是回到零散工具。',
-          },
+          { title: '路线图总览', body: '直接看到整体路径和当前重点。' },
+          { title: '节点对应笔记', body: '点击节点就能继续查看相关记录。' },
+          { title: '继续协作', body: '和团队在同一个空间里继续推进。' },
         ],
-        helperTitle: '为什么团队会频繁打开',
-        helperBody: '因为这里不是单纯的记录页，而是每天看进度、找信息和继续协作的入口。',
+        helperTitle: '进入后立即看到',
+        helperBody: '路线图、节点状态、关联笔记。',
         registerLead: '还没有账号？',
-        registerAction: '创建团队空间',
+        registerAction: '创建空间',
         error: '登录失败，请稍后重试',
       }
     : {
-        badge: `${BRAND.name} · Welcome back`,
-        title: 'Return to your team workspace',
-        summary: 'Sign in and jump straight back into the dashboard, recent activity, and next actions.',
+        badge: `${BRAND.name} Sign in`,
+        title: 'Continue moving your roadmap',
+        summary: 'Sign in to open your roadmap, notes, and current priorities.',
         username: 'Username',
         usernamePlaceholder: 'team-operator',
         password: 'Password',
         passwordPlaceholder: 'Enter your password',
         submit: 'Sign in',
         submitting: 'Signing in...',
-        sideTitle: 'What you get after sign-in',
+        sideTitle: 'After sign-in you can',
         sideCards: [
-          {
-            title: 'Dashboard first',
-            body: 'See completion, next steps, and recent activity before anything else.',
-          },
-          {
-            title: 'Clear permissions',
-            body: 'Each role lands on the right surface without extra noise or wrong prompts.',
-          },
-          {
-            title: 'Continuous collaboration',
-            body: 'Keep moving roadmap, notes, and teamwork forward from one shared space.',
-          },
+          { title: 'Open the roadmap', body: 'See the path and the nodes already in motion.' },
+          { title: 'Find the notes', body: 'Go back to methods, findings, and work records.' },
+          { title: 'Keep collaborating', body: 'Move forward with the team in one shared space.' },
         ],
-        helperTitle: 'Why teams come back often',
-        helperBody: 'This is not just where records live. It is the daily entry point for progress, context, and teamwork.',
+        helperTitle: 'What you get immediately',
+        helperBody: 'Current priorities, node status, and linked notes.',
         registerLead: 'Need an account?',
         registerAction: 'Create workspace',
         error: 'Unable to sign in right now',
@@ -87,7 +69,7 @@ const copy = computed(() =>
 
 const redirectTarget = computed(() => {
   const redirect = router.currentRoute.value.query.redirect
-  return typeof redirect === 'string' ? redirect : '/admin/dashboard'
+  return typeof redirect === 'string' ? redirect : '/roadmap'
 })
 
 const handleLogin = async () => {
@@ -169,9 +151,7 @@ const handleLogin = async () => {
           </form>
 
           <div class="product-muted-card mt-6 px-5 py-4">
-            <div class="text-sm font-bold text-[var(--accent)]">
-              {{ copy.helperTitle }}
-            </div>
+            <div class="text-sm font-bold text-[var(--accent)]">{{ copy.helperTitle }}</div>
             <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ copy.helperBody }}</p>
           </div>
 

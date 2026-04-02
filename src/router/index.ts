@@ -22,7 +22,7 @@ const router = createRouter({
     {
       path: '/admin',
       component: () => import('@/views/admin/AdminLayout.vue'),
-      redirect: '/admin/dashboard',
+      redirect: '/admin/roadmap',
       meta: { requiresAuth: true },
       children: [
         {
@@ -76,7 +76,7 @@ router.beforeEach((to) => {
   }
 
   if (authStore.isLoggedIn && (to.name === 'login' || to.name === 'register')) {
-    return { name: 'admin-dashboard' }
+    return { name: 'roadmap' }
   }
 })
 

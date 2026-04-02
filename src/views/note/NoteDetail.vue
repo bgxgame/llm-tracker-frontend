@@ -123,33 +123,7 @@ const editNote = () => {
     </div>
 
     <div v-else-if="note" class="mx-auto max-w-7xl px-6 py-8 lg:px-10">
-      <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <main class="min-w-0">
-          <section class="rounded-[2rem] border border-[rgba(20,33,43,0.08)] bg-[rgba(255,255,255,0.72)] p-8 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
-            <div class="flex flex-wrap items-center gap-3">
-              <span class="pill pill-brand">{{ currentNodeTitle }}</span>
-              <span class="pill">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</span>
-              <span class="pill">{{ readingTime }} {{ copy.readingTime }}</span>
-            </div>
-
-            <h1 class="product-title mt-6 text-4xl leading-[0.96] md:text-6xl">{{ note.title }}</h1>
-
-            <div v-if="note.tags?.length" class="mt-6 flex flex-wrap gap-2">
-              <span
-                v-for="tag in note.tags"
-                :key="tag"
-                class="rounded-full border border-[rgba(20,33,43,0.08)] bg-[rgba(255,250,242,0.9)] px-3 py-1 text-[11px] font-black text-[var(--ink-main)]"
-              >
-                #{{ tag }}
-              </span>
-            </div>
-          </section>
-
-          <article class="note-body mt-6 rounded-[2rem] border border-[rgba(20,33,43,0.08)] bg-[rgba(255,255,255,0.76)] px-8 py-10 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
-            <MdPreview :modelValue="note.content" :editorId="'note-preview'" theme="light" class="bg-transparent! no-padding-preview" />
-          </article>
-        </main>
-
+      <div class="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside class="space-y-6">
           <section class="rounded-[1.8rem] border border-[rgba(20,33,43,0.08)] bg-[rgba(255,251,245,0.84)] p-5 shadow-[0_14px_36px_rgba(20,33,43,0.04)]">
             <div class="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--brand)]">{{ copy.outline }}</div>
@@ -183,6 +157,32 @@ const editNote = () => {
             </div>
           </section>
         </aside>
+
+        <main class="min-w-0">
+          <section class="rounded-[2rem] border border-[rgba(20,33,43,0.08)] bg-[rgba(255,255,255,0.72)] p-8 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="pill pill-brand">{{ currentNodeTitle }}</span>
+              <span class="pill">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</span>
+              <span class="pill">{{ readingTime }} {{ copy.readingTime }}</span>
+            </div>
+
+            <h1 class="product-title mt-6 text-4xl leading-[0.96] md:text-6xl">{{ note.title }}</h1>
+
+            <div v-if="note.tags?.length" class="mt-6 flex flex-wrap gap-2">
+              <span
+                v-for="tag in note.tags"
+                :key="tag"
+                class="rounded-full border border-[rgba(20,33,43,0.08)] bg-[rgba(255,250,242,0.9)] px-3 py-1 text-[11px] font-black text-[var(--ink-main)]"
+              >
+                #{{ tag }}
+              </span>
+            </div>
+          </section>
+
+          <article class="note-body mt-6 rounded-[2rem] border border-[rgba(20,33,43,0.08)] bg-[rgba(255,255,255,0.76)] px-8 py-10 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
+            <MdPreview :modelValue="note.content" :editorId="'note-preview'" theme="light" class="bg-transparent! no-padding-preview" />
+          </article>
+        </main>
       </div>
     </div>
   </div>

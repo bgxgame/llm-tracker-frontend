@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { BRAND } from '@/config/brand'
 import { useAuthStore } from '@/store/auth'
@@ -15,18 +15,17 @@ const isCollapsed = ref(false)
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        brandLine: '团队工作台',
-        workspaceLabel: '当前空间',
+        brandLine: '路线图协作',
+        workspaceLabel: '空间切换',
         accountLabel: '当前账号',
         logout: '退出登录',
         collapse: '收起导航',
         expand: '展开导航',
         nav: [
-          { to: '/admin/dashboard', short: '总', label: '总览', hint: '看当前推进' },
           { to: '/admin/roadmap', short: '图', label: '路线图', hint: '看整体路径' },
           { to: '/admin/notes', short: '记', label: '笔记', hint: '沉淀结论' },
           { to: '/admin/workspace', short: '空', label: '空间', hint: '成员与权限' },
-          { to: '/admin/search', short: '搜', label: '搜索', hint: '需要时再找' },
+          { to: '/admin/dashboard', short: '总', label: '总览', hint: '看当前推进' },
         ],
       }
     : {
@@ -41,7 +40,6 @@ const copy = computed(() =>
           { to: '/admin/roadmap', short: 'RM', label: 'Roadmap', hint: 'See the full path' },
           { to: '/admin/notes', short: 'NT', label: 'Notes', hint: 'Capture decisions' },
           { to: '/admin/workspace', short: 'WS', label: 'Workspace', hint: 'Members and access' },
-          { to: '/admin/search', short: 'SR', label: 'Search', hint: 'Find when needed' },
         ],
       }
 )
@@ -71,6 +69,21 @@ const handleLogout = () => {
   authStore.logout()
   router.push('/login')
 }
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    router.push('/admin/search')
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <template>
@@ -100,6 +113,25 @@ const handleLogout = () => {
             >
               {{ isCollapsed ? '+' : '-' }}
             </button>
+          </div>
+
+          <div v-if="!isCollapsed" class="admin-sidebar-card">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(15,23,42,0.06)] text-sm font-bold text-[var(--ink-strong)]">
+                  {{ authStore.user?.username?.charAt(0)?.toUpperCase() || 'U' }}
+                </span>
+                <div class="min-w-0">
+                  <div class="admin-sidebar-label">{{ copy.accountLabel }}</div>
+                  <div class="mt-1 truncate text-sm font-semibold text-[var(--ink-strong)]">{{ authStore.user?.username }}</div>
+                  <div class="truncate text-xs text-[var(--ink-soft)]">{{ authStore.user?.email }}</div>
+                </div>
+              </div>
+
+              <button class="text-xs font-semibold text-[var(--danger)]" type="button" @click="handleLogout">
+                {{ copy.logout }}
+              </button>
+            </div>
           </div>
 
           <div v-if="!isCollapsed" class="admin-sidebar-card">
@@ -141,30 +173,6 @@ const handleLogout = () => {
               </div>
             </router-link>
           </nav>
-
-          <div class="mt-auto px-1">
-            <div class="admin-sidebar-card">
-              <div class="flex items-center gap-3">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(15,23,42,0.06)] text-sm font-bold text-[var(--ink-strong)]">
-                  {{ authStore.user?.username?.charAt(0)?.toUpperCase() || 'U' }}
-                </span>
-                <div v-if="!isCollapsed" class="min-w-0">
-                  <div class="admin-sidebar-label">{{ copy.accountLabel }}</div>
-                  <div class="mt-1 truncate text-sm font-semibold text-[var(--ink-strong)]">{{ authStore.user?.username }}</div>
-                  <div class="truncate text-xs text-[var(--ink-soft)]">{{ authStore.user?.email }}</div>
-                </div>
-              </div>
-
-              <button
-                v-if="!isCollapsed"
-                class="footer-link footer-link-danger mt-4 w-full !rounded-[14px] !px-3 !py-2.5 !text-xs"
-                type="button"
-                @click="handleLogout"
-              >
-                {{ copy.logout }}
-              </button>
-            </div>
-          </div>
         </div>
       </aside>
 

@@ -24,9 +24,9 @@ const errorMessage = ref('')
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: `${BRAND.name} · 创建团队空间`,
-        title: '创建账号，启动你的第一套团队空间',
-        summary: '几分钟内完成初始化，立即开始管理成员、路线图、笔记与协作节奏。',
+        badge: `${BRAND.name} 注册`,
+        title: '创建你的第一个空间',
+        summary: '注册后直接开始搭路线图、记录笔记、继续协作。',
         username: '用户名',
         usernamePlaceholder: 'team-operator',
         email: '邮箱',
@@ -35,22 +35,13 @@ const copy = computed(() =>
         passwordPlaceholder: '至少 6 位',
         confirm: '确认密码',
         confirmPlaceholder: '再次输入密码',
-        submit: '创建账号并进入',
-        submitting: '正在初始化空间...',
-        sideTitle: '开通后立即可用',
+        submit: '创建账号',
+        submitting: '创建中...',
+        sideTitle: '注册后你能获得',
         sideCards: [
-          {
-            title: '空间基础已就绪',
-            body: '注册后即可获得可继续扩展的团队空间，不需要再拼装基础协作能力。',
-          },
-          {
-            title: '角色权限已内置',
-            body: '所有者、管理员、成员和只读角色都已经准备好，团队协作边界更清楚。',
-          },
-          {
-            title: '总览入口默认可用',
-            body: '创建完成后直接进入总览台，先看重点，再决定下一步如何推进。',
-          },
+          { title: '一张路线图', body: '把整个推进路径直接画出来。' },
+          { title: '一套笔记', body: '把方法、结论和过程留在节点下面。' },
+          { title: '一个协作空间', body: '把成员拉进来，在同一条路径上继续推进。' },
         ],
         loginLead: '已经有账号？',
         loginAction: '去登录',
@@ -58,9 +49,9 @@ const copy = computed(() =>
         error: '创建账号失败，请稍后重试',
       }
     : {
-        badge: `${BRAND.name} · Create workspace`,
-        title: 'Create an account and launch your first workspace',
-        summary: 'Get set up in minutes and start managing members, roadmap, notes, and collaboration rhythm right away.',
+        badge: `${BRAND.name} Register`,
+        title: 'Create your first workspace',
+        summary: 'Sign up and start building roadmap, notes, and team collaboration right away.',
         username: 'Username',
         usernamePlaceholder: 'team-operator',
         email: 'Email',
@@ -69,24 +60,15 @@ const copy = computed(() =>
         passwordPlaceholder: 'At least 6 characters',
         confirm: 'Confirm password',
         confirmPlaceholder: 'Enter password again',
-        submit: 'Create account and continue',
-        submitting: 'Provisioning workspace...',
-        sideTitle: 'Ready on day one',
+        submit: 'Create account',
+        submitting: 'Creating...',
+        sideTitle: 'After sign-up you get',
         sideCards: [
-          {
-            title: 'Workspace foundation',
-            body: 'Start with a team space that already supports the essentials of structured collaboration.',
-          },
-          {
-            title: 'Permissions included',
-            body: 'Owner, admin, member, and viewer roles are already built into the product.',
-          },
-          {
-            title: 'Dashboard by default',
-            body: 'Land in the overview first so users see the most important information immediately.',
-          },
+          { title: 'A workspace', body: 'Start creating roadmap and notes immediately.' },
+          { title: 'Team collaboration', body: 'Invite members and keep moving together.' },
+          { title: 'A clear path', body: 'Keep nodes, status, and findings in one place.' },
         ],
-        loginLead: 'Already have access?',
+        loginLead: 'Already have an account?',
         loginAction: 'Sign in',
         mismatch: 'Passwords do not match',
         error: 'Unable to create the account right now',
@@ -116,7 +98,7 @@ const handleRegister = async () => {
     })
 
     authStore.login(session)
-    router.push('/admin/dashboard')
+    router.push('/roadmap')
   } catch (error: any) {
     errorMessage.value = error.message || copy.value.error
   } finally {

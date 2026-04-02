@@ -32,8 +32,8 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         kicker: '路线图',
-        title: '把推进路径直接展示出来',
-        summary: '路线图画布本身就是产品资产。先让人一眼看懂你在推进什么，再进入节点细节。',
+        title: '路线图',
+        summary: '查看路径，选择节点，继续推进。',
         share: '复制分享链接',
         shareDone: '链接已复制',
         addNode: '新增节点',
@@ -76,8 +76,8 @@ const copy = computed(() =>
       }
     : {
         kicker: 'Roadmap',
-        title: 'Show the path forward directly',
-        summary: 'The roadmap canvas should be a product asset. Let people understand the path first, then move into details.',
+        title: 'Roadmap',
+        summary: 'View the path, pick a node, and keep moving.',
         share: 'Copy share link',
         shareDone: 'Link copied',
         addNode: 'Add node',
@@ -123,18 +123,6 @@ const copy = computed(() =>
 const hasWriteAccess = computed(() => authStore.hasWriteAccess)
 const currentWorkspace = computed(() => authStore.activeWorkspace)
 const selectedNode = computed(() => nodes.value.find((node) => node.id === selectedNodeId.value) ?? null)
-
-const metrics = computed(() => {
-  const total = nodes.value.length
-  const completed = nodes.value.filter((node) => node.status === 'completed').length
-  const inProgress = nodes.value.filter((node) => node.status === 'in_progress').length
-  return {
-    total,
-    completed,
-    inProgress,
-    completion: total > 0 ? Math.round((completed / total) * 100) : 0,
-  }
-})
 
 const flowNodes = computed(() =>
   nodes.value.map((node) => ({
@@ -321,140 +309,82 @@ watch(
     </div>
 
     <template v-else>
-      <header class="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-        <div class="max-w-4xl">
+      <section class="roadmap-stage">
+        <div class="roadmap-floating-bar roadmap-floating-bar-left">
           <div class="admin-kicker">{{ copy.kicker }}</div>
-          <h1 class="admin-headline mt-3">{{ copy.title }}</h1>
-          <p class="admin-subtitle mt-5 max-w-3xl">{{ copy.summary }}</p>
+          <div class="mt-2 text-lg font-semibold text-[var(--ink-strong)]">{{ currentWorkspace?.workspace_name }}</div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="roadmap-floating-bar roadmap-floating-bar-right">
           <span :class="hasWriteAccess ? 'admin-chip-dark' : 'admin-chip'">
             {{ hasWriteAccess ? copy.writable : copy.readonly }}
           </span>
           <button class="product-button-secondary" type="button" @click="copyShareLink">{{ copy.share }}</button>
           <button v-if="hasWriteAccess" class="product-button-dark" type="button" @click="openEdit()">{{ copy.addNode }}</button>
         </div>
-      </header>
 
-      <div v-if="shareMessage" class="mt-4 inline-flex rounded-full bg-[rgba(15,23,42,0.06)] px-4 py-2 text-sm font-semibold text-[var(--ink-main)]">
-        {{ shareMessage }}
-      </div>
+        <div v-if="shareMessage" class="roadmap-floating-hint">
+          {{ shareMessage }}
+        </div>
 
-      <section class="admin-kpi-grid mt-6">
-        <article class="admin-kpi-card">
-          <div class="admin-kpi-label">{{ localeStore.isChinese ? '节点' : 'Nodes' }}</div>
-          <div class="admin-kpi-value">{{ metrics.total }}</div>
-        </article>
-        <article class="admin-kpi-card">
-          <div class="admin-kpi-label">{{ copy.inProgress }}</div>
-          <div class="admin-kpi-value">{{ metrics.inProgress }}</div>
-        </article>
-        <article class="admin-kpi-card">
-          <div class="admin-kpi-label">{{ copy.completed }}</div>
-          <div class="admin-kpi-value">{{ metrics.completed }}</div>
-        </article>
-        <article class="admin-kpi-card">
-          <div class="admin-kpi-label">{{ localeStore.isChinese ? '完成率' : 'Completion' }}</div>
-          <div class="admin-kpi-value">{{ metrics.completion }}%</div>
-        </article>
-      </section>
+        <div v-if="loading" class="roadmap-canvas-shell">
+          <div class="admin-empty !border-none !bg-transparent !p-0">{{ copy.loading }}</div>
+        </div>
 
-      <section class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_360px]">
-        <article class="admin-card p-6">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <div class="admin-card-title">{{ localeStore.isChinese ? '路线图画布' : 'Roadmap canvas' }}</div>
-              <p class="admin-card-copy">
-                {{ localeStore.isChinese ? '这部分应该足够直观，能直接拿给别人看。' : 'This should be clear enough to share directly with other people.' }}
-              </p>
-            </div>
-          </div>
+        <div v-else class="roadmap-canvas-shell">
+          <VueFlow
+            class="h-full w-full bg-transparent"
+            :nodes="flowNodes"
+            :edges="flowEdges"
+            :default-viewport="{ x: 0, y: 0, zoom: 0.82 }"
+            :min-zoom="0.48"
+            :max-zoom="1.3"
+            :nodes-draggable="false"
+            :elements-selectable="false"
+            @node-click="handleNodeClick"
+          >
+            <Background pattern-color="#e5e7eb" :gap="26" variant="dots" />
+            <Controls />
+          </VueFlow>
+        </div>
 
-          <div class="roadmap-canvas-shell mt-6">
-            <div v-if="loading" class="admin-empty !border-none !bg-transparent !p-0">{{ copy.loading }}</div>
-
-            <VueFlow
-              v-else
-              class="h-full w-full bg-transparent"
-              :nodes="flowNodes"
-              :edges="flowEdges"
-              :default-viewport="{ x: 0, y: 0, zoom: 0.82 }"
-              :min-zoom="0.48"
-              :max-zoom="1.3"
-              :nodes-draggable="false"
-              :elements-selectable="false"
-              @node-click="handleNodeClick"
-            >
-              <Background pattern-color="#e5e7eb" :gap="26" variant="dots" />
-              <Controls />
-            </VueFlow>
-          </div>
-        </article>
-
-        <aside class="admin-card p-6">
-          <div class="admin-card-title">{{ copy.selectedTitle }}</div>
-
-          <template v-if="selectedNode">
-            <div class="mt-4 flex flex-wrap gap-2">
+        <Transition name="fade-card">
+          <aside v-if="selectedNode" class="roadmap-detail-float">
+            <div class="flex flex-wrap gap-2">
               <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
               <span :class="selectedNode.status === 'completed' ? 'admin-chip-green' : selectedNode.status === 'in_progress' ? 'admin-chip-blue' : 'admin-chip'">
                 {{ statusLabel(selectedNode.status) }}
               </span>
             </div>
 
-            <div class="mt-4 text-2xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">{{ selectedNode.title }}</div>
+            <div class="mt-4 text-xl font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">{{ selectedNode.title }}</div>
             <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ selectedNode.description || copy.noDescription }}</p>
 
-            <div class="mt-6 text-sm font-semibold text-[var(--ink-main)]">{{ copy.linkedNotes }}</div>
+            <div class="mt-5 text-sm font-semibold text-[var(--ink-main)]">{{ copy.linkedNotes }}</div>
 
-            <div v-if="loadingNotes" class="admin-empty mt-4 !p-6">{{ copy.loading }}</div>
-            <div v-else-if="linkedNotes.length > 0" class="mt-4 space-y-3">
-              <article v-for="note in linkedNotes.slice(0, 3)" :key="note.id" class="admin-list-card cursor-pointer" @click="openNote(note.id)">
-                <div class="text-xs font-semibold text-[var(--ink-soft)]">
-                  {{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}
-                </div>
-                <div class="mt-2 text-base font-semibold text-[var(--ink-strong)]">{{ note.title }}</div>
-                <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ note.summary || copy.noDescription }}</p>
-                <div class="mt-3 text-sm font-semibold text-[var(--ink-strong)]">{{ copy.openNote }}</div>
-              </article>
-            </div>
-            <div v-else class="admin-empty mt-4 !p-6">{{ copy.noNotes }}</div>
-          </template>
-
-          <div v-else class="admin-empty mt-4 !p-8">
-            <div class="text-lg font-semibold text-[var(--ink-strong)]">{{ copy.emptyTitle }}</div>
-            <p class="mx-auto mt-3 max-w-sm text-sm leading-7 text-[var(--ink-soft)]">{{ copy.emptyCopy }}</p>
-          </div>
-        </aside>
-      </section>
-
-      <section class="admin-card mt-6 p-6">
-        <div class="admin-card-title">{{ copy.listTitle }}</div>
-        <p class="admin-card-copy">{{ copy.listCopy }}</p>
-
-        <div class="mt-5 space-y-3">
-          <article v-for="(node, index) in nodes" :key="node.id" class="roadmap-list-card" @click="selectNode(node)">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div class="flex min-w-0 gap-4">
-                <div class="roadmap-order-chip">#{{ index + 1 }}</div>
-                <div class="min-w-0">
-                  <div class="flex flex-wrap gap-2">
-                    <span class="admin-chip-warm">{{ typeLabel(node.node_type) }}</span>
-                    <span :class="node.status === 'completed' ? 'admin-chip-green' : node.status === 'in_progress' ? 'admin-chip-blue' : 'admin-chip'">
-                      {{ statusLabel(node.status) }}
-                    </span>
-                  </div>
-                  <div class="mt-3 text-lg font-semibold text-[var(--ink-strong)]">{{ node.title }}</div>
-                  <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ node.description || copy.noDescription }}</p>
-                </div>
-              </div>
-
-              <button v-if="hasWriteAccess" class="text-sm font-semibold text-[var(--ink-strong)]" type="button" @click.stop="openEdit(node)">
-                {{ copy.edit }}
+            <div v-if="loadingNotes" class="mt-3 text-sm text-[var(--ink-soft)]">{{ copy.loading }}</div>
+            <div v-else-if="linkedNotes.length > 0" class="mt-3 space-y-2">
+              <button
+                v-for="note in linkedNotes.slice(0, 2)"
+                :key="note.id"
+                class="block w-full rounded-[16px] border border-[rgba(15,23,42,0.08)] bg-[rgba(247,247,245,0.96)] px-4 py-3 text-left"
+                type="button"
+                @click="openNote(note.id)"
+              >
+                <div class="text-sm font-semibold text-[var(--ink-strong)]">{{ note.title }}</div>
+                <div class="mt-1 text-xs text-[var(--ink-soft)]">{{ note.summary || copy.noDescription }}</div>
               </button>
             </div>
-          </article>
+            <div v-else class="mt-3 text-sm text-[var(--ink-soft)]">{{ copy.noNotes }}</div>
+
+            <button v-if="hasWriteAccess" class="mt-5 text-sm font-semibold text-[var(--ink-strong)]" type="button" @click="openEdit(selectedNode)">
+              {{ copy.edit }}
+            </button>
+          </aside>
+        </Transition>
+
+        <div v-if="!selectedNode && !loading" class="roadmap-bottom-hint">
+          {{ copy.emptyTitle }}
         </div>
       </section>
     </template>
