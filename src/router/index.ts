@@ -12,6 +12,16 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/share/:token',
+      name: 'roadmap-share',
+      component: () => import('@/views/roadmap/SharedRoadmapView.vue'),
+    },
+    {
+      path: '/invite/:token',
+      name: 'workspace-invite',
+      component: () => import('@/views/workspace/WorkspaceInviteView.vue'),
+    },
+    {
       path: '/note/:id',
       name: 'note-detail',
       component: () => import('@/views/note/NoteDetail.vue'),

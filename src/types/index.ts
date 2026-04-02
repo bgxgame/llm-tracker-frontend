@@ -93,6 +93,56 @@ export interface WorkspaceOverview {
   onboarding: WorkspaceOnboardingChecklistItem[];
 }
 
+export interface WorkspaceInviteLink {
+  workspace_id: number;
+  workspace_name: string;
+  workspace_slug: string;
+  token: string;
+  role: WorkspaceRole;
+  invite_url: string;
+  expires_at: string;
+}
+
+export interface WorkspaceInvitePreview {
+  workspace_id: number;
+  workspace_name: string;
+  workspace_slug: string;
+  role: WorkspaceRole;
+  inviter_name: string;
+  expires_at: string;
+}
+
+export interface WorkspaceShareLink {
+  workspace_id: number;
+  workspace_name: string;
+  workspace_slug: string;
+  share_token: string;
+  share_url: string;
+}
+
+export interface WorkspaceSharedNote {
+  id: number;
+  title: string;
+  summary: string | null;
+  content: string;
+  created_at: string;
+}
+
+export interface WorkspaceSharedRoadmap {
+  workspace_id: number;
+  workspace_name: string;
+  workspace_slug: string;
+  nodes: RoadmapNode[];
+}
+
+export interface WorkspaceSharedNodeNotes {
+  workspace_id: number;
+  workspace_name: string;
+  workspace_slug: string;
+  node_id: number;
+  notes: WorkspaceSharedNote[];
+}
+
 export interface WorkspaceSearchRoadmapItem {
   id: number;
   title: string;

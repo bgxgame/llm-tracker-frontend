@@ -6,6 +6,7 @@ import { Controls } from '@vue-flow/controls'
 import { VueFlow } from '@vue-flow/core'
 import { noteApi } from '@/api/note'
 import { roadmapApi } from '@/api/roadmap'
+import { workspaceApi } from '@/api/workspace'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
 import type { Note, RoadmapNode } from '@/types'
@@ -210,11 +211,14 @@ const handleNodeClick = async (payload: { node: { data: RoadmapNode } }) => {
 }
 
 const copyShareLink = async () => {
+  if (!authStore.activeWorkspaceId) return
+
   try {
-    await navigator.clipboard.writeText(`${window.location.origin}/roadmap`)
+    const share = await workspaceApi.createShareLink(authStore.activeWorkspaceId)
+    await navigator.clipboard.writeText(`${window.location.origin}${share.share_url}`)
     shareMessage.value = copy.value.shareDone
   } catch {
-    shareMessage.value = `${window.location.origin}/roadmap`
+    shareMessage.value = copy.value.loadError
   }
 
   window.setTimeout(() => {

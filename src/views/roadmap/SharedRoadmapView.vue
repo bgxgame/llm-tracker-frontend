@@ -1,0 +1,299 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import { VueFlow } from '@vue-flow/core'
+import { workspaceApi } from '@/api/workspace'
+import { useLocaleStore } from '@/store/locale'
+import type { RoadmapNode, WorkspaceSharedNote, WorkspaceSharedRoadmap } from '@/types'
+
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+
+const route = useRoute()
+const router = useRouter()
+const localeStore = useLocaleStore()
+
+const roadmap = ref<WorkspaceSharedRoadmap | null>(null)
+const notes = ref<WorkspaceSharedNote[]>([])
+const selectedNode = ref<RoadmapNode | null>(null)
+const selectedNoteId = ref<number | null>(null)
+const loading = ref(true)
+const loadingNotes = ref(false)
+const errorMessage = ref('')
+
+const token = computed(() => String(route.params.token || ''))
+
+const copy = computed(() =>
+  localeStore.isChinese
+    ? {
+        title: '路线图',
+        summary: '点击节点，向下看对应笔记。',
+        loading: '正在加载路线图...',
+        notesLoading: '正在加载笔记...',
+        loadError: '分享页面已失效或不存在',
+        notesTitle: '相关笔记',
+        noNotes: '这个节点下还没有公开笔记。',
+        noDescription: '这个节点还没有补充说明。',
+        notePreview: '点击一条笔记查看完整内容',
+        emptyHint: '点击上方节点后，相关笔记会显示在这里。',
+        noteContentTitle: '笔记内容',
+        registerTitle: '想把你的工作也整理成这样？',
+        registerAction: '注册开始',
+        loginAction: '登录继续',
+        theory: '理论',
+        coding: '编码',
+        project: '项目',
+        todo: '待开始',
+        inProgress: '进行中',
+        completed: '已完成',
+      }
+    : {
+        title: 'Roadmap',
+        summary: 'Click a node and scroll down to view the related notes.',
+        loading: 'Loading roadmap...',
+        notesLoading: 'Loading notes...',
+        loadError: 'This shared page is no longer available',
+        notesTitle: 'Related notes',
+        noNotes: 'There are no public notes under this node yet.',
+        noDescription: 'No description yet.',
+        notePreview: 'Click a note to view the full content',
+        emptyHint: 'Click a node above and the related notes will appear here.',
+        noteContentTitle: 'Note content',
+        registerTitle: 'Want to organize your work like this?',
+        registerAction: 'Start free',
+        loginAction: 'Sign in',
+        theory: 'Theory',
+        coding: 'Coding',
+        project: 'Project',
+        todo: 'Todo',
+        inProgress: 'In progress',
+        completed: 'Completed',
+      }
+)
+
+const flowNodes = computed(() =>
+  (roadmap.value?.nodes ?? []).map((node) => ({
+    id: String(node.id),
+    label: node.title,
+    data: node,
+    position: {
+      x: node.node_type === 'theory' ? 80 : node.node_type === 'coding' ? 340 : 600,
+      y: node.sort_order * 176 + 56,
+    },
+    class: `share-node share-node-${node.status}`,
+  }))
+)
+
+const flowEdges = computed(() =>
+  (roadmap.value?.nodes ?? [])
+    .filter((node) => node.parent_id)
+    .map((node) => ({
+      id: `edge-${node.parent_id}-${node.id}`,
+      source: String(node.parent_id),
+      target: String(node.id),
+      animated: node.status === 'in_progress',
+      type: 'smoothstep',
+      style: { stroke: '#d1d5db', strokeWidth: 2.5 },
+    }))
+)
+
+const selectedNote = computed(
+  () => notes.value.find((note) => note.id === selectedNoteId.value) ?? notes.value[0] ?? null
+)
+
+const typeLabel = (type: RoadmapNode['node_type']) => {
+  if (type === 'coding') return copy.value.coding
+  if (type === 'project') return copy.value.project
+  return copy.value.theory
+}
+
+const statusLabel = (status: RoadmapNode['status']) => {
+  if (status === 'completed') return copy.value.completed
+  if (status === 'in_progress') return copy.value.inProgress
+  return copy.value.todo
+}
+
+const notePreview = (note: WorkspaceSharedNote) => {
+  const source = note.summary?.trim() || note.content.trim()
+  return source.length > 120 ? `${source.slice(0, 120)}...` : source
+}
+
+const loadRoadmap = async () => {
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    roadmap.value = await workspaceApi.getSharedRoadmap(token.value)
+  } catch (error: any) {
+    roadmap.value = null
+    errorMessage.value = error.message || copy.value.loadError
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadNotes = async (node: RoadmapNode) => {
+  selectedNode.value = node
+  selectedNoteId.value = null
+  loadingNotes.value = true
+
+  try {
+    const response = await workspaceApi.getSharedNodeNotes(token.value, node.id)
+    notes.value = response.notes
+    selectedNoteId.value = response.notes[0]?.id ?? null
+    setTimeout(() => {
+      document.getElementById('shared-roadmap-notes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
+  } catch {
+    notes.value = []
+  } finally {
+    loadingNotes.value = false
+  }
+}
+
+const handleNodeClick = async (payload: { node: { data: RoadmapNode } }) => {
+  await loadNotes(payload.node.data)
+}
+
+onMounted(() => {
+  loadRoadmap()
+})
+</script>
+
+<template>
+  <div class="min-h-screen bg-[linear-gradient(180deg,#fafaf8_0%,#f4f6f8_100%)] px-3 py-3 md:px-4 md:py-4">
+    <section class="relative overflow-hidden rounded-[32px] border border-[rgba(15,23,42,0.06)] bg-white">
+      <div class="flex flex-col gap-4 border-b border-[rgba(15,23,42,0.06)] px-5 py-4 md:flex-row md:items-center md:justify-between md:px-6">
+        <div class="min-w-0">
+          <div class="truncate text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-soft)]">
+            {{ roadmap?.workspace_name || copy.title }}
+          </div>
+          <div class="mt-2 flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+            <h1 class="text-2xl font-black tracking-[-0.05em] text-[var(--ink-strong)] md:text-3xl">{{ copy.title }}</h1>
+            <p class="text-sm text-[var(--ink-soft)] md:text-base">{{ copy.summary }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button class="product-button-secondary !px-4 !py-2.5" type="button" @click="router.push('/login')">
+            {{ copy.loginAction }}
+          </button>
+          <button class="product-button-dark !px-4 !py-2.5" type="button" @click="router.push('/register')">
+            {{ copy.registerAction }}
+          </button>
+        </div>
+      </div>
+
+      <div class="share-canvas-shell">
+        <div v-if="loading" class="admin-empty !border-none !bg-transparent !p-0">{{ copy.loading }}</div>
+
+        <VueFlow
+          v-else-if="roadmap"
+          class="h-full w-full bg-transparent"
+          :nodes="flowNodes"
+          :edges="flowEdges"
+          :default-viewport="{ x: 0, y: 0, zoom: 0.82 }"
+          :min-zoom="0.48"
+          :max-zoom="1.3"
+          :nodes-draggable="false"
+          :elements-selectable="false"
+          @node-click="handleNodeClick"
+        >
+          <Background pattern-color="#e5e7eb" :gap="26" variant="dots" />
+          <Controls />
+        </VueFlow>
+      </div>
+    </section>
+
+    <div v-if="errorMessage" class="product-error mx-auto mt-4 max-w-6xl px-5 py-4 text-sm font-semibold">
+      {{ errorMessage }}
+    </div>
+
+    <section
+      id="shared-roadmap-notes"
+      class="mx-auto mt-4 max-w-6xl rounded-[32px] border border-[rgba(15,23,42,0.06)] bg-white px-6 py-6 md:px-8"
+    >
+      <template v-if="selectedNode">
+        <div class="flex flex-wrap gap-2">
+          <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
+          <span :class="selectedNode.status === 'completed' ? 'admin-chip-green' : selectedNode.status === 'in_progress' ? 'admin-chip-blue' : 'admin-chip'">
+            {{ statusLabel(selectedNode.status) }}
+          </span>
+        </div>
+
+        <h2 class="mt-4 text-3xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">{{ selectedNode.title }}</h2>
+        <p class="mt-3 max-w-3xl text-base leading-8 text-[var(--ink-soft)]">{{ selectedNode.description || copy.noDescription }}</p>
+
+        <div class="mt-8 text-sm font-semibold text-[var(--ink-main)]">{{ copy.notesTitle }}</div>
+
+        <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.notesLoading }}</div>
+        <div v-else-if="notes.length > 0" class="mt-4 grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+          <div class="space-y-3">
+            <button
+              v-for="note in notes"
+              :key="note.id"
+              type="button"
+              class="admin-list-card block w-full text-left"
+              :class="selectedNote?.id === note.id ? 'border-[rgba(15,23,42,0.16)]' : ''"
+              @click="selectedNoteId = note.id"
+            >
+              <div class="text-base font-semibold text-[var(--ink-strong)]">{{ note.title }}</div>
+              <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ notePreview(note) }}</p>
+            </button>
+          </div>
+
+          <article v-if="selectedNote" class="rounded-[24px] border border-[rgba(15,23,42,0.08)] bg-[rgba(247,247,245,0.88)] p-6">
+            <div class="text-sm font-semibold text-[var(--ink-soft)]">{{ copy.noteContentTitle }}</div>
+            <div class="mt-3 text-2xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">{{ selectedNote.title }}</div>
+            <p class="mt-4 whitespace-pre-wrap text-sm leading-8 text-[var(--ink-main)]">{{ selectedNote.content }}</p>
+          </article>
+        </div>
+        <div v-else class="admin-empty mt-4">{{ copy.noNotes }}</div>
+      </template>
+
+      <div v-else class="admin-empty">{{ copy.emptyHint }}</div>
+    </section>
+
+    <section class="mx-auto mt-4 max-w-6xl rounded-[28px] border border-[rgba(15,23,42,0.06)] bg-[var(--surface-dark)] px-6 py-6 text-white md:px-8">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="text-2xl font-bold tracking-[-0.04em]">{{ copy.registerTitle }}</div>
+        <button class="product-button-primary" type="button" @click="router.push('/register')">
+          {{ copy.registerAction }}
+        </button>
+      </div>
+    </section>
+  </div>
+</template>
+
+<style scoped>
+.share-canvas-shell {
+  height: calc(100vh - 170px);
+  min-height: 640px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 247, 245, 0.94));
+}
+
+:deep(.share-node) {
+  min-width: 220px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.98);
+  padding: 18px 20px;
+  color: var(--ink-strong);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+}
+
+:deep(.share-node-in_progress) {
+  border-color: rgba(15, 23, 42, 0.36);
+  box-shadow: 0 0 0 6px rgba(15, 23, 42, 0.04), 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+:deep(.share-node-completed) {
+  border-color: rgba(21, 128, 61, 0.2);
+  background: rgba(248, 255, 251, 0.98);
+}
+</style>

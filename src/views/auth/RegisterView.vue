@@ -75,6 +75,11 @@ const copy = computed(() =>
       }
 )
 
+const redirectTarget = computed(() => {
+  const redirect = router.currentRoute.value.query.redirect
+  return typeof redirect === 'string' ? redirect : '/roadmap'
+})
+
 const handleRegister = async () => {
   errorMessage.value = ''
 
@@ -98,7 +103,7 @@ const handleRegister = async () => {
     })
 
     authStore.login(session)
-    router.push('/roadmap')
+    router.push(redirectTarget.value)
   } catch (error: any) {
     errorMessage.value = error.message || copy.value.error
   } finally {

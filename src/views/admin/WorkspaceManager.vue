@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { workspaceApi } from '@/api/workspace'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
-import type { WorkspaceMember, WorkspaceRole } from '@/types'
+import type { WorkspaceInviteLink, WorkspaceMember, WorkspaceRole } from '@/types'
 
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
@@ -11,11 +11,12 @@ const localeStore = useLocaleStore()
 const members = ref<WorkspaceMember[]>([])
 const loadingMembers = ref(false)
 const creatingWorkspace = ref(false)
-const invitingMember = ref(false)
+const creatingInviteLink = ref(false)
 const errorMessage = ref('')
+const inviteMessage = ref('')
 const createWorkspaceName = ref('')
-const inviteIdentifier = ref('')
 const inviteRole = ref<WorkspaceRole>('member')
+const inviteLink = ref<WorkspaceInviteLink | null>(null)
 
 const copy = computed(() =>
   localeStore.isChinese
@@ -29,9 +30,15 @@ const copy = computed(() =>
         creating: '创建中...',
         workspacesTitle: '空间列表',
         membersTitle: '成员与权限',
-        invitePlaceholder: '输入用户名或邮箱',
-        inviteAction: '邀请成员',
-        inviting: '邀请中...',
+        inviteTitle: '邀请链接',
+        inviteSummary: '生成链接，发给对方。对方注册或登录后即可加入当前空间。',
+        inviteAction: '生成邀请链接',
+        inviteGenerating: '生成中...',
+        inviteLinkLabel: '当前邀请链接',
+        inviteLinkEmpty: '生成后会显示在这里',
+        copyInvite: '复制链接',
+        copied: '链接已复制',
+        inviteExpires: '链接 7 天后失效',
         member: '成员',
         role: '角色',
         joined: '加入时间',
@@ -39,11 +46,10 @@ const copy = computed(() =>
         manageEnabled: '可管理',
         readOnly: '只读查看',
         emptyName: '空间名称不能为空',
-        emptyInvite: '请输入用户名或邮箱',
         noMembers: '这个空间还没有成员。',
         loading: '正在加载成员...',
         createError: '创建空间失败',
-        inviteError: '邀请成员失败',
+        inviteError: '生成邀请链接失败',
         updateError: '更新成员角色失败',
         removeError: '移除成员失败',
         protectedOwner: '至少保留一位所有者。',
@@ -54,16 +60,22 @@ const copy = computed(() =>
     : {
         kicker: 'Workspace',
         title: 'Workspaces and members',
-        summary: 'Create workspaces, invite members, and set roles.',
+        summary: 'Create workspaces, share invite links, and manage access.',
         createTitle: 'Create workspace',
         createPlaceholder: 'For example: Growth / Delivery / Research',
         createAction: 'Create workspace',
         creating: 'Creating...',
         workspacesTitle: 'Workspace list',
         membersTitle: 'Members and roles',
-        invitePlaceholder: 'Enter a username or email',
-        inviteAction: 'Invite member',
-        inviting: 'Inviting...',
+        inviteTitle: 'Invite link',
+        inviteSummary: 'Generate one link and send it out. People can join after signing in or registering.',
+        inviteAction: 'Generate invite link',
+        inviteGenerating: 'Generating...',
+        inviteLinkLabel: 'Current invite link',
+        inviteLinkEmpty: 'The link appears here after generation',
+        copyInvite: 'Copy link',
+        copied: 'Link copied',
+        inviteExpires: 'The link expires in 7 days',
         member: 'Member',
         role: 'Role',
         joined: 'Joined',
@@ -71,11 +83,10 @@ const copy = computed(() =>
         manageEnabled: 'Can manage',
         readOnly: 'Read only',
         emptyName: 'Workspace name cannot be empty',
-        emptyInvite: 'Enter a username or email',
         noMembers: 'This workspace has no members yet.',
         loading: 'Loading members...',
         createError: 'Unable to create workspace',
-        inviteError: 'Unable to invite member',
+        inviteError: 'Unable to generate invite link',
         updateError: 'Unable to update member role',
         removeError: 'Unable to remove member',
         protectedOwner: 'At least one owner must remain.',
@@ -107,6 +118,10 @@ const roleLabel = computed<Record<WorkspaceRole, string>>(() =>
 const ownerCount = computed(() => members.value.filter((member) => member.role === 'owner').length)
 const roleOptions = computed<WorkspaceRole[]>(() =>
   authStore.activeRole === 'owner' ? ['owner', 'admin', 'member', 'viewer'] : ['admin', 'member', 'viewer']
+)
+
+const currentInviteUrl = computed(() =>
+  inviteLink.value ? `${window.location.origin}${inviteLink.value.invite_url}` : ''
 )
 
 const formatDate = (value: string) =>
@@ -172,6 +187,8 @@ const handleCreateWorkspace = async () => {
     const workspace = await workspaceApi.createWorkspace({ name: createWorkspaceName.value.trim() })
     authStore.appendWorkspace(workspace)
     createWorkspaceName.value = ''
+    inviteLink.value = null
+    inviteMessage.value = ''
     await fetchMembers()
   } catch (error: any) {
     errorMessage.value = error.message || copy.value.createError
@@ -180,28 +197,32 @@ const handleCreateWorkspace = async () => {
   }
 }
 
-const handleInviteMember = async () => {
-  if (!currentWorkspaceId.value) return
-  if (!inviteIdentifier.value.trim()) {
-    errorMessage.value = copy.value.emptyInvite
-    return
-  }
+const handleCreateInviteLink = async () => {
+  if (!currentWorkspaceId.value || !canManageMembers.value) return
 
-  invitingMember.value = true
+  creatingInviteLink.value = true
   errorMessage.value = ''
+  inviteMessage.value = ''
 
   try {
-    await workspaceApi.addMember(currentWorkspaceId.value, {
-      identifier: inviteIdentifier.value.trim(),
+    inviteLink.value = await workspaceApi.createInviteLink(currentWorkspaceId.value, {
       role: inviteRole.value,
     })
-    inviteIdentifier.value = ''
-    inviteRole.value = 'member'
-    await fetchMembers()
   } catch (error: any) {
     errorMessage.value = error.message || copy.value.inviteError
   } finally {
-    invitingMember.value = false
+    creatingInviteLink.value = false
+  }
+}
+
+const copyInviteLink = async () => {
+  if (!currentInviteUrl.value) return
+
+  try {
+    await navigator.clipboard.writeText(currentInviteUrl.value)
+    inviteMessage.value = copy.value.copied
+  } catch (error: any) {
+    errorMessage.value = error.message || copy.value.inviteError
   }
 }
 
@@ -237,6 +258,8 @@ const removeMember = async (member: WorkspaceMember) => {
 watch(
   () => currentWorkspaceId.value,
   () => {
+    inviteLink.value = null
+    inviteMessage.value = ''
     fetchMembers()
   },
   { immediate: true }
@@ -284,96 +307,121 @@ watch(
               :class="authStore.activeWorkspaceId === workspace.workspace_id ? 'border-[rgba(15,23,42,0.16)]' : ''"
               @click="authStore.setActiveWorkspace(workspace.workspace_id)"
             >
-              <div class="flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="truncate text-base font-semibold text-[var(--ink-strong)]">{{ workspace.workspace_name }}</div>
-                  <div class="mt-1 truncate text-sm text-[var(--ink-soft)]">{{ roleLabel[workspace.role] }}</div>
-                </div>
+              <div class="min-w-0">
+                <div class="truncate text-base font-semibold text-[var(--ink-strong)]">{{ workspace.workspace_name }}</div>
+                <div class="mt-1 truncate text-sm text-[var(--ink-soft)]">{{ roleLabel[workspace.role] }}</div>
               </div>
             </button>
           </div>
         </article>
       </div>
 
-      <article class="admin-card p-6">
-        <div class="flex items-center justify-between gap-3">
-          <div class="admin-card-title">{{ copy.membersTitle }}</div>
-          <span :class="canManageMembers ? 'admin-chip-dark' : 'admin-chip'">
-            {{ canManageMembers ? copy.manageEnabled : copy.readOnly }}
-          </span>
-        </div>
+      <div class="space-y-6">
+        <article class="admin-card p-6">
+          <div class="flex items-center justify-between gap-3">
+            <div class="admin-card-title">{{ copy.inviteTitle }}</div>
+            <span :class="canManageMembers ? 'admin-chip-dark' : 'admin-chip'">
+              {{ canManageMembers ? copy.manageEnabled : copy.readOnly }}
+            </span>
+          </div>
 
-        <div class="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_auto]">
-          <input
-            v-model="inviteIdentifier"
-            type="text"
-            class="admin-input"
-            :disabled="!canManageMembers || invitingMember"
-            :placeholder="copy.invitePlaceholder"
-            @keyup.enter="handleInviteMember"
-          />
+          <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ copy.inviteSummary }}</p>
 
-          <select v-model="inviteRole" class="admin-select" :disabled="!canManageMembers || invitingMember">
-            <option v-for="role in roleOptions" :key="role" :value="role">
-              {{ roleLabel[role] }}
-            </option>
-          </select>
+          <div class="mt-5 grid gap-3 lg:grid-cols-[180px_auto]">
+            <select v-model="inviteRole" class="admin-select" :disabled="!canManageMembers || creatingInviteLink">
+              <option v-for="role in roleOptions" :key="role" :value="role">
+                {{ roleLabel[role] }}
+              </option>
+            </select>
 
-          <button
-            class="product-button-dark whitespace-nowrap"
-            type="button"
-            :disabled="!canManageMembers || invitingMember"
-            @click="handleInviteMember"
-          >
-            {{ invitingMember ? copy.inviting : copy.inviteAction }}
-          </button>
-        </div>
+            <button
+              class="product-button-dark"
+              type="button"
+              :disabled="!canManageMembers || creatingInviteLink"
+              @click="handleCreateInviteLink"
+            >
+              {{ creatingInviteLink ? copy.inviteGenerating : copy.inviteAction }}
+            </button>
+          </div>
 
-        <div v-if="loadingMembers" class="admin-empty mt-5">
-          {{ copy.loading }}
-        </div>
-
-        <div v-else-if="members.length === 0" class="admin-empty mt-5">
-          {{ copy.noMembers }}
-        </div>
-
-        <div v-else class="mt-5 space-y-3">
-          <article v-for="member in members" :key="member.user_id" class="admin-list-card">
-            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_120px_auto] lg:items-start">
-              <div class="min-w-0">
-                <div class="text-base font-semibold text-[var(--ink-strong)]">{{ member.username }}</div>
-                <div class="mt-1 text-sm text-[var(--ink-soft)]">{{ member.email }}</div>
-                <p v-if="memberHint(member)" class="mt-2 text-sm text-[var(--danger)]">{{ memberHint(member) }}</p>
-              </div>
-
-              <select
-                :value="member.role"
-                class="admin-select"
-                :disabled="!canEditMemberRole(member)"
-                @change="updateRole(member, ($event.target as HTMLSelectElement).value as WorkspaceRole)"
-              >
-                <option v-for="role in roleOptions" :key="role" :value="role">
-                  {{ roleLabel[role] }}
-                </option>
-              </select>
-
-              <div class="pt-3 text-sm text-[var(--ink-soft)] lg:pt-0">
-                {{ formatDate(member.joined_at) }}
-              </div>
-
+          <div class="mt-5 space-y-3">
+            <label class="product-label">{{ copy.inviteLinkLabel }}</label>
+            <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px]">
+              <input
+                :value="currentInviteUrl || copy.inviteLinkEmpty"
+                type="text"
+                class="admin-input"
+                readonly
+              />
               <button
-                class="text-sm font-semibold"
-                :class="canRemoveMember(member) ? 'text-[var(--danger)]' : 'cursor-not-allowed text-[rgba(15,23,42,0.3)]'"
+                class="product-button-secondary"
                 type="button"
-                :disabled="!canRemoveMember(member)"
-                @click="removeMember(member)"
+                :disabled="!currentInviteUrl"
+                @click="copyInviteLink"
               >
-                {{ copy.remove }}
+                {{ copy.copyInvite }}
               </button>
             </div>
-          </article>
-        </div>
-      </article>
+            <div class="text-sm text-[var(--ink-soft)]">
+              {{ inviteMessage || copy.inviteExpires }}
+            </div>
+          </div>
+        </article>
+
+        <article class="admin-card p-6">
+          <div class="flex items-center justify-between gap-3">
+            <div class="admin-card-title">{{ copy.membersTitle }}</div>
+            <span :class="canManageMembers ? 'admin-chip-dark' : 'admin-chip'">
+              {{ canManageMembers ? copy.manageEnabled : copy.readOnly }}
+            </span>
+          </div>
+
+          <div v-if="loadingMembers" class="admin-empty mt-5">
+            {{ copy.loading }}
+          </div>
+
+          <div v-else-if="members.length === 0" class="admin-empty mt-5">
+            {{ copy.noMembers }}
+          </div>
+
+          <div v-else class="mt-5 space-y-3">
+            <article v-for="member in members" :key="member.user_id" class="admin-list-card">
+              <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_120px_auto] lg:items-start">
+                <div class="min-w-0">
+                  <div class="text-base font-semibold text-[var(--ink-strong)]">{{ member.username }}</div>
+                  <div class="mt-1 text-sm text-[var(--ink-soft)]">{{ member.email }}</div>
+                  <p v-if="memberHint(member)" class="mt-2 text-sm text-[var(--danger)]">{{ memberHint(member) }}</p>
+                </div>
+
+                <select
+                  :value="member.role"
+                  class="admin-select"
+                  :disabled="!canEditMemberRole(member)"
+                  @change="updateRole(member, ($event.target as HTMLSelectElement).value as WorkspaceRole)"
+                >
+                  <option v-for="role in roleOptions" :key="role" :value="role">
+                    {{ roleLabel[role] }}
+                  </option>
+                </select>
+
+                <div class="pt-3 text-sm text-[var(--ink-soft)] lg:pt-0">
+                  {{ formatDate(member.joined_at) }}
+                </div>
+
+                <button
+                  class="text-sm font-semibold"
+                  :class="canRemoveMember(member) ? 'text-[var(--danger)]' : 'cursor-not-allowed text-[rgba(15,23,42,0.3)]'"
+                  type="button"
+                  :disabled="!canRemoveMember(member)"
+                  @click="removeMember(member)"
+                >
+                  {{ copy.remove }}
+                </button>
+              </div>
+            </article>
+          </div>
+        </article>
+      </div>
     </section>
   </div>
 </template>
