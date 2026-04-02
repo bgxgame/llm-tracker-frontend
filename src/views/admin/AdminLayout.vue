@@ -19,46 +19,46 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         brandLine: '团队工作台',
-        summary: '统一查看总览、动态、路线图、笔记和空间成员。',
-        searchLabel: '搜索',
+        summary: '把总览、动态、搜索、路线图和笔记放在一个清晰入口里。',
+        searchLabel: '快速搜索',
         searchPlaceholder: '搜索路线图、笔记或成员',
         searchAction: '搜索',
         workspaceLabel: '当前空间',
-        workspaceHint: '切换空间后，总览和管理页面会一起刷新。',
+        workspaceHint: '切换空间后，总览、动态和搜索结果会一起刷新。',
         accountLabel: '当前账号',
-        marketing: '官网',
+        marketing: '返回首页',
         logout: '退出登录',
-        collapse: '收起侧栏',
-        expand: '展开侧栏',
+        collapse: '收起导航',
+        expand: '展开导航',
         nav: [
-          { to: '/admin/dashboard', short: '总', label: '总览', meta: '关键数据与下一步' },
-          { to: '/admin/activity', short: '动', label: '动态', meta: '成员与内容变化' },
-          { to: '/admin/search', short: '搜', label: '搜索', meta: '快速找到内容' },
-          { to: '/admin/workspace', short: '空', label: '空间', meta: '空间与成员管理' },
-          { to: '/admin/roadmap', short: '图', label: '路线图', meta: '执行路径与节点' },
-          { to: '/admin/notes', short: '记', label: '笔记', meta: '研究记录与资料' },
+          { to: '/admin/dashboard', short: '总', label: '总览', meta: '先看关键数据和下一步' },
+          { to: '/admin/activity', short: '动', label: '动态', meta: '查看团队最近的变化' },
+          { to: '/admin/search', short: '搜', label: '搜索', meta: '快速找到需要的信息' },
+          { to: '/admin/workspace', short: '空', label: '空间', meta: '管理成员与协作边界' },
+          { to: '/admin/roadmap', short: '图', label: '路线图', meta: '推进任务与执行节奏' },
+          { to: '/admin/notes', short: '记', label: '笔记', meta: '沉淀研究与过程记录' },
         ],
       }
     : {
         brandLine: 'Team workspace',
-        summary: 'View overview, activity, roadmap, notes, and members in one place.',
-        searchLabel: 'Search',
+        summary: 'Keep overview, activity, search, roadmap, and notes in one clear operating surface.',
+        searchLabel: 'Quick search',
         searchPlaceholder: 'Search roadmap, notes, or members',
         searchAction: 'Search',
         workspaceLabel: 'Active workspace',
-        workspaceHint: 'Switching workspace refreshes the full overview and management context.',
+        workspaceHint: 'Changing workspace refreshes overview, activity, and search results together.',
         accountLabel: 'Account',
-        marketing: 'Site',
+        marketing: 'Home',
         logout: 'Logout',
-        collapse: 'Collapse sidebar',
-        expand: 'Expand sidebar',
+        collapse: 'Collapse navigation',
+        expand: 'Expand navigation',
         nav: [
-          { to: '/admin/dashboard', short: 'DB', label: 'Overview', meta: 'Key numbers and next steps' },
-          { to: '/admin/activity', short: 'AC', label: 'Activity', meta: 'Changes across the team' },
-          { to: '/admin/search', short: 'SR', label: 'Search', meta: 'Find work quickly' },
-          { to: '/admin/workspace', short: 'WS', label: 'Workspace', meta: 'Members and governance' },
-          { to: '/admin/roadmap', short: 'RM', label: 'Roadmap', meta: 'Execution path and nodes' },
-          { to: '/admin/notes', short: 'NT', label: 'Notes', meta: 'Research records and assets' },
+          { to: '/admin/dashboard', short: 'DB', label: 'Overview', meta: 'Key metrics and next steps' },
+          { to: '/admin/activity', short: 'AC', label: 'Activity', meta: 'See recent team changes' },
+          { to: '/admin/search', short: 'SR', label: 'Search', meta: 'Find information quickly' },
+          { to: '/admin/workspace', short: 'WS', label: 'Workspace', meta: 'Members and collaboration rules' },
+          { to: '/admin/roadmap', short: 'RM', label: 'Roadmap', meta: 'Execution path and delivery rhythm' },
+          { to: '/admin/notes', short: 'NT', label: 'Notes', meta: 'Research and working records' },
         ],
       }
 )
@@ -262,11 +262,7 @@ const handleLogout = () => {
 }
 
 .workspace-select {
-  @apply appearance-none rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--ink-strong)] outline-none transition-all;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235f6b7a' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6' /%3E%3C/svg%3E");
-  background-position: right 0.9rem center;
-  background-repeat: no-repeat;
-  background-size: 0.9rem;
+  @apply rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--ink-strong)] outline-none transition-all;
 }
 
 .workspace-select:focus {
@@ -275,39 +271,22 @@ const handleLogout = () => {
 }
 
 .nav-item {
-  @apply flex items-center gap-3 rounded-2xl px-3 py-3 transition-all;
-}
-
-.nav-item:hover {
-  background: rgba(15, 23, 42, 0.04);
+  @apply flex items-center gap-3 rounded-3xl border border-transparent px-3 py-3 transition-all hover:border-[rgba(15,23,42,0.08)] hover:bg-white/88;
 }
 
 .nav-item-active {
-  background: rgba(229, 106, 43, 0.1);
+  @apply border-[rgba(15,23,42,0.08)] bg-white shadow-[0_10px_24px_rgba(15,23,42,0.04)];
 }
 
 .nav-code {
-  @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[rgba(15,23,42,0.08)] bg-white text-sm font-semibold text-[var(--ink-main)];
-}
-
-.nav-item-active .nav-code {
-  background: var(--brand);
-  color: white;
-  border-color: transparent;
+  @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[rgba(15,23,42,0.06)] text-xs font-black text-[var(--ink-main)];
 }
 
 .footer-link {
-  @apply flex items-center justify-center rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[var(--surface-soft)] px-3 py-2.5 text-sm font-medium text-[var(--ink-main)] transition-all;
+  @apply inline-flex items-center justify-center rounded-2xl border border-[rgba(15,23,42,0.08)] bg-[var(--surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--ink-main)] transition-all hover:border-[rgba(15,23,42,0.14)] hover:bg-white;
 }
 
-.footer-link:hover {
-  border-color: rgba(15, 23, 42, 0.16);
-  color: var(--ink-strong);
-}
-
-.footer-link-danger:hover {
-  border-color: transparent;
-  background: rgba(220, 38, 38, 0.1);
-  color: var(--danger);
+.footer-link-danger {
+  @apply text-[var(--danger)];
 }
 </style>

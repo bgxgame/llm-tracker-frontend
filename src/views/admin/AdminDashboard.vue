@@ -22,31 +22,31 @@ const overview = ref<WorkspaceOverview | null>(null)
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        eyebrow: '工作台总览',
-        summary: '先看最重要的信息，再决定下一步做什么。',
+        eyebrow: '空间总览',
+        summary: '先看最重要的信息，再决定团队下一步做什么。',
         role: '当前角色',
         completion: '完成率',
-        workHintReadOnly: '你当前可以查看整体进展和团队动态。',
-        workHintWritable: '你当前可以继续推进路线图、笔记和团队协作。',
-        primaryAction: '查看路线图',
-        secondaryAction: '查看笔记',
+        readOnlyHint: '你当前可以查看整体进度、最近动态和关键记录。',
+        writeHint: '你当前可以继续推进路线图、笔记和团队协作。',
+        primaryAction: authStore.hasWriteAccess ? '管理路线图' : '查看路线图',
+        secondaryAction: authStore.hasWriteAccess ? '继续记录笔记' : '查看笔记',
         metrics: {
-          members: '团队成员',
+          members: '成员数',
           roadmap: '路线图节点',
-          notes: '研究笔记',
+          notes: '笔记数',
           progress: '进行中',
         },
-        nextTitle: '下一步最值得做的事',
-        nextSummary: '这里会优先告诉你最能推动空间进展的动作。',
-        nextDone: '已完成',
-        nextTodo: '待处理',
+        onboardingTitle: '下一步最值得做的事',
+        onboardingSummary: '把最能推动空间前进的动作放在前面，减少判断成本。',
+        done: '已完成',
+        todo: '待处理',
         healthTitle: '空间状态',
-        healthSummary: '从进度和协作结构快速判断这个空间是否已经进入稳定运转。',
+        healthSummary: '快速判断这个空间是否已经形成稳定协作节奏。',
         overallCompletion: '整体完成率',
         suggestedNextMove: '建议下一步',
         completed: '已完成',
         inProgress: '进行中',
-        todo: '待开始',
+        pending: '待开始',
         teamRoles: {
           owner: '所有者',
           admin: '管理员',
@@ -56,41 +56,41 @@ const copy = computed(() =>
         notesTitle: '最新笔记',
         notesAction: '查看全部笔记',
         noSummary: '这条笔记还没有摘要。',
-        emptyNotes: '还没有笔记。先从路线图中的一个节点开始记录。',
+        emptyNotes: '还没有笔记。先从一个节点开始记录。',
         activityTitle: '最近动态',
         activityAction: '查看全部动态',
-        openAction: '打开',
-        emptyActivity: '最近还没有动态。可以先邀请成员、创建笔记或推进路线图。',
-        noWorkspace: '当前没有激活的空间。',
+        openAction: '查看详情',
+        emptyActivity: '最近还没有动态。可以先邀请成员、创建笔记，或推进路线图。',
+        noWorkspace: '当前没有可用空间。',
         loading: '正在加载总览...',
         errorFallback: '加载总览失败',
       }
     : {
-        eyebrow: 'Overview',
-        summary: 'See the most important information first, then decide what to do next.',
+        eyebrow: 'Workspace overview',
+        summary: 'See the most important information first and decide what the team should do next.',
         role: 'Current role',
         completion: 'Completion',
-        workHintReadOnly: 'You can review progress and team activity.',
-        workHintWritable: 'You can keep moving roadmap, notes, and team collaboration forward.',
-        primaryAction: 'Open roadmap',
-        secondaryAction: 'Open notes',
+        readOnlyHint: 'You can review progress, recent activity, and the most important records.',
+        writeHint: 'You can keep roadmap, notes, and collaboration moving forward.',
+        primaryAction: authStore.hasWriteAccess ? 'Manage roadmap' : 'View roadmap',
+        secondaryAction: authStore.hasWriteAccess ? 'Continue notes' : 'View notes',
         metrics: {
           members: 'Members',
           roadmap: 'Roadmap nodes',
           notes: 'Notes',
           progress: 'In progress',
         },
-        nextTitle: 'Best next steps',
-        nextSummary: 'This area highlights the most useful actions to move the workspace forward.',
-        nextDone: 'Done',
-        nextTodo: 'Next',
-        healthTitle: 'Workspace status',
-        healthSummary: 'Use progress and team structure to quickly judge whether the workspace is running smoothly.',
+        onboardingTitle: 'Best next steps',
+        onboardingSummary: 'Put the most useful actions first so the team spends less time deciding.',
+        done: 'Done',
+        todo: 'Next',
+        healthTitle: 'Workspace health',
+        healthSummary: 'Quickly judge whether the workspace is building a stable collaboration rhythm.',
         overallCompletion: 'Overall completion',
         suggestedNextMove: 'Suggested next move',
         completed: 'Completed',
         inProgress: 'In progress',
-        todo: 'Todo',
+        pending: 'Todo',
         teamRoles: {
           owner: 'Owners',
           admin: 'Admins',
@@ -100,7 +100,7 @@ const copy = computed(() =>
         notesTitle: 'Latest notes',
         notesAction: 'View all notes',
         noSummary: 'This note does not have a summary yet.',
-        emptyNotes: 'No notes yet. Start from a roadmap node and capture the first record.',
+        emptyNotes: 'No notes yet. Start by recording work under a node.',
         activityTitle: 'Recent activity',
         activityAction: 'View all activity',
         openAction: 'Open',
@@ -134,30 +134,30 @@ const onboardingCopyMap = computed<
     ? {
         roadmap_foundation: {
           title: '补齐路线图基础节点',
-          description: '至少创建 3 个路线图节点，让团队先看到清晰的执行路径。',
+          description: '至少创建 3 个节点，让团队先看到一条清晰的推进路径。',
           cta_label: '打开路线图',
         },
         invite_team: {
           title: '邀请第一批协作者',
-          description: '至少再加入 1 位成员，让空间真正进入协作状态。',
-          cta_label: '管理成员',
+          description: '至少再增加 1 位成员，让空间真正进入协作状态。',
+          cta_label: authStore.canManageMembers ? '管理成员' : '查看成员',
         },
         seed_notes: {
-          title: '记录第一批研究笔记',
-          description: '至少创建 3 条笔记，让决策、实验和发现沉淀下来。',
+          title: '记录第一批关键笔记',
+          description: '至少创建 3 条笔记，把决策、实验和发现沉淀下来。',
           cta_label: '查看笔记',
         },
       }
     : {
         roadmap_foundation: {
-          title: 'Build roadmap foundation',
-          description: 'Create at least 3 roadmap nodes so the team has a visible execution path.',
+          title: 'Build the roadmap foundation',
+          description: 'Create at least 3 nodes so the team has a visible path forward.',
           cta_label: 'Open roadmap',
         },
         invite_team: {
-          title: 'Invite the first teammates',
-          description: 'Add at least one more teammate so the workspace becomes collaborative.',
-          cta_label: 'Manage members',
+          title: 'Invite the first collaborators',
+          description: 'Add at least one more person so the workspace becomes collaborative.',
+          cta_label: authStore.canManageMembers ? 'Manage members' : 'View members',
         },
         seed_notes: {
           title: 'Capture the first notes',
@@ -172,26 +172,40 @@ const metrics = computed(() => overview.value?.metrics)
 const team = computed(() => overview.value?.team)
 const recentNotes = computed(() => overview.value?.notes ?? [])
 const activityItems = computed(() => overview.value?.activity ?? [])
+
 const currentRoleKey = computed<WorkspaceRole>(
   () => (overview.value?.workspace.role ?? authStore.activeRole ?? 'viewer') as WorkspaceRole
 )
 const currentRole = computed(() => roleLabelMap.value[currentRoleKey.value])
+const workspaceName = computed(() => currentWorkspace.value?.workspace_name ?? '--')
 
 const onboardingItems = computed(() =>
   (overview.value?.onboarding ?? []).map((item) => {
     const localized = onboardingCopyMap.value[item.key]
-    if (!localized) {
-      return item
-    }
-
-    return {
-      ...item,
-      title: localized.title,
-      description: localized.description,
-      cta_label: localized.cta_label,
-    }
+    return localized
+      ? {
+          ...item,
+          title: localized.title,
+          description: localized.description,
+          cta_label: localized.cta_label,
+        }
+      : item
   })
 )
+
+const teamBreakdown = computed(() => {
+  const counts = team.value?.role_counts
+  if (!counts) {
+    return []
+  }
+
+  return [
+    { label: copy.value.teamRoles.owner, value: counts.owner },
+    { label: copy.value.teamRoles.admin, value: counts.admin },
+    { label: copy.value.teamRoles.member, value: counts.member },
+    { label: copy.value.teamRoles.viewer, value: counts.viewer },
+  ]
+})
 
 const suggestedNextMove = computed(() => {
   if (!metrics.value) {
@@ -201,23 +215,23 @@ const suggestedNextMove = computed(() => {
   if (metrics.value.roadmap_total === 0) {
     return localeStore.isChinese
       ? '先补齐最小路线图，让团队知道接下来沿着什么路径推进。'
-      : 'Start with a minimal roadmap so the team can see what path to move next.'
+      : 'Start with a minimal roadmap so the team can see the path forward.'
   }
 
   if (metrics.value.members_total <= 1) {
     return localeStore.isChinese
       ? '邀请第一位协作者，让这个空间真正变成团队空间。'
-      : 'Invite the first teammate so this workspace becomes a team space.'
+      : 'Invite the first teammate so the workspace becomes collaborative.'
   }
 
   if (metrics.value.notes_total < metrics.value.roadmap_total) {
     return localeStore.isChinese
-      ? '路线图已经有结构，接下来应该补齐节点下的研究记录和复盘。'
-      : 'The roadmap already has structure. Next, add notes and reviews under active nodes.'
+      ? '路线图已经有结构，接下来补齐执行中的笔记和关键结论。'
+      : 'The roadmap already has structure. Next, add notes to the active work.'
   }
 
   return localeStore.isChinese
-    ? '这个空间已经有稳定基础，可以继续扩大协作并沉淀更多知识。'
+    ? '这个空间已经形成稳定基础，可以继续扩大协作并沉淀更多经验。'
     : 'This workspace has a stable baseline. Keep expanding collaboration and capturing more knowledge.'
 })
 
@@ -251,8 +265,8 @@ const formatDate = (value: string) =>
 const activityBadge = (item: WorkspaceActivity) => {
   if (localeStore.isChinese) {
     if (item.type === 'member_joined') return '成员加入'
-    if (item.type === 'note_created') return '新增笔记'
-    if (item.type === 'roadmap_updated') return '节点更新'
+    if (item.type === 'note_created') return '新建笔记'
+    if (item.type === 'roadmap_updated') return '路线图更新'
     return '动态'
   }
 
@@ -272,34 +286,30 @@ watch(
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl px-6 py-8 lg:px-8">
-    <div v-if="errorMessage" class="product-error px-5 py-4 text-sm font-semibold">
+  <div class="mx-auto max-w-7xl px-6 py-8 lg:px-10">
+    <div v-if="errorMessage" class="product-error mb-5 px-5 py-4 text-sm font-semibold">
       {{ errorMessage }}
     </div>
 
-    <div v-else-if="loading" class="empty-card">
+    <div v-if="loading && !overview" class="empty-card">
       {{ copy.loading }}
     </div>
 
-    <div v-else-if="!overview" class="empty-card">
+    <div v-else-if="!currentWorkspace" class="empty-card">
       {{ copy.noWorkspace }}
     </div>
 
     <template v-else>
       <section class="hero-shell">
         <div class="hero-main">
-          <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-[rgba(229,106,43,0.06)] text-[var(--brand-deep)]">
-            <span class="h-2 w-2 rounded-full bg-[var(--brand)]"></span>
+          <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/80 text-[var(--brand)]">
+            <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
             {{ copy.eyebrow }}
           </div>
-
-          <h1 class="product-title mt-5 text-4xl leading-[0.92] md:text-6xl">
-            {{ currentWorkspace?.workspace_name || 'Workspace' }}
-          </h1>
-
+          <h1 class="product-title mt-6 text-4xl leading-[0.95] md:text-5xl">{{ workspaceName }}</h1>
           <p class="mt-4 max-w-2xl text-base leading-8 text-[var(--ink-soft)]">{{ copy.summary }}</p>
 
-          <div class="mt-6 flex flex-wrap gap-3">
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
             <button class="product-button-primary" type="button" @click="router.push('/admin/roadmap')">
               {{ copy.primaryAction }}
             </button>
@@ -312,13 +322,13 @@ watch(
         <aside class="hero-side">
           <div class="hero-side-label">{{ copy.role }}</div>
           <div class="hero-side-value">{{ currentRole }}</div>
-          <p class="hero-side-copy">{{ authStore.hasWriteAccess ? copy.workHintWritable : copy.workHintReadOnly }}</p>
+          <p class="hero-side-copy">{{ authStore.hasWriteAccess ? copy.writeHint : copy.readOnlyHint }}</p>
 
           <div class="hero-divider"></div>
 
           <div class="hero-side-label">{{ copy.completion }}</div>
           <div class="hero-side-value">{{ metrics?.completion_rate ?? 0 }}%</div>
-          <p class="hero-side-copy">{{ currentWorkspace?.workspace_slug || '' }}</p>
+          <p class="hero-side-copy">{{ suggestedNextMove }}</p>
         </aside>
       </section>
 
@@ -343,26 +353,24 @@ watch(
 
       <section class="content-grid">
         <article class="panel">
-          <div class="section-title">{{ copy.nextTitle }}</div>
-          <p class="section-copy">{{ copy.nextSummary }}</p>
+          <div class="section-head">
+            <div>
+              <div class="section-title">{{ copy.onboardingTitle }}</div>
+              <div class="section-copy">{{ copy.onboardingSummary }}</div>
+            </div>
+          </div>
 
           <div class="mt-5 space-y-3">
-            <article
-              v-for="item in onboardingItems"
-              :key="item.key"
-              class="task-item"
-            >
+            <article v-for="item in onboardingItems" :key="item.key" class="task-item">
               <div class="task-body">
-                <div class="flex items-center gap-3">
-                  <span :class="item.done ? 'task-badge task-badge-done' : 'task-badge task-badge-todo'">
-                    {{ item.done ? copy.nextDone : copy.nextTodo }}
-                  </span>
-                  <h3 class="task-title">{{ item.title }}</h3>
+                <div :class="item.done ? 'task-badge task-badge-done' : 'task-badge task-badge-todo'">
+                  {{ item.done ? copy.done : copy.todo }}
                 </div>
-                <p class="task-copy">{{ item.description }}</p>
+                <div class="mt-3 task-title">{{ item.title }}</div>
+                <div class="task-copy">{{ item.description }}</div>
               </div>
 
-              <button class="product-button-secondary !px-4 !py-2.5" type="button" @click="router.push(item.cta_path)">
+              <button class="product-button-secondary" type="button" @click="router.push(item.cta_path)">
                 {{ item.cta_label }}
               </button>
             </article>
@@ -371,55 +379,41 @@ watch(
 
         <article class="panel panel-soft">
           <div class="section-title">{{ copy.healthTitle }}</div>
-          <p class="section-copy">{{ copy.healthSummary }}</p>
+          <div class="section-copy">{{ copy.healthSummary }}</div>
 
-          <div class="mt-5">
-            <div class="mb-2 flex items-center justify-between text-sm font-semibold text-[var(--ink-main)]">
-              <span>{{ copy.overallCompletion }}</span>
-              <span>{{ metrics?.completion_rate ?? 0 }}%</span>
-            </div>
-            <div class="progress-bar">
+          <div class="next-move">
+            <div class="next-move-label">{{ copy.overallCompletion }}</div>
+            <div class="mt-3 progress-bar">
               <div class="progress-fill" :style="{ width: `${metrics?.completion_rate ?? 0}%` }"></div>
             </div>
+            <div class="mt-3 text-sm font-semibold text-[var(--ink-main)]">{{ metrics?.completion_rate ?? 0 }}%</div>
           </div>
 
           <div class="status-grid">
-            <div class="status-card">
+            <article class="status-card">
               <div class="status-label">{{ copy.completed }}</div>
               <div class="status-value">{{ metrics?.roadmap_completed ?? 0 }}</div>
-            </div>
-            <div class="status-card">
+            </article>
+            <article class="status-card">
               <div class="status-label">{{ copy.inProgress }}</div>
               <div class="status-value">{{ metrics?.roadmap_in_progress ?? 0 }}</div>
-            </div>
-            <div class="status-card">
-              <div class="status-label">{{ copy.todo }}</div>
+            </article>
+            <article class="status-card">
+              <div class="status-label">{{ copy.pending }}</div>
               <div class="status-value">{{ metrics?.roadmap_todo ?? 0 }}</div>
-            </div>
+            </article>
           </div>
 
           <div class="team-mini-grid">
-            <div class="team-mini-card">
-              <div class="team-mini-label">{{ copy.teamRoles.owner }}</div>
-              <div class="team-mini-value">{{ team?.role_counts.owner ?? 0 }}</div>
-            </div>
-            <div class="team-mini-card">
-              <div class="team-mini-label">{{ copy.teamRoles.admin }}</div>
-              <div class="team-mini-value">{{ team?.role_counts.admin ?? 0 }}</div>
-            </div>
-            <div class="team-mini-card">
-              <div class="team-mini-label">{{ copy.teamRoles.member }}</div>
-              <div class="team-mini-value">{{ team?.role_counts.member ?? 0 }}</div>
-            </div>
-            <div class="team-mini-card">
-              <div class="team-mini-label">{{ copy.teamRoles.viewer }}</div>
-              <div class="team-mini-value">{{ team?.role_counts.viewer ?? 0 }}</div>
-            </div>
+            <article v-for="item in teamBreakdown" :key="item.label" class="team-mini-card">
+              <div class="team-mini-label">{{ item.label }}</div>
+              <div class="team-mini-value">{{ item.value }}</div>
+            </article>
           </div>
 
           <div class="next-move">
             <div class="next-move-label">{{ copy.suggestedNextMove }}</div>
-            <p class="next-move-copy">{{ suggestedNextMove }}</p>
+            <div class="next-move-copy">{{ suggestedNextMove }}</div>
           </div>
         </article>
       </section>

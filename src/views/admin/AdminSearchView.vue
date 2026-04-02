@@ -23,45 +23,47 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        eyebrow: 'Workspace Search',
-        title: '先搜索，再进入具体模块',
-        summary: '像大厂产品一样先从全局搜索找到上下文，再决定去 roadmap 还是 notes，不让用户先猜信息藏在哪。',
-        inputPlaceholder: '搜索关键词、项目名、方法论、节点标题或研究结论',
-        searching: '正在搜索 workspace...',
+        eyebrow: '全局搜索',
+        title: '先找到，再进入具体页面',
+        summary: '输入关键词，先定位信息，再决定去路线图还是笔记，避免在多个页面来回猜。',
+        inputPlaceholder: '搜索项目、方法、节点标题、研究结论或成员信息',
+        searching: '正在搜索空间内容...',
         loadError: '搜索失败，请稍后重试',
-        emptyState: '输入关键词后，这里会返回 roadmap 节点和 research notes 的匹配结果。',
-        noResults: '当前 workspace 里没有匹配结果。',
-        results: '结果总数',
-        roadmap: 'Roadmap 匹配',
-        notes: 'Note 匹配',
-        openRoadmap: '打开 Roadmap',
-        openNote: '打开 Note',
+        emptyState: '输入关键词后，这里会返回路线图节点和笔记结果。',
+        noResults: '当前空间没有找到匹配内容。',
+        results: '结果数',
+        roadmap: '路线图结果',
+        notes: '笔记结果',
+        openRoadmap: '查看路线图',
+        openNote: '查看笔记',
         lastUpdated: '最近更新',
         createdAt: '创建时间',
         linkedNode: '关联节点',
         unknownNode: '未关联节点',
         noSummary: '这条笔记还没有摘要。',
         scopePrefix: '当前搜索范围',
-        workspaceFallback: 'Workspace',
+        workspaceFallback: '当前空间',
+        tipsTitle: '搜索建议',
+        tips: ['先搜节点标题或项目名称', '再用方法名或结论补充定位', '结果会按路线图和笔记分开展示'],
         todo: '待开始',
         inProgress: '进行中',
         completed: '已完成',
-        theory: 'Theory',
-        coding: 'Coding',
-        project: 'Project',
+        theory: '理论',
+        coding: '编码',
+        project: '项目',
       }
     : {
-        eyebrow: 'Workspace Search',
-        title: 'Search first, then jump into the right module',
-        summary: 'Use global search the way leading products do: find the context first, then decide whether the answer belongs in roadmap or notes.',
-        inputPlaceholder: 'Search keywords, project names, methods, node titles, or research outcomes',
+        eyebrow: 'Workspace search',
+        title: 'Find first, then jump into the right page',
+        summary: 'Search for the context first, then decide whether the answer belongs in roadmap or notes.',
+        inputPlaceholder: 'Search projects, methods, node titles, research outcomes, or team context',
         searching: 'Searching workspace...',
         loadError: 'Unable to complete the search right now',
-        emptyState: 'Start typing to search roadmap nodes and research notes across the workspace.',
+        emptyState: 'Start typing and this page will return roadmap nodes and note results.',
         noResults: 'No results matched the current workspace query.',
         results: 'Results',
-        roadmap: 'Roadmap matches',
-        notes: 'Note matches',
+        roadmap: 'Roadmap results',
+        notes: 'Note results',
         openRoadmap: 'Open roadmap',
         openNote: 'Open note',
         lastUpdated: 'Last updated',
@@ -69,8 +71,10 @@ const copy = computed(() =>
         linkedNode: 'Linked node',
         unknownNode: 'No linked node',
         noSummary: 'This note does not have a summary yet.',
-        scopePrefix: 'Current search scope',
+        scopePrefix: 'Current scope',
         workspaceFallback: 'Workspace',
+        tipsTitle: 'Search tips',
+        tips: ['Start with node titles or project names', 'Use methods or outcomes to narrow the result', 'Roadmap and note results are separated for faster scanning'],
         todo: 'Todo',
         inProgress: 'In progress',
         completed: 'Completed',
@@ -211,7 +215,7 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
   <div class="mx-auto max-w-6xl px-6 py-8 lg:px-10">
     <header class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
       <div class="max-w-3xl">
-        <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-white/80 text-[var(--brand)]">
+        <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/80 text-[var(--brand)]">
           <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
           {{ copy.eyebrow }}
         </div>
@@ -219,12 +223,18 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
         <p class="mt-5 text-base leading-8 text-[var(--ink-soft)]">{{ copy.summary }}</p>
       </div>
 
-      <div class="scope-pill">{{ copy.scopePrefix }}: {{ workspaceName }}</div>
+      <div class="scope-pill">{{ copy.scopePrefix }}：{{ workspaceName }}</div>
     </header>
 
     <section class="search-shell mt-8">
       <input v-model="searchTerm" type="text" class="search-input" :placeholder="copy.inputPlaceholder" />
       <div class="scope-pill">{{ copy.results }} {{ searchResults?.total_results ?? 0 }}</div>
+    </section>
+
+    <section class="mt-5 grid gap-4 md:grid-cols-3">
+      <article v-for="tip in copy.tips" :key="tip" class="tip-card">
+        {{ tip }}
+      </article>
     </section>
 
     <div v-if="errorMessage" class="product-error mt-8 px-5 py-4 text-sm font-semibold">
@@ -248,11 +258,7 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
         <article class="result-panel">
           <div class="panel-eyebrow">{{ copy.roadmap }}</div>
           <div class="mt-6 space-y-4">
-            <article
-              v-for="item in searchResults.roadmap_results"
-              :key="item.id"
-              class="result-card"
-            >
+            <article v-for="item in searchResults.roadmap_results" :key="item.id" class="result-card">
               <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
@@ -266,7 +272,7 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
                   {{ copy.openRoadmap }}
                 </button>
               </div>
-              <div class="mt-4 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--ink-soft)]">
+              <div class="mt-4 text-xs font-semibold text-[var(--ink-soft)]">
                 {{ copy.lastUpdated }} {{ formatDate(item.updated_at) }}
               </div>
             </article>
@@ -276,11 +282,7 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
         <article class="result-panel">
           <div class="panel-eyebrow">{{ copy.notes }}</div>
           <div class="mt-6 space-y-4">
-            <article
-              v-for="item in searchResults.note_results"
-              :key="item.id"
-              class="result-card"
-            >
+            <article v-for="item in searchResults.note_results" :key="item.id" class="result-card">
               <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
                   <div class="pill pill-muted">{{ copy.linkedNode }} {{ resolveNodeTitle(item.node_id) }}</div>
@@ -291,7 +293,7 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
                   {{ copy.openNote }}
                 </button>
               </div>
-              <div class="mt-4 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--ink-soft)]">
+              <div class="mt-4 text-xs font-semibold text-[var(--ink-soft)]">
                 {{ copy.createdAt }} {{ formatDate(item.created_at) }}
               </div>
             </article>
@@ -318,12 +320,16 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
 }
 
 .search-input:focus {
-  border-color: rgba(216, 110, 59, 0.42);
-  box-shadow: 0 0 0 5px rgba(216, 110, 59, 0.12);
+  border-color: rgba(229, 106, 43, 0.42);
+  box-shadow: 0 0 0 5px rgba(229, 106, 43, 0.12);
 }
 
 .scope-pill {
-  @apply inline-flex rounded-full bg-[rgba(20,33,43,0.06)] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--ink-main)];
+  @apply inline-flex rounded-full bg-[rgba(20,33,43,0.06)] px-4 py-2 text-sm font-semibold text-[var(--ink-main)];
+}
+
+.tip-card {
+  @apply rounded-[1.6rem] border border-[rgba(20,33,43,0.08)] bg-[rgba(255,255,255,0.72)] px-5 py-4 text-sm leading-7 text-[var(--ink-soft)] shadow-[0_10px_24px_rgba(20,33,43,0.04)];
 }
 
 .result-panel {
@@ -331,7 +337,7 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
 }
 
 .panel-eyebrow {
-  @apply text-[11px] font-black uppercase tracking-[0.28em] text-[var(--brand)];
+  @apply text-sm font-bold text-[var(--brand)];
 }
 
 .result-card {
@@ -339,7 +345,7 @@ const openNoteResult = (item: WorkspaceSearchNoteItem) => {
 }
 
 .pill {
-  @apply inline-flex rounded-full bg-[rgba(216,110,59,0.12)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[var(--brand)];
+  @apply inline-flex rounded-full bg-[rgba(229,106,43,0.12)] px-3 py-1 text-xs font-semibold text-[var(--brand)];
 }
 
 .pill-muted {

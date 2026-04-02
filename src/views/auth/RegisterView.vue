@@ -24,9 +24,9 @@ const errorMessage = ref('')
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: `${BRAND.name} · Launch Workspace`,
+        badge: `${BRAND.name} · 创建团队空间`,
         title: '创建账号，启动你的第一套团队空间',
-        summary: '你会获得一个从第一天就支持权限治理、研究笔记、roadmap 和 dashboard 的 workspace 基础层。',
+        summary: '几分钟内完成初始化，立即开始管理成员、路线图、笔记与协作节奏。',
         username: '用户名',
         usernamePlaceholder: 'team-operator',
         email: '邮箱',
@@ -36,20 +36,20 @@ const copy = computed(() =>
         confirm: '确认密码',
         confirmPlaceholder: '再次输入密码',
         submit: '创建账号并进入',
-        submitting: '正在初始化团队空间...',
-        sideTitle: '注册后立即获得',
+        submitting: '正在初始化空间...',
+        sideTitle: '开通后立即可用',
         sideCards: [
           {
-            title: 'Workspace foundation',
-            body: '默认拥有可继续扩展的 workspace 架构，让团队从一开始就能稳定协作。',
+            title: '空间基础已就绪',
+            body: '注册后即可获得可继续扩展的团队空间，不需要再拼装基础协作能力。',
           },
           {
-            title: 'Role-based collaboration',
-            body: 'Owner、Admin、Member、Viewer 四层角色已经是产品的一部分，而不是后补功能。',
+            title: '角色权限已内置',
+            body: '所有者、管理员、成员和只读角色都已经准备好，团队协作边界更清楚。',
           },
           {
-            title: 'Knowledge operating loop',
-            body: '把笔记、路线图、活动和团队执行链路，从一开始就放进同一个系统里。',
+            title: '总览入口默认可用',
+            body: '创建完成后直接进入总览台，先看重点，再决定下一步如何推进。',
           },
         ],
         loginLead: '已经有账号？',
@@ -58,9 +58,9 @@ const copy = computed(() =>
         error: '创建账号失败，请稍后重试',
       }
     : {
-        badge: `${BRAND.name} · Launch Workspace`,
-        title: 'Create an account and launch your first team space',
-        summary: 'Start with a workspace foundation that already supports governance, research notes, roadmap tracking, and a team dashboard.',
+        badge: `${BRAND.name} · Create workspace`,
+        title: 'Create an account and launch your first workspace',
+        summary: 'Get set up in minutes and start managing members, roadmap, notes, and collaboration rhythm right away.',
         username: 'Username',
         usernamePlaceholder: 'team-operator',
         email: 'Email',
@@ -68,22 +68,22 @@ const copy = computed(() =>
         password: 'Password',
         passwordPlaceholder: 'At least 6 characters',
         confirm: 'Confirm password',
-        confirmPlaceholder: 'Repeat password',
-        submit: 'Create account and enter',
+        confirmPlaceholder: 'Enter password again',
+        submit: 'Create account and continue',
         submitting: 'Provisioning workspace...',
-        sideTitle: 'What you unlock immediately',
+        sideTitle: 'Ready on day one',
         sideCards: [
           {
             title: 'Workspace foundation',
-            body: 'Start with an extensible workspace model that leaves room for governance and product growth.',
+            body: 'Start with a team space that already supports the essentials of structured collaboration.',
           },
           {
-            title: 'Role-based collaboration',
-            body: 'Owner, Admin, Member, and Viewer roles are built into the product instead of bolted on later.',
+            title: 'Permissions included',
+            body: 'Owner, admin, member, and viewer roles are already built into the product.',
           },
           {
-            title: 'Knowledge operating loop',
-            body: 'Bring notes, roadmap, activity, and execution into one system from the start.',
+            title: 'Dashboard by default',
+            body: 'Land in the overview first so users see the most important information immediately.',
           },
         ],
         loginLead: 'Already have access?',
@@ -134,7 +134,7 @@ const handleRegister = async () => {
     <div class="product-shell grid min-h-[calc(100vh-7.5rem)] items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
       <section>
         <div class="product-panel rounded-[2.4rem] p-8 md:p-10">
-          <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-white/80 text-[var(--brand)]">
+          <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/80 text-[var(--brand)]">
             <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
             {{ copy.badge }}
           </div>

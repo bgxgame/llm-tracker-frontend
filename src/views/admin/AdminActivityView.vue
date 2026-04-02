@@ -21,47 +21,47 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         eyebrow: '动态中心',
-        title: '追踪团队最近在推进什么',
-        summary: '把成员加入、笔记创建和路线图变化收敛成一条清晰时间线，方便快速判断这个空间是否真的在往前走。',
-        readOnlyHint: '当前是只读角色，可以查看协作信号，但不会出现误导性的写操作入口。',
-        writableHint: '当前角色可以继续推进内容与执行，动态中心会帮你看见协作是否形成闭环。',
+        title: '团队最近在推进什么',
+        summary: '把成员加入、笔记创建和路线图更新汇总成一条清晰时间线，方便快速判断空间是否真正向前。',
+        readOnlyHint: '你当前拥有只读权限，可查看协作变化，但不会看到误导性的编辑入口。',
+        writableHint: '你当前可以继续推进内容和流程，这里会帮助你快速判断团队是否在持续协同。',
         workspace: '当前空间',
         total: '动态总数',
-        activeFilter: '筛选条件',
+        activeFilter: '当前筛选',
         filters: {
           all: '全部动态',
           member_joined: '成员加入',
           note_created: '新建笔记',
-          roadmap_updated: '更新节点',
+          roadmap_updated: '路线图更新',
         },
         loading: '正在加载动态...',
         errorFallback: '加载动态失败',
-        empty: '当前筛选下还没有动态。可以先邀请成员、创建笔记，或推进路线图节点。',
-        open: '打开',
+        empty: '当前筛选下还没有动态。先邀请成员、创建笔记，或更新路线图。',
+        open: '查看详情',
         happenedAt: '发生时间',
-        noWorkspace: '当前没有可用的空间上下文。',
+        noWorkspace: '当前没有可用的空间。',
       }
     : {
-        eyebrow: 'Activity Center',
-        title: 'Track what the team is moving right now',
-        summary: 'Collapse member joins, note creation, and roadmap changes into one readable timeline so the team can see whether the workspace is actually progressing.',
-        readOnlyHint: 'This is a read-only role. You can review collaboration signals without being pushed toward write actions.',
-        writableHint: 'This role can keep work moving, and Activity helps confirm whether collaboration is compounding.',
+        eyebrow: 'Activity center',
+        title: 'See what the team is moving now',
+        summary: 'Turn member joins, note creation, and roadmap updates into one readable timeline so the workspace feels easy to understand.',
+        readOnlyHint: 'You are in a read-only role and can review activity without misleading edit prompts.',
+        writableHint: 'You can keep work moving, and this view helps confirm whether collaboration is compounding.',
         workspace: 'Workspace',
         total: 'Total activity',
-        activeFilter: 'Filter',
+        activeFilter: 'Active filter',
         filters: {
           all: 'All activity',
           member_joined: 'Member joined',
           note_created: 'Note created',
           roadmap_updated: 'Roadmap updated',
         },
-        loading: 'Loading activity feed...',
-        errorFallback: 'Unable to load activity feed',
+        loading: 'Loading activity...',
+        errorFallback: 'Unable to load activity',
         empty: 'No activity matches the current filter yet. Invite a teammate, add a note, or update the roadmap.',
         open: 'Open',
         happenedAt: 'Happened at',
-        noWorkspace: 'There is no active workspace context right now.',
+        noWorkspace: 'There is no active workspace right now.',
       }
 )
 
@@ -151,7 +151,7 @@ watch(
   <div class="mx-auto max-w-6xl px-6 py-8 lg:px-10">
     <header class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
       <div class="max-w-3xl">
-        <div class="product-eyebrow border border-[rgba(45,122,120,0.14)] bg-white/80 text-[var(--accent)]">
+        <div class="product-eyebrow border border-[rgba(37,99,235,0.14)] bg-white/80 text-[var(--accent)]">
           <span class="h-2.5 w-2.5 rounded-full bg-[var(--accent)]"></span>
           {{ copy.eyebrow }}
         </div>
@@ -170,8 +170,7 @@ watch(
           <div class="summary-label">{{ copy.total }}</div>
           <div class="summary-value">{{ activityResponse?.total_items ?? 0 }}</div>
           <p class="summary-copy">
-            {{ copy.activeFilter }}:
-            {{ filterOptions.find((item) => item.value === currentFilter)?.label }}
+            {{ copy.activeFilter }}：{{ filterOptions.find((item) => item.value === currentFilter)?.label }}
           </p>
         </article>
       </div>
@@ -211,9 +210,7 @@ watch(
           </div>
 
           <div class="activity-side">
-            <div class="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--ink-soft)]">
-              {{ copy.happenedAt }}
-            </div>
+            <div class="text-xs font-semibold text-[var(--ink-soft)]">{{ copy.happenedAt }}</div>
             <div class="mt-2 text-sm font-semibold text-[var(--ink-main)]">{{ formatDate(item.occurred_at) }}</div>
             <button class="product-button-secondary mt-4 !px-5 !py-3" type="button" @click="router.push(item.href)">
               {{ copy.open }}
@@ -241,7 +238,7 @@ watch(
 }
 
 .summary-label {
-  @apply text-[10px] font-black uppercase tracking-[0.24em] text-[var(--ink-soft)];
+  @apply text-xs font-semibold text-[var(--ink-soft)];
 }
 
 .summary-value {
@@ -261,7 +258,7 @@ watch(
 }
 
 .chip {
-  @apply rounded-full border border-[rgba(20,33,43,0.12)] bg-white px-4 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--ink-soft)] transition-all;
+  @apply rounded-full border border-[rgba(20,33,43,0.12)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink-soft)] transition-all;
 }
 
 .chip:hover {
@@ -284,7 +281,7 @@ watch(
 }
 
 .pill {
-  @apply inline-flex rounded-full bg-[rgba(20,33,43,0.06)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[var(--ink-main)];
+  @apply inline-flex rounded-full bg-[rgba(20,33,43,0.06)] px-3 py-1 text-xs font-semibold text-[var(--ink-main)];
 }
 
 .empty-card {

@@ -10,285 +10,276 @@ const localeStore = useLocaleStore()
 
 const primaryHref = computed(() => (authStore.isLoggedIn ? '/admin/dashboard' : '/register'))
 const secondaryHref = computed(() =>
-  authStore.isLoggedIn ? '/admin/dashboard' : { name: 'login', query: { redirect: '/admin/dashboard' } }
+  authStore.isLoggedIn ? '/admin/search' : { name: 'login', query: { redirect: '/admin/dashboard' } }
 )
 
 const copy = computed(() =>
   localeStore.isChinese
     ? {
+        descriptor: 'AI 团队工作台',
         nav: {
           product: '产品能力',
-          workflow: '团队场景',
-          pricing: '收费方式',
+          scenarios: '适用团队',
+          pricing: '价格方案',
         },
-        badge: `${BRAND.name} · Workspace Intelligence for AI Teams`,
-        title: '把 Roadmap、研究笔记、团队协作和交付资产，重构成一套可运营的 Workspace 产品。',
+        badge: `${BRAND.name} · 让团队协作更清晰`,
+        title: '把路线图、笔记和团队协作放进同一个工作空间',
         summary:
-          'LLM Tracker 不只是记录内容，而是把 AI 团队每天产生的方法、结论、进度和责任，沉淀成可以持续复用的商业系统。',
-        primary: authStore.isLoggedIn ? '进入 Dashboard' : '开始创建 Workspace',
-        secondary: authStore.isLoggedIn ? '打开 Ops Console' : '登录查看产品',
+          'ContextOps 帮你把目标、进度、知识和成员协作放到一个清晰入口里。少切换工具，少丢上下文，更快把想法推进成结果。',
+        primary: authStore.isLoggedIn ? '进入工作台' : '立即开始',
+        secondary: authStore.isLoggedIn ? '打开搜索' : '登录体验',
         highlights: [
-          { value: 'Workspace', label: '把人、内容、权限和项目边界管理在同一层' },
-          { value: 'Knowledge Ops', label: '让研究流程不再散落在文档、聊天和代码仓库里' },
-          { value: 'Execution Memory', label: '把团队经验沉淀成下一次可复制的执行资产' },
+          { title: '一个入口', description: '最重要的信息先看到，不用在多个页面之间反复切换。' },
+          { title: '进度清楚', description: '路线图、笔记和动态保持同步，团队知道现在该做什么。' },
+          { title: '经验沉淀', description: '每次研究与交付都会留下可复用的记录，而不是散落在各处。' },
         ],
-        consoleTitle: 'Workspace Ops Console',
-        consoleSummary: '从 dashboard 直接看到团队的推进速度、协作结构、近期活动和 onboarding 状态。',
+        consoleTitle: '空间总览',
+        consoleName: '产品增长空间',
+        consoleSummary: '打开后先看到最重要的事：完成率、待推进节点、最新笔记和最近动态。',
         consoleMetrics: [
-          { label: 'Completion Rate', value: '74%', hint: 'Roadmap 节点按优先级持续推进' },
-          { label: 'Active Notes', value: '18', hint: '研究结论与 roadmap 节点保持关联' },
-          { label: 'Team Coverage', value: '8', hint: 'Owner / Admin / Member / Viewer 分层协作' },
+          { label: '完成率', value: '74%', hint: '本周重点节点仍在持续推进' },
+          { label: '进行中', value: '6', hint: '每个节点都能看到负责人和状态' },
+          { label: '笔记数', value: '18', hint: '研究结论与交付动作保持关联' },
         ],
-        activityTitle: 'Recent Activity',
+        activityTitle: '最近动态',
         activities: [
-          '新成员加入 AI Delivery Workspace',
-          '评估模板被更新并同步到 Research Notes',
-          'Roadmap 本周完成 3 个节点，1 个节点进入执行中',
+          '新成员加入产品增长空间，并完成初始协作设置。',
+          '评估方法笔记已更新，并关联到本周重点节点。',
+          '路线图新增两个任务，其中一个已进入执行中。',
         ],
-        problemsTitle: '为什么通用文档工具不够',
-        problems: [
+        proofTitle: '为什么团队会更愿意长期用下去',
+        proofs: [
           {
-            title: '上下文被拆散',
-            description: '知识留在文档，决策留在聊天，交付留在仓库，团队始终看不到完整链路。',
+            title: '首页就能抓住重点',
+            description: '打开空间先看到最关键的信息，不需要用户先理解系统结构。',
           },
           {
-            title: '研究过程不可运营',
-            description: '你知道团队很忙，但无法从一个视图看到谁在推进、哪里卡住、哪些结论可复用。',
+            title: '团队节奏一眼可见',
+            description: '成员变化、路线图推进和笔记沉淀都能快速串起来看。',
           },
           {
-            title: '新成员接不住经验',
-            description: 'Onboarding、复盘和方法论没有沉淀成组织资产，训练成本每次都重新支付。',
+            title: '对新成员也足够友好',
+            description: '新加入的人能快速看懂当前目标、已有结论和接下来要做的事。',
           },
         ],
-        featureTitle: '一个 Workspace 连接项目、研究与团队执行',
+        featureTitle: '围绕团队日常协作，把重点放在最前面',
         features: [
           {
-            eyebrow: 'Dashboard',
-            title: '团队总览开箱即用',
-            description: '成员、路线图、笔记和活动时间线统一在一个首页里查看。',
+            title: '总览台',
+            description: '把完成率、待办、最近动态和关键笔记收进一个首页，先看重点，再进入细节。',
           },
           {
-            eyebrow: 'Permissions',
-            title: '让正确的人看到正确的内容',
-            description: 'Owner、Admin、Member、Viewer 四层角色让协作更清晰，也更少混乱。',
+            title: '路线图',
+            description: '把方向拆成清晰节点，让团队知道现在推进到哪、下一步去哪里。',
           },
           {
-            eyebrow: 'Research Notes',
-            title: '笔记回到业务上下文',
-            description: '每一条研究记录都能挂接到 roadmap 节点、交付目标和团队动作。',
+            title: '研究笔记',
+            description: '记录结论、实验和方案讨论，让笔记始终留在业务上下文里。',
           },
           {
-            eyebrow: 'Ops Layer',
-            title: '让团队经验可以复利',
-            description: '把一次次研究、试验和交付，沉淀成下一次更快启动的运营系统。',
+            title: '团队权限',
+            description: '不同角色看到不同边界，既能协作，也能让空间保持清晰秩序。',
           },
         ],
-        workflowTitle: '适合哪些团队先用起来',
-        workflows: [
+        scenariosTitle: '这些团队会最先感受到价值',
+        scenarios: [
           {
             title: 'AI 创业团队',
-            description: '把产品探索、评估方法、模型试验和交付节奏压进同一套团队空间。',
+            description: '适合同时推进产品探索、模型评估、交付协作的小团队。',
           },
           {
-            title: '训练营与教育团队',
-            description: '把课程路线、学员输出、教研笔记和运营复盘结构化沉淀。',
+            title: '培训与内容团队',
+            description: '适合需要管理课程路线、资料整理和团队复盘的运营场景。',
           },
           {
             title: '实验室与技术组织',
-            description: '围绕实验、项目和论文建立长期可继承的知识系统，而不是临时资料堆。',
+            description: '适合围绕项目、论文和实验长期沉淀知识与执行记录。',
           },
         ],
-        pricingTitle: '从一个团队开始，按协作规模逐步升级',
+        pricingTitle: '从一个团队开始，按协作规模升级',
         pricing: [
           {
-            name: 'Starter',
+            name: '个人试用',
             price: '免费',
-            description: '适合个人验证与小规模试运行',
-            bullets: ['1 个 workspace', '核心 notes 与 roadmap', '基础团队协作'],
+            description: '适合个人体验与最初验证',
+            bullets: ['1 个空间', '基础路线图与笔记', '个人工作流试运行'],
           },
           {
-            name: 'Team',
-            price: '¥299 / workspace / 月',
-            description: '适合需要统一项目、知识与协作节奏的团队',
-            bullets: ['权限治理与团队协作', '活动与 onboarding 视图', '更清晰的项目执行结构'],
+            name: '团队版',
+            price: '299 元 / 空间 / 月',
+            description: '适合已经开始团队协作的业务',
+            bullets: ['成员与权限管理', '总览、动态与搜索', '更清晰的协作结构'],
             featured: true,
           },
           {
-            name: 'Enterprise',
-            price: '定制报价',
-            description: '适合跨团队、多角色、复杂协作场景',
-            bullets: ['多 workspace 治理', '更正式的协作流程', '迁移与落地支持'],
+            name: '企业版',
+            price: '联系咨询',
+            description: '适合多团队与更复杂的治理需求',
+            bullets: ['多空间管理', '更正式的协作流程', '迁移与落地支持'],
           },
         ],
-        ctaTitle: '让团队在一个 Workspace 里同步目标、研究与执行。',
-        ctaSummary:
-          '少切换工具，少丢上下文，更快把想法推进成清晰、可追踪、可交付的结果。',
+        ctaTitle: '让团队在一个空间里同步目标、知识和执行',
+        ctaSummary: '越少切换，越少遗漏。让每一次讨论、记录和推进都回到同一个地方。',
       }
     : {
+        descriptor: 'AI workspace for teams',
         nav: {
           product: 'Product',
-          workflow: 'Use Cases',
+          scenarios: 'Teams',
           pricing: 'Pricing',
         },
-        badge: `${BRAND.name} · Workspace Intelligence for AI Teams`,
-        title: 'Turn roadmap, research notes, collaboration, and delivery assets into a product-grade workspace.',
+        badge: `${BRAND.name} · Clearer teamwork for AI teams`,
+        title: 'Keep roadmap, notes, and collaboration inside one workspace',
         summary:
-          'LLM Tracker is not another place to write things down. It is where AI teams compound methods, decisions, progress, and ownership into a reusable operating system.',
-        primary: authStore.isLoggedIn ? 'Open dashboard' : 'Launch workspace',
-        secondary: authStore.isLoggedIn ? 'Open Ops Console' : 'Sign in',
+          'ContextOps gives teams one clear place for goals, progress, knowledge, and collaboration so work keeps moving without losing context.',
+        primary: authStore.isLoggedIn ? 'Open workspace' : 'Get started',
+        secondary: authStore.isLoggedIn ? 'Open search' : 'Sign in',
         highlights: [
-          { value: 'Workspace', label: 'Manage people, content, permissions, and project scope in one operating layer' },
-          { value: 'Knowledge Ops', label: 'Keep research workflows out of scattered docs, chat threads, and repos' },
-          { value: 'Execution Memory', label: 'Turn team experience into reusable delivery capital' },
+          { title: 'One home', description: 'See the most important information first instead of bouncing across tools.' },
+          { title: 'Clear progress', description: 'Roadmap, notes, and activity stay aligned so the team knows what happens next.' },
+          { title: 'Reusable memory', description: 'Research and delivery work turn into knowledge the team can use again.' },
         ],
-        consoleTitle: 'Workspace Ops Console',
-        consoleSummary: 'See execution velocity, team structure, recent activity, and onboarding progress from one dashboard.',
+        consoleTitle: 'Workspace overview',
+        consoleName: 'Product Growth Workspace',
+        consoleSummary: 'Open the workspace and immediately see completion, active work, recent notes, and team activity.',
         consoleMetrics: [
-          { label: 'Completion Rate', value: '74%', hint: 'Roadmap stages keep moving against shared priorities' },
-          { label: 'Active Notes', value: '18', hint: 'Research insight stays connected to roadmap decisions' },
-          { label: 'Team Coverage', value: '8', hint: 'Owner, Admin, Member, and Viewer roles stay explicit' },
+          { label: 'Completion', value: '74%', hint: 'Priority work keeps moving through the roadmap' },
+          { label: 'In progress', value: '6', hint: 'Every active node has visible context and ownership' },
+          { label: 'Notes', value: '18', hint: 'Research stays attached to delivery decisions' },
         ],
-        activityTitle: 'Recent Activity',
+        activityTitle: 'Recent activity',
         activities: [
-          'A new teammate joined the AI Delivery workspace',
-          'The evaluation playbook was updated and linked to research notes',
-          'Three roadmap items shipped this week and one moved into progress',
+          'A new teammate joined the growth workspace and completed setup.',
+          'The evaluation note was refreshed and linked to a priority node.',
+          'Two new roadmap items were added and one moved into progress.',
         ],
-        problemsTitle: 'Why generic document tools stop short',
-        problems: [
+        proofTitle: 'Why teams keep coming back',
+        proofs: [
           {
-            title: 'Context gets fragmented',
-            description: 'Knowledge lives in docs, decisions live in chat, delivery lives in repos, and the full chain disappears.',
+            title: 'The first screen does the heavy lifting',
+            description: 'Users see the important information first without learning the whole system.',
           },
           {
-            title: 'Research lacks an operating view',
-            description: 'Teams stay busy without a clear picture of what is moving, what is blocked, and what is reusable.',
+            title: 'Team momentum is visible',
+            description: 'Members, roadmap movement, and notes are easy to read together.',
           },
           {
-            title: 'Experience does not compound',
-            description: 'Onboarding, retrospectives, and methods do not become durable organizational memory.',
+            title: 'New teammates ramp faster',
+            description: 'People can quickly understand goals, context, and what needs attention next.',
           },
         ],
-        featureTitle: 'One workspace for projects, research, and team execution',
+        featureTitle: 'Built around daily teamwork with the most important things first',
         features: [
           {
-            eyebrow: 'Dashboard',
-            title: 'A clear home for the team',
-            description: 'Members, roadmap, notes, and recent activity are visible from one workspace home.',
+            title: 'Dashboard',
+            description: 'Bring completion, next steps, activity, and important notes into one focused home.',
           },
           {
-            eyebrow: 'Permissions',
-            title: 'The right access for the right people',
-            description: 'Owner, Admin, Member, and Viewer roles keep collaboration clear from day one.',
+            title: 'Roadmap',
+            description: 'Break direction into clear nodes so the team knows what is moving and what comes next.',
           },
           {
-            eyebrow: 'Research Notes',
-            title: 'Notes stay inside execution context',
-            description: 'Every insight can be tied back to a roadmap step, delivery objective, or operating decision.',
+            title: 'Research notes',
+            description: 'Capture findings, experiments, and decisions without losing business context.',
           },
           {
-            eyebrow: 'Ops Layer',
-            title: 'Let experience compound',
-            description: 'Turn repeated research, experiments, and delivery work into a faster next launch.',
+            title: 'Permissions',
+            description: 'Give every role the right surface while keeping the workspace orderly.',
           },
         ],
-        workflowTitle: 'Best fit for teams building AI capability',
-        workflows: [
+        scenariosTitle: 'Teams that feel the value first',
+        scenarios: [
           {
             title: 'AI startups',
-            description: 'Unify exploration, evaluation method, experimentation, and delivery cadence in one team space.',
+            description: 'Great for teams balancing product exploration, evaluation work, and delivery.',
           },
           {
-            title: 'Training programs',
-            description: 'Structure curriculum paths, learner outputs, instructor notes, and operating retrospectives.',
+            title: 'Training and content teams',
+            description: 'Useful for course planning, material organization, and operating review loops.',
           },
           {
             title: 'Labs and technical orgs',
-            description: 'Build durable knowledge systems around experiments, projects, and papers instead of ad hoc folders.',
+            description: 'Helpful for long-running knowledge and execution around projects, papers, and experiments.',
           },
         ],
-        pricingTitle: 'Start with one team and scale as collaboration grows',
+        pricingTitle: 'Start with one team and grow with collaboration',
         pricing: [
           {
             name: 'Starter',
             price: 'Free',
-            description: 'For solo operators and early validation',
-            bullets: ['1 workspace', 'Core notes and roadmap', 'Foundational collaboration'],
+            description: 'For early exploration and solo validation',
+            bullets: ['1 workspace', 'Core roadmap and notes', 'Personal workflow testing'],
           },
           {
             name: 'Team',
             price: '$39 / workspace / month',
-            description: 'For teams that need one place for project work, knowledge, and collaboration',
-            bullets: ['Permission governance and team collaboration', 'Activity and onboarding visibility', 'A clearer operating structure for work'],
+            description: 'For teams already collaborating around shared work',
+            bullets: ['Members and permissions', 'Dashboard, activity, and search', 'A clearer team operating structure'],
             featured: true,
           },
           {
             name: 'Enterprise',
-            price: 'Custom',
-            description: 'For multi-team, multi-role, higher-governance environments',
-            bullets: ['Multi-workspace governance', 'Formal collaboration workflows', 'Migration and rollout support'],
+            price: 'Contact sales',
+            description: 'For multi-team setups and stronger governance needs',
+            bullets: ['Multi-workspace management', 'More formal collaboration flows', 'Migration and rollout support'],
           },
         ],
-        ctaTitle: 'Keep goals, research, and execution in one workspace.',
-        ctaSummary:
-          'Spend less time switching tools, lose less context, and move ideas into trackable, deliverable work faster.',
+        ctaTitle: 'Keep goals, knowledge, and execution in one workspace',
+        ctaSummary: 'Switch less, lose less, and move work forward with more clarity.',
       }
 )
 </script>
 
 <template>
   <div class="page-shell overflow-hidden">
-    <section class="relative pb-16 pt-6 md:pb-24">
-      <div class="absolute inset-x-0 top-0 h-[620px] bg-[radial-gradient(circle_at_top_left,_rgba(216,110,59,0.16),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(45,122,120,0.14),_transparent_26%),linear-gradient(180deg,_rgba(255,251,245,0.86)_0%,_rgba(244,241,235,0.48)_70%,_transparent_100%)]"></div>
+    <section class="relative pb-18 pt-6 md:pb-24">
+      <div class="absolute inset-x-0 top-0 h-[620px] bg-[radial-gradient(circle_at_top_left,_rgba(229,106,43,0.15),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(37,99,235,0.12),_transparent_24%),linear-gradient(180deg,_rgba(255,255,255,0.84)_0%,_rgba(245,247,251,0.3)_70%,_transparent_100%)]"></div>
 
-      <header class="product-shell relative z-10 flex items-center justify-between gap-4 py-5">
+      <header class="product-shell relative z-10 flex items-center justify-between gap-5 py-5">
         <router-link to="/" class="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <span class="flex h-11 w-11 items-center justify-center rounded-[1.35rem] bg-[var(--ink-strong)] text-sm font-black tracking-[0.18em] text-white shadow-[0_20px_40px_rgba(20,33,43,0.16)]">
-              {{ BRAND.mark }}
+          <span class="flex h-11 w-11 items-center justify-center rounded-[1.2rem] bg-[var(--ink-strong)] text-sm font-black tracking-[0.18em] text-white shadow-[0_18px_36px_rgba(20,33,43,0.16)]">
+            {{ BRAND.mark }}
+          </span>
+          <span>
+            <span class="block font-[var(--font-display)] text-base font-black tracking-[-0.04em] text-[var(--ink-strong)]">
+              {{ BRAND.name }}
             </span>
-            <span>
-              <span class="block font-[var(--font-display)] text-sm font-black uppercase tracking-[0.32em] text-[var(--ink-strong)]">
-                {{ BRAND.name }}
-              </span>
-              <span class="block text-[10px] font-black uppercase tracking-[0.34em] text-[var(--ink-soft)]">
-                {{ BRAND.descriptor }}
-              </span>
+            <span class="block text-xs font-semibold text-[var(--ink-soft)]">
+              {{ copy.descriptor }}
             </span>
-          </router-link>
+          </span>
+        </router-link>
 
-        <nav class="hidden items-center gap-7 text-[11px] font-black uppercase tracking-[0.24em] text-[var(--ink-soft)] lg:flex">
-          <a href="#product" class="transition-colors hover:text-[var(--ink-strong)]">{{ copy.nav.product }}</a>
-          <a href="#workflow" class="transition-colors hover:text-[var(--ink-strong)]">{{ copy.nav.workflow }}</a>
+        <nav class="hidden items-center gap-7 text-sm font-semibold text-[var(--ink-soft)] lg:flex">
+          <a href="#features" class="transition-colors hover:text-[var(--ink-strong)]">{{ copy.nav.product }}</a>
+          <a href="#scenarios" class="transition-colors hover:text-[var(--ink-strong)]">{{ copy.nav.scenarios }}</a>
           <a href="#pricing" class="transition-colors hover:text-[var(--ink-strong)]">{{ copy.nav.pricing }}</a>
         </nav>
 
         <div class="flex items-center gap-3">
           <LanguageSwitcher />
-          <router-link :to="secondaryHref" class="product-button-secondary hidden lg:inline-flex">
+          <router-link :to="secondaryHref" class="hidden rounded-full px-4 py-2 text-sm font-semibold text-[var(--ink-main)] transition-colors hover:bg-white/70 md:inline-flex">
             {{ copy.secondary }}
-          </router-link>
-          <router-link :to="primaryHref" class="product-button-primary">
-            {{ copy.primary }}
           </router-link>
         </div>
       </header>
 
-      <div class="product-shell relative z-10 grid gap-10 pt-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:items-center lg:pt-16">
-        <div class="max-w-3xl">
-          <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-[rgba(255,255,255,0.72)] text-[var(--brand)]">
+      <div class="product-shell relative z-10 grid gap-10 pt-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(340px,0.98fr)] lg:items-center">
+        <div>
+          <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/82 text-[var(--brand)]">
             <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
             {{ copy.badge }}
           </div>
 
-          <h1 class="product-title mt-8 text-5xl leading-[0.92] md:text-6xl xl:text-7xl">
+          <h1 class="product-title mt-8 max-w-4xl text-5xl leading-[0.92] md:text-6xl xl:text-7xl">
             {{ copy.title }}
           </h1>
 
-          <p class="product-body mt-7 max-w-2xl text-lg md:text-[1.15rem]">
+          <p class="product-body mt-6 max-w-2xl text-lg md:text-[1.08rem]">
             {{ copy.summary }}
           </p>
 
-          <div class="mt-10 flex flex-col gap-4 sm:flex-row">
+          <div class="mt-9 flex flex-col gap-4 sm:flex-row">
             <router-link :to="primaryHref" class="product-button-primary">
               {{ copy.primary }}
             </router-link>
@@ -297,33 +288,33 @@ const copy = computed(() =>
             </router-link>
           </div>
 
-          <div class="mt-12 grid gap-4 md:grid-cols-3">
-            <div v-for="item in copy.highlights" :key="item.value" class="product-stat">
-              <div class="text-xs font-black uppercase tracking-[0.26em] text-[var(--ink-soft)]">{{ item.value }}</div>
-              <p class="mt-4 text-sm font-semibold leading-7 text-[var(--ink-main)]">{{ item.label }}</p>
-            </div>
+          <div class="mt-10 grid gap-4 md:grid-cols-3">
+            <article v-for="item in copy.highlights" :key="item.title" class="product-stat">
+              <div class="text-base font-bold tracking-[-0.03em] text-[var(--ink-strong)]">{{ item.title }}</div>
+              <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ item.description }}</p>
+            </article>
           </div>
         </div>
 
         <div class="relative">
-          <div class="absolute -left-6 top-10 h-40 w-40 rounded-full bg-[rgba(216,110,59,0.16)] blur-3xl"></div>
-          <div class="absolute -right-5 bottom-10 h-44 w-44 rounded-full bg-[rgba(45,122,120,0.18)] blur-3xl"></div>
+          <div class="absolute -left-6 top-10 h-40 w-40 rounded-full bg-[rgba(229,106,43,0.16)] blur-3xl"></div>
+          <div class="absolute -right-5 bottom-10 h-44 w-44 rounded-full bg-[rgba(37,99,235,0.18)] blur-3xl"></div>
 
-          <div class="relative overflow-hidden rounded-[2.2rem] bg-[var(--surface-dark)] p-6 text-white shadow-[0_40px_120px_rgba(20,33,43,0.2)] md:p-8">
+          <div class="relative overflow-hidden rounded-[2.3rem] bg-[var(--surface-dark)] p-6 text-white shadow-[0_40px_120px_rgba(20,33,43,0.2)] md:p-8">
             <div class="flex items-start justify-between gap-5">
               <div>
-                <p class="text-[11px] font-black uppercase tracking-[0.28em] text-[rgba(255,255,255,0.56)]">
+                <p class="text-[11px] font-semibold tracking-[0.08em] text-[rgba(255,255,255,0.56)]">
                   {{ copy.consoleTitle }}
                 </p>
                 <h2 class="mt-3 font-[var(--font-display)] text-3xl font-black tracking-[-0.05em]">
-                  AI Research Workspace
+                  {{ copy.consoleName }}
                 </h2>
                 <p class="mt-4 max-w-md text-sm leading-7 text-[rgba(255,255,255,0.68)]">
                   {{ copy.consoleSummary }}
                 </p>
               </div>
-              <span class="rounded-full bg-white/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[rgba(255,255,255,0.78)]">
-                Live Overview
+              <span class="rounded-full bg-white/10 px-4 py-2 text-[11px] font-semibold text-[rgba(255,255,255,0.76)]">
+                {{ localeStore.isChinese ? '今日概览' : 'Live overview' }}
               </span>
             </div>
 
@@ -333,53 +324,33 @@ const copy = computed(() =>
                 :key="metric.label"
                 class="rounded-[1.5rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-5"
               >
-                <div class="text-[11px] font-black uppercase tracking-[0.24em] text-[rgba(255,255,255,0.54)]">
+                <div class="text-[11px] font-semibold tracking-[0.08em] text-[rgba(255,255,255,0.54)]">
                   {{ metric.label }}
                 </div>
-                <div class="mt-4 font-[var(--font-display)] text-4xl font-black tracking-[-0.06em]">
+                <div class="mt-3 font-[var(--font-display)] text-4xl font-black tracking-[-0.06em]">
                   {{ metric.value }}
                 </div>
-                <p class="mt-3 text-sm leading-6 text-[rgba(255,255,255,0.65)]">{{ metric.hint }}</p>
+                <p class="mt-3 text-sm leading-6 text-[rgba(255,255,255,0.66)]">{{ metric.hint }}</p>
               </div>
             </div>
 
-            <div class="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div class="rounded-[1.6rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-5">
-                <div class="flex items-center justify-between gap-3">
-                  <div class="text-[11px] font-black uppercase tracking-[0.24em] text-[rgba(255,255,255,0.56)]">
-                    {{ copy.activityTitle }}
-                  </div>
-                  <div class="rounded-full bg-[rgba(216,110,59,0.18)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[rgba(255,245,240,0.92)]">
-                    Team Flow
-                  </div>
+            <div class="mt-5 rounded-[1.6rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-5">
+              <div class="flex items-center justify-between gap-3">
+                <div class="text-[11px] font-semibold tracking-[0.08em] text-[rgba(255,255,255,0.56)]">
+                  {{ copy.activityTitle }}
                 </div>
-
-                <div class="mt-4 space-y-3">
-                  <div
-                    v-for="activity in copy.activities"
-                    :key="activity"
-                    class="rounded-[1.2rem] border border-white/10 bg-[rgba(255,255,255,0.06)] px-4 py-3 text-sm leading-6 text-[rgba(255,255,255,0.72)]"
-                  >
-                    {{ activity }}
-                  </div>
+                <div class="rounded-full bg-[rgba(229,106,43,0.18)] px-3 py-1 text-[11px] font-semibold text-[rgba(255,245,240,0.92)]">
+                  {{ localeStore.isChinese ? '持续推进中' : 'Team flow' }}
                 </div>
               </div>
 
-              <div class="rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(216,110,59,0.18),rgba(255,255,255,0.04))] p-5">
-                <p class="text-[11px] font-black uppercase tracking-[0.24em] text-[rgba(255,255,255,0.58)]">Onboarding</p>
-                <div class="mt-4 space-y-3">
-                  <div class="rounded-[1.2rem] bg-[rgba(255,255,255,0.08)] px-4 py-3">
-                    <div class="text-sm font-black text-white">Roadmap baseline</div>
-                    <div class="mt-1 text-sm leading-6 text-[rgba(255,255,255,0.68)]">3 foundational nodes are already mapped</div>
-                  </div>
-                  <div class="rounded-[1.2rem] bg-[rgba(255,255,255,0.08)] px-4 py-3">
-                    <div class="text-sm font-black text-white">Team roles</div>
-                    <div class="mt-1 text-sm leading-6 text-[rgba(255,255,255,0.68)]">Owner and Admin keep governance visible</div>
-                  </div>
-                  <div class="rounded-[1.2rem] bg-[rgba(255,255,255,0.08)] px-4 py-3">
-                    <div class="text-sm font-black text-white">Research memory</div>
-                    <div class="mt-1 text-sm leading-6 text-[rgba(255,255,255,0.68)]">Notes stay linked to delivery decisions</div>
-                  </div>
+              <div class="mt-4 space-y-3">
+                <div
+                  v-for="activity in copy.activities"
+                  :key="activity"
+                  class="rounded-[1.2rem] border border-white/10 bg-[rgba(255,255,255,0.06)] px-4 py-3 text-sm leading-6 text-[rgba(255,255,255,0.72)]"
+                >
+                  {{ activity }}
                 </div>
               </div>
             </div>
@@ -388,95 +359,67 @@ const copy = computed(() =>
       </div>
     </section>
 
-    <section class="product-shell py-16 md:py-24">
-      <div class="grid gap-6 lg:grid-cols-3">
-        <article
-          v-for="item in copy.problems"
-          :key="item.title"
-          class="product-panel rounded-[2rem] p-8"
-        >
-          <div class="text-[11px] font-black uppercase tracking-[0.26em] text-[var(--brand)]">Pain Point</div>
-          <h3 class="mt-5 font-[var(--font-display)] text-3xl font-black tracking-[-0.05em] text-[var(--ink-strong)]">
-            {{ item.title }}
-          </h3>
-          <p class="mt-4 text-base leading-8 text-[var(--ink-soft)]">{{ item.description }}</p>
+    <section class="product-shell pb-6 md:pb-10">
+      <div class="grid gap-5 lg:grid-cols-3">
+        <article v-for="item in copy.proofs" :key="item.title" class="product-panel rounded-[2rem] p-7">
+          <div class="text-sm font-bold text-[var(--ink-strong)]">{{ item.title }}</div>
+          <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ item.description }}</p>
         </article>
       </div>
     </section>
 
-    <section id="product" class="bg-[var(--surface-dark)] py-20 text-white md:py-24">
-      <div class="product-shell">
-        <div class="max-w-4xl">
-          <div class="product-eyebrow border border-white/10 bg-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.72)]">
-            <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
-            Product Layer
-          </div>
-          <h2 class="mt-7 font-[var(--font-display)] text-4xl font-black leading-[0.95] tracking-[-0.06em] md:text-6xl">
-            {{ copy.featureTitle }}
-          </h2>
+    <section id="features" class="product-shell py-14 md:py-18">
+      <div class="max-w-3xl">
+        <div class="product-eyebrow border border-[rgba(37,99,235,0.14)] bg-white/80 text-[var(--accent)]">
+          <span class="h-2.5 w-2.5 rounded-full bg-[var(--accent)]"></span>
+          {{ copy.proofTitle }}
         </div>
+        <h2 class="product-section-title mt-7">{{ copy.featureTitle }}</h2>
+      </div>
 
-        <div class="mt-12 grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
-          <article
-            v-for="feature in copy.features"
-            :key="feature.title"
-            class="rounded-[1.9rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-7"
-          >
-            <div class="text-[11px] font-black uppercase tracking-[0.28em] text-[var(--brand)]">
-              {{ feature.eyebrow }}
-            </div>
-            <h3 class="mt-5 font-[var(--font-display)] text-3xl font-black tracking-[-0.05em]">
-              {{ feature.title }}
-            </h3>
-            <p class="mt-4 text-sm leading-7 text-[rgba(255,255,255,0.68)]">{{ feature.description }}</p>
-          </article>
-        </div>
+      <div class="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <article v-for="feature in copy.features" :key="feature.title" class="product-panel rounded-[2rem] p-7">
+          <h3 class="font-[var(--font-display)] text-3xl font-black tracking-[-0.05em] text-[var(--ink-strong)]">
+            {{ feature.title }}
+          </h3>
+          <p class="mt-4 text-sm leading-7 text-[var(--ink-soft)]">{{ feature.description }}</p>
+        </article>
       </div>
     </section>
 
-    <section id="workflow" class="product-shell py-20 md:py-24">
-      <div class="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-        <div>
-          <div class="product-eyebrow border border-[rgba(45,122,120,0.14)] bg-[rgba(255,255,255,0.72)] text-[var(--accent)]">
-            <span class="h-2.5 w-2.5 rounded-full bg-[var(--accent)]"></span>
-            Team Scenarios
-          </div>
-          <h2 class="product-section-title mt-7">{{ copy.workflowTitle }}</h2>
-        </div>
-
-        <div class="grid gap-5">
-          <article
-            v-for="item in copy.workflows"
-            :key="item.title"
-            class="product-panel rounded-[2rem] p-7"
-          >
-            <h3 class="font-[var(--font-display)] text-3xl font-black tracking-[-0.05em] text-[var(--ink-strong)]">
-              {{ item.title }}
-            </h3>
-            <p class="mt-4 text-base leading-8 text-[var(--ink-soft)]">{{ item.description }}</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="pricing" class="product-shell pb-20 md:pb-24">
-      <div class="max-w-4xl">
-        <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-[rgba(255,255,255,0.72)] text-[var(--brand)]">
+    <section id="scenarios" class="product-shell py-14 md:py-18">
+      <div class="max-w-3xl">
+        <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/80 text-[var(--brand)]">
           <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
-          Pricing Logic
+          {{ copy.nav.scenarios }}
+        </div>
+        <h2 class="product-section-title mt-7">{{ copy.scenariosTitle }}</h2>
+      </div>
+
+      <div class="mt-10 grid gap-5 lg:grid-cols-3">
+        <article v-for="item in copy.scenarios" :key="item.title" class="product-panel rounded-[2rem] p-7">
+          <h3 class="font-[var(--font-display)] text-3xl font-black tracking-[-0.05em] text-[var(--ink-strong)]">
+            {{ item.title }}
+          </h3>
+          <p class="mt-4 text-sm leading-7 text-[var(--ink-soft)]">{{ item.description }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="pricing" class="product-shell pb-16 pt-14 md:pb-20 md:pt-18">
+      <div class="max-w-3xl">
+        <div class="product-eyebrow border border-[rgba(37,99,235,0.14)] bg-white/80 text-[var(--accent)]">
+          <span class="h-2.5 w-2.5 rounded-full bg-[var(--accent)]"></span>
+          {{ copy.nav.pricing }}
         </div>
         <h2 class="product-section-title mt-7">{{ copy.pricingTitle }}</h2>
       </div>
 
-      <div class="mt-12 grid gap-5 lg:grid-cols-3">
+      <div class="mt-10 grid gap-5 lg:grid-cols-3">
         <article
           v-for="plan in copy.pricing"
           :key="plan.name"
-          :class="
-            plan.featured
-              ? 'bg-[var(--ink-strong)] text-white shadow-[0_28px_90px_rgba(20,33,43,0.18)]'
-              : 'product-panel text-[var(--ink-strong)]'
-          "
+          :class="plan.featured ? 'bg-[var(--ink-strong)] text-white shadow-[0_28px_90px_rgba(20,33,43,0.18)]' : 'product-panel text-[var(--ink-strong)]'"
           class="rounded-[2rem] border p-8"
         >
           <div class="flex items-start justify-between gap-4">
@@ -488,9 +431,9 @@ const copy = computed(() =>
             </div>
             <span
               v-if="plan.featured"
-              class="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-[rgba(255,255,255,0.82)]"
+              class="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-[rgba(255,255,255,0.82)]"
             >
-              Recommended
+              {{ localeStore.isChinese ? '推荐' : 'Recommended' }}
             </span>
           </div>
 
@@ -500,11 +443,7 @@ const copy = computed(() =>
             <div
               v-for="bullet in plan.bullets"
               :key="bullet"
-              :class="
-                plan.featured
-                  ? 'bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.76)]'
-                  : 'bg-[rgba(255,255,255,0.64)] text-[var(--ink-main)]'
-              "
+              :class="plan.featured ? 'bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.76)]' : 'bg-[rgba(255,255,255,0.64)] text-[var(--ink-main)]'"
               class="rounded-[1.2rem] px-4 py-3 text-sm font-semibold leading-6"
             >
               {{ bullet }}
@@ -518,7 +457,9 @@ const copy = computed(() =>
       <div class="product-shell overflow-hidden rounded-[2.4rem] bg-[var(--ink-strong)] px-8 py-10 text-white shadow-[0_34px_120px_rgba(20,33,43,0.18)] md:px-12 md:py-14">
         <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
           <div class="max-w-4xl">
-            <div class="text-[11px] font-black uppercase tracking-[0.28em] text-[rgba(255,255,255,0.56)]">Unified Workflow</div>
+            <div class="text-sm font-semibold text-[rgba(255,255,255,0.56)]">
+              {{ BRAND.name }}
+            </div>
             <h2 class="mt-5 font-[var(--font-display)] text-4xl font-black leading-[0.95] tracking-[-0.06em] md:text-6xl">
               {{ copy.ctaTitle }}
             </h2>

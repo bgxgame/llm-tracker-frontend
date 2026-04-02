@@ -22,65 +22,65 @@ const errorMessage = ref('')
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        badge: `${BRAND.name} · Workspace Access`,
-        title: '进入你的 Workspace Ops Console',
-        summary: '继续管理团队 roadmap、研究笔记、近期活动和协作权限，不再让关键上下文散落在别处。',
+        badge: `${BRAND.name} · 欢迎回来`,
+        title: '继续推进你的团队空间',
+        summary: '登录后直接回到总览台，查看团队进度、最新动态和待处理事项。',
         username: '用户名',
         usernamePlaceholder: 'team-operator',
         password: '密码',
         passwordPlaceholder: '输入你的密码',
-        submit: '进入 Workspace',
-        submitting: '正在进入...',
-        sideTitle: '登录后你会回到什么体验',
+        submit: '登录',
+        submitting: '登录中...',
+        sideTitle: '登录后你会看到',
         sideCards: [
           {
-            title: 'Dashboard first',
-            body: '登录后默认进入 command center，先看团队指标、onboarding 和 recent activity。',
+            title: '总览优先',
+            body: '先看到完成率、待办和最近动态，不需要先理解整个系统。',
           },
           {
-            title: 'Role-aware access',
-            body: '不同角色看到不同能力边界，Viewer 也不会再被误导到写操作入口。',
+            title: '权限清楚',
+            body: '不同角色进入后看到各自该做的事，不会被多余操作打扰。',
           },
           {
-            title: 'One operating flow',
-            body: '从统一的 workspace 继续推进团队工作，而不是回到零散工具堆。',
+            title: '协作连续',
+            body: '从同一个空间继续推进路线图、笔记和团队协作，而不是回到零散工具。',
           },
         ],
-        helperTitle: '为什么团队会频繁打开它',
-        helperBody: '因为这里不是单纯“记笔记”的地方，而是运营 workspace、跟踪交付和沉淀方法论的主入口。',
+        helperTitle: '为什么团队会频繁打开',
+        helperBody: '因为这里不是单纯的记录页，而是每天看进度、找信息和继续协作的入口。',
         registerLead: '还没有账号？',
         registerAction: '创建团队空间',
         error: '登录失败，请稍后重试',
       }
     : {
-        badge: `${BRAND.name} · Workspace Access`,
-        title: 'Enter your Workspace Ops Console',
-        summary: 'Return to roadmap execution, research notes, recent activity, and permission-aware collaboration from one place.',
+        badge: `${BRAND.name} · Welcome back`,
+        title: 'Return to your team workspace',
+        summary: 'Sign in and jump straight back into the dashboard, recent activity, and next actions.',
         username: 'Username',
         usernamePlaceholder: 'team-operator',
         password: 'Password',
         passwordPlaceholder: 'Enter your password',
-        submit: 'Enter workspace',
+        submit: 'Sign in',
         submitting: 'Signing in...',
-        sideTitle: 'What waits after sign-in',
+        sideTitle: 'What you get after sign-in',
         sideCards: [
           {
             title: 'Dashboard first',
-            body: 'Land in the command center by default and immediately see team metrics, onboarding, and recent activity.',
+            body: 'See completion, next steps, and recent activity before anything else.',
           },
           {
-            title: 'Role-aware access',
-            body: 'Every role sees the right operating surface, and viewers are not nudged toward write actions.',
+            title: 'Clear permissions',
+            body: 'Each role lands on the right surface without extra noise or wrong prompts.',
           },
           {
-            title: 'One operating flow',
-            body: 'Keep working from one workspace instead of returning to a fragmented tool stack.',
+            title: 'Continuous collaboration',
+            body: 'Keep moving roadmap, notes, and teamwork forward from one shared space.',
           },
         ],
-        helperTitle: 'Why teams return here often',
-        helperBody: 'This is not just where notes live. It is the main surface for operating a workspace, tracking delivery, and compounding methods.',
+        helperTitle: 'Why teams come back often',
+        helperBody: 'This is not just where records live. It is the daily entry point for progress, context, and teamwork.',
         registerLead: 'Need an account?',
-        registerAction: 'Create team space',
+        registerAction: 'Create workspace',
         error: 'Unable to sign in right now',
       }
 )
@@ -135,7 +135,7 @@ const handleLogin = async () => {
 
       <section class="order-1 lg:order-2">
         <div class="product-panel rounded-[2.4rem] p-8 md:p-10">
-          <div class="product-eyebrow border border-[rgba(216,110,59,0.14)] bg-white/80 text-[var(--brand)]">
+          <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/80 text-[var(--brand)]">
             <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
             {{ copy.badge }}
           </div>
@@ -169,7 +169,7 @@ const handleLogin = async () => {
           </form>
 
           <div class="product-muted-card mt-6 px-5 py-4">
-            <div class="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--accent)]">
+            <div class="text-sm font-bold text-[var(--accent)]">
               {{ copy.helperTitle }}
             </div>
             <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ copy.helperBody }}</p>
