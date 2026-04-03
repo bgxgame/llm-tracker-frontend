@@ -41,7 +41,7 @@ const copy = computed(() =>
         sideCards: [
           { title: '先画主线', body: '把复杂任务先整理成一条清晰路径。' },
           { title: '再补节点内容', body: '方法、结论和过程都挂在对应节点下面。' },
-          { title: '需要时再邀请别人', body: '先自己跑顺，再把协作者拉进来。' },
+          { title: '需要时再邀请别人', body: '先把自己的推进理顺，再把协作者拉进来。' },
         ],
         loginLead: '已经有账号？',
         loginAction: '去登录',

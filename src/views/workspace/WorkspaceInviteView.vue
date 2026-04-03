@@ -26,9 +26,9 @@ const copy = computed(() =>
     ? {
         badge: '空间邀请',
         title: '加入新的协作空间',
-        summary: '加入后就能继续看路线图、笔记和当前推进。',
+        summary: '加入后就能直接看到路线图、节点内容和当前推进状态。',
         inviter: '邀请人',
-        role: '加入角色',
+        role: '加入身份',
         expires: '失效时间',
         accept: '加入这个空间',
         accepting: '加入中...',
@@ -36,6 +36,8 @@ const copy = computed(() =>
         register: '注册后加入',
         success: '已加入空间，正在进入路线图...',
         loadError: '邀请链接无效或已失效',
+        stepsTitle: '加入后会发生什么',
+        steps: ['进入这套空间的路线图', '继续查看节点下的笔记和资料', '按分配的身份开始协作'],
       }
     : {
         badge: 'Workspace invite',
@@ -50,6 +52,8 @@ const copy = computed(() =>
         register: 'Register to join',
         success: 'Workspace joined. Opening roadmap...',
         loadError: 'The invite link is invalid or expired',
+        stepsTitle: 'What happens next',
+        steps: ['Open the roadmap in this workspace', 'Continue into the notes and linked materials', 'Start working with the assigned role'],
       }
 )
 
@@ -129,7 +133,7 @@ onMounted(() => {
 
 <template>
   <div class="page-shell px-5 py-6 md:px-8 md:py-8">
-    <div class="product-shell mx-auto max-w-3xl">
+    <div class="product-shell mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.05fr_0.95fr]">
       <section class="product-panel rounded-[2.4rem] p-8 md:p-10">
         <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/80 text-[var(--brand)]">
           <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
@@ -191,6 +195,28 @@ onMounted(() => {
           {{ errorMessage }}
         </div>
       </section>
+
+      <aside class="rounded-[2.4rem] bg-[var(--surface-dark)] p-8 text-white shadow-[0_36px_120px_rgba(20,33,43,0.18)] md:p-10">
+        <div class="product-eyebrow border border-white/10 bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.76)]">
+          <span class="h-2.5 w-2.5 rounded-full bg-[var(--accent)]"></span>
+          {{ copy.stepsTitle }}
+        </div>
+
+        <div class="mt-8 space-y-3">
+          <article
+            v-for="(step, index) in copy.steps"
+            :key="step"
+            class="flex gap-4 rounded-[1.4rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-4"
+          >
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm font-black text-white/88">
+              {{ index + 1 }}
+            </span>
+            <p class="pt-1 text-sm font-semibold leading-7 text-[rgba(255,255,255,0.78)]">
+              {{ step }}
+            </p>
+          </article>
+        </div>
+      </aside>
     </div>
   </div>
 </template>
