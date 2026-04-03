@@ -32,7 +32,7 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         title: '路线图',
-        summary: '先看主线，点节点，再往下看公开内容。',
+        summary: '先看主线，再点节点继续阅读对应内容。',
         loading: '正在加载路线图...',
         notesLoading: '正在加载笔记...',
         loadError: '这个分享页面已失效或不存在。',
@@ -42,8 +42,6 @@ const copy = computed(() =>
         emptyHint: '点一个节点，继续往下看内容。',
         openNote: '进入阅读',
         shareTag: '公开分享',
-        registerTitle: '把你的推进也放到一张图里',
-        registerSummary: '路线、节点、笔记放在一起，别人一眼就能看懂你在做什么。',
         registerAction: '立即免费使用',
         loginAction: '登录',
         openCanvas: '点节点展开内容',
@@ -56,7 +54,7 @@ const copy = computed(() =>
       }
     : {
         title: 'Roadmap',
-        summary: 'See the path first, then click a node and continue into the public content below.',
+        summary: 'See the path first, then continue into the linked public content.',
         loading: 'Loading roadmap...',
         notesLoading: 'Loading notes...',
         loadError: 'This shared page is no longer available.',
@@ -66,8 +64,6 @@ const copy = computed(() =>
         emptyHint: 'Click a node and continue into the content below.',
         openNote: 'Open note',
         shareTag: 'Public share',
-        registerTitle: 'Turn your own work into one clear roadmap',
-        registerSummary: 'Keep the path, nodes, and notes in one visible view.',
         registerAction: 'Start free',
         loginAction: 'Sign in',
         openCanvas: 'Click a node to open content',
@@ -293,23 +289,6 @@ onMounted(() => {
       </template>
 
       <div v-else class="admin-empty">{{ copy.emptyHint }}</div>
-    </section>
-
-    <section class="mx-auto mt-4 max-w-6xl rounded-[28px] border border-[rgba(15,23,42,0.06)] bg-[var(--surface-dark)] px-6 py-6 text-white md:px-8">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div class="max-w-3xl">
-          <div class="text-2xl font-bold tracking-[-0.04em]">{{ copy.registerTitle }}</div>
-          <p class="mt-3 text-sm leading-7 text-[rgba(255,255,255,0.68)]">{{ copy.registerSummary }}</p>
-        </div>
-        <div class="flex flex-wrap gap-3">
-          <button class="product-button-secondary" type="button" @click="router.push('/login')">
-            {{ copy.loginAction }}
-          </button>
-          <button class="product-button-primary" type="button" @click="router.push('/register')">
-            {{ copy.registerAction }}
-          </button>
-        </div>
-      </div>
     </section>
   </div>
 </template>

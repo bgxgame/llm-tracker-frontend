@@ -21,6 +21,7 @@ const copy = computed(() =>
         workspaceLabel: '当前空间',
         searchLabel: '搜索',
         searchHint: 'Ctrl + K',
+        quickOpen: '快速打开',
         accountLabel: '账号',
         logout: '退出',
         collapse: '收起导航',
@@ -37,6 +38,7 @@ const copy = computed(() =>
         workspaceLabel: 'Current workspace',
         searchLabel: 'Search',
         searchHint: 'Ctrl + K',
+        quickOpen: 'Quick open',
         accountLabel: 'Account',
         logout: 'Log out',
         collapse: 'Collapse navigation',
@@ -93,11 +95,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-transparent">
+  <div class="min-h-screen bg-[linear-gradient(180deg,#fbfbf9_0%,#f3f5f7_100%)]">
     <div class="flex min-h-screen">
       <aside
-        :class="[isCollapsed ? 'w-[76px]' : 'w-[202px]']"
-        class="border-r border-[rgba(15,23,42,0.05)] bg-[rgba(248,248,246,0.76)] transition-all duration-300"
+        :class="[isCollapsed ? 'w-[74px]' : 'w-[188px]']"
+        class="border-r border-[rgba(15,23,42,0.05)] bg-[rgba(248,248,246,0.82)] backdrop-blur transition-all duration-300"
       >
         <div class="flex h-full flex-col gap-2.5 px-3 pb-3 pt-4">
           <div class="flex items-center justify-between gap-3 px-1">
@@ -142,20 +144,27 @@ onBeforeUnmount(() => {
             </select>
           </div>
 
-          <button
+          <div
             :class="isCollapsed ? 'justify-center' : 'justify-between'"
-            class="flex w-full items-center rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white/86 px-3 py-2.5 text-left text-sm font-semibold text-[var(--ink-main)] transition-colors hover:border-[rgba(15,23,42,0.12)] hover:text-[var(--ink-strong)]"
-            type="button"
-            @click="isCommandPaletteOpen = true"
+            class="flex items-center gap-2 px-1"
           >
-            <span>{{ isCollapsed ? '搜' : copy.searchLabel }}</span>
-            <span
+            <button
+              class="flex h-10 items-center gap-2 rounded-[14px] border border-[rgba(15,23,42,0.06)] bg-white/86 px-3 text-left text-sm font-semibold text-[var(--ink-main)] transition-colors hover:border-[rgba(15,23,42,0.12)] hover:text-[var(--ink-strong)]"
+              :class="isCollapsed ? 'w-10 justify-center px-0' : 'min-w-0 flex-1'"
+              type="button"
+              @click="isCommandPaletteOpen = true"
+            >
+              <span class="text-base leading-none">⌕</span>
+              <span v-if="!isCollapsed" class="truncate">{{ copy.quickOpen }}</span>
+            </button>
+
+            <div
               v-if="!isCollapsed"
-              class="rounded-full bg-[rgba(15,23,42,0.05)] px-2 py-1 text-[11px] font-semibold text-[var(--ink-soft)]"
+              class="rounded-full border border-[rgba(15,23,42,0.06)] bg-white/72 px-2.5 py-1 text-[11px] font-semibold text-[var(--ink-soft)]"
             >
               {{ copy.searchHint }}
-            </span>
-          </button>
+            </div>
+          </div>
 
           <nav class="space-y-1">
             <router-link
@@ -201,10 +210,8 @@ onBeforeUnmount(() => {
       </aside>
 
       <main class="min-w-0 flex-1">
-        <div class="min-h-screen p-2.5 md:p-3.5">
-          <div class="min-h-[calc(100vh-1.25rem)] rounded-[26px] border border-[rgba(15,23,42,0.05)] bg-[rgba(255,255,255,0.74)]">
-            <router-view />
-          </div>
+        <div class="min-h-screen px-2.5 py-2.5 md:px-3.5 md:py-3.5">
+          <router-view />
         </div>
       </main>
     </div>

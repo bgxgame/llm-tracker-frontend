@@ -30,8 +30,9 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         title: '路线图',
-        summary: '先看主线，点节点，再往下看内容。',
+        summary: '先看主线，再点节点进入对应内容。',
         loading: '正在加载路线图...',
+        notesLoading: '正在加载节点内容...',
         loadError: '加载路线图失败',
         linkedNotes: '节点内容',
         noNotes: '这个节点下还没有笔记。',
@@ -56,8 +57,9 @@ const copy = computed(() =>
       }
     : {
         title: 'Roadmap',
-        summary: 'See the path first, then click a node and continue into the content below.',
+        summary: 'See the path first, then open the right content from each node.',
         loading: 'Loading roadmap...',
+        notesLoading: 'Loading node content...',
         loadError: 'Unable to load roadmap',
         linkedNotes: 'Node content',
         noNotes: 'There are no notes under this node yet.',
@@ -217,6 +219,25 @@ watch(
           <p class="mt-4 max-w-3xl text-sm leading-7 text-[var(--ink-soft)] md:text-base">
             {{ copy.summary }}
           </p>
+
+          <div class="mt-5 flex flex-wrap gap-3">
+            <div class="roadmap-stat-pill">
+              <span>{{ copy.totalNodes }}</span>
+              <strong>{{ nodes.length }}</strong>
+            </div>
+            <div class="roadmap-stat-pill">
+              <span>{{ copy.activeNodes }}</span>
+              <strong>{{ activeCount }}</strong>
+            </div>
+            <div class="roadmap-stat-pill">
+              <span>{{ copy.completedNodes }}</span>
+              <strong>{{ completedCount }}</strong>
+            </div>
+            <div class="roadmap-stat-pill">
+              <span>{{ copy.selectedNotes }}</span>
+              <strong>{{ notes.length }}</strong>
+            </div>
+          </div>
         </div>
 
         <div class="roadmap-actions">
@@ -231,25 +252,6 @@ watch(
           >
             {{ copy.manageAction }}
           </button>
-        </div>
-      </div>
-
-      <div class="roadmap-strip">
-        <div class="roadmap-strip-item">
-          <div class="roadmap-strip-label">{{ copy.totalNodes }}</div>
-          <div class="roadmap-strip-value">{{ nodes.length }}</div>
-        </div>
-        <div class="roadmap-strip-item">
-          <div class="roadmap-strip-label">{{ copy.activeNodes }}</div>
-          <div class="roadmap-strip-value">{{ activeCount }}</div>
-        </div>
-        <div class="roadmap-strip-item">
-          <div class="roadmap-strip-label">{{ copy.completedNodes }}</div>
-          <div class="roadmap-strip-value">{{ completedCount }}</div>
-        </div>
-        <div class="roadmap-strip-item">
-          <div class="roadmap-strip-label">{{ copy.selectedNotes }}</div>
-          <div class="roadmap-strip-value">{{ notes.length }}</div>
         </div>
       </div>
 
@@ -314,7 +316,7 @@ watch(
           <div class="admin-chip">{{ notes.length }}</div>
         </div>
 
-        <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.loading }}</div>
+        <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.notesLoading }}</div>
         <div v-else-if="notes.length > 0" class="mt-4 grid gap-4 md:grid-cols-2">
           <article v-for="note in notes" :key="note.id" class="admin-list-card roadmap-note-card cursor-pointer" @click="openNote(note.id)">
             <div class="flex flex-wrap gap-2">
@@ -352,31 +354,23 @@ watch(
   gap: 10px;
 }
 
-.roadmap-strip {
-  display: grid;
-  gap: 12px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-  padding: 14px 20px;
-}
-
-.roadmap-strip-item {
+.roadmap-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 14px 16px;
-}
-
-.roadmap-strip-label {
+  border-radius: 999px;
+  background: rgba(247, 247, 245, 0.86);
+  padding: 9px 12px;
   color: var(--ink-soft);
   font-size: 12px;
   font-weight: 700;
 }
 
-.roadmap-strip-value {
-  margin-top: 8px;
+.roadmap-stat-pill strong {
   color: var(--ink-strong);
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1;
@@ -397,7 +391,7 @@ watch(
 
 .roadmap-canvas-shell {
   position: relative;
-  height: calc(100vh - 246px);
+  height: calc(100vh - 198px);
   min-height: 620px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 247, 245, 0.94));
 }
@@ -455,11 +449,6 @@ watch(
     align-items: end;
     justify-content: space-between;
     padding: 24px 24px 20px;
-  }
-
-  .roadmap-strip {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    padding: 14px 24px;
   }
 }
 </style>

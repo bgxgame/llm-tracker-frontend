@@ -22,21 +22,22 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         kicker: '空间',
-        title: '空间与成员',
-        summary: '先切换当前空间，再邀请成员加入。',
+        title: '空间设置',
+        summary: '切换当前空间、邀请成员，并管理协作权限。',
         currentTitle: '当前空间',
-        currentHint: '你现在正在推进的空间',
+        currentHint: '这里决定你当前正在推进哪一套路线图和笔记',
         createTitle: '新建空间',
         createPlaceholder: '例如：产品增长 / 客户交付 / 研究实验',
         createAction: '创建空间',
         creating: '创建中...',
         inviteTitle: '邀请加入',
-        inviteHint: '发给对方即可加入当前空间',
+        inviteHint: '生成链接发给对方，对方打开后可直接注册并加入当前空间',
         inviteAction: '生成邀请链接',
         inviteGenerating: '生成中...',
         inviteLinkLabel: '邀请链接',
         inviteLinkEmpty: '生成后显示在这里',
         inviteRoleLabel: '加入身份',
+        inviteFlowHint: '新成员打开链接后，可以直接加入当前空间，无需你手动再分配。',
         copyInvite: '复制链接',
         copied: '链接已复制',
         inviteExpires: '链接 7 天后失效',
@@ -62,21 +63,22 @@ const copy = computed(() =>
       }
     : {
         kicker: 'Workspace',
-        title: 'Workspace and members',
-        summary: 'Switch the active workspace first, then invite people into it.',
+        title: 'Workspace settings',
+        summary: 'Switch workspace, invite people, and manage collaboration access.',
         currentTitle: 'Current workspace',
-        currentHint: 'The space you are working in now',
+        currentHint: 'This controls which roadmap and notes you are actively working in',
         createTitle: 'Create workspace',
         createPlaceholder: 'For example: Growth / Delivery / Research',
         createAction: 'Create workspace',
         creating: 'Creating...',
         inviteTitle: 'Invite people',
-        inviteHint: 'Send the link and they can join this workspace',
+        inviteHint: 'Send the link and they can register or join this workspace directly',
         inviteAction: 'Generate invite link',
         inviteGenerating: 'Generating...',
         inviteLinkLabel: 'Invite link',
         inviteLinkEmpty: 'The link appears here after generation',
         inviteRoleLabel: 'Role',
+        inviteFlowHint: 'New members can join from this link directly without a separate manual setup.',
         copyInvite: 'Copy link',
         copied: 'Link copied',
         inviteExpires: 'The link expires in 7 days',
@@ -413,7 +415,11 @@ watch(
             </button>
 
             <div class="text-sm text-[var(--ink-soft)]">
-              {{ inviteMessage || copy.inviteExpires }}
+              {{ inviteMessage || copy.inviteFlowHint }}
+            </div>
+
+            <div class="text-xs font-semibold text-[var(--ink-soft)]">
+              {{ copy.inviteExpires }}
             </div>
           </div>
         </article>

@@ -29,8 +29,8 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         title: '快速搜索',
-        subtitle: '搜索节点和笔记，直接跳到你要看的内容',
-        placeholder: '输入节点标题、笔记标题、方法或结论',
+        subtitle: '按节点标题、笔记标题或关键词，直接跳到内容',
+        placeholder: '搜索节点、笔记标题、方法或结论',
         helper: '按 Esc 关闭',
         loading: '正在搜索...',
         empty: '输入关键词开始搜索',

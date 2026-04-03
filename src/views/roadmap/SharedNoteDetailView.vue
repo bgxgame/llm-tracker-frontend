@@ -28,6 +28,8 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         back: '返回路线图',
+        login: '登录',
+        start: '立即使用',
         loading: '正在加载笔记内容...',
         loadError: '加载笔记内容失败',
         workspaceFallback: '公开分享',
@@ -39,9 +41,14 @@ const copy = computed(() =>
         untitledArtifact: '未命名资料',
         openResource: '打开链接',
         emptyArtifacts: '这条笔记还没有关联资料。',
+        shareTag: '公开阅读',
+        ctaTitle: '把目标、路线和笔记放到一张图里',
+        ctaSummary: '公开分享时，别人先看主线，再进入节点内容，整个过程会更直观也更容易理解。',
       }
     : {
         back: 'Back to roadmap',
+        login: 'Sign in',
+        start: 'Start free',
         loading: 'Loading note content...',
         loadError: 'Unable to load note content',
         workspaceFallback: 'Shared roadmap',
@@ -53,6 +60,9 @@ const copy = computed(() =>
         untitledArtifact: 'Untitled artifact',
         openResource: 'Open resource',
         emptyArtifacts: 'No linked artifacts yet.',
+        shareTag: 'Public reading',
+        ctaTitle: 'Put goals, roadmap, and notes into one clear view',
+        ctaSummary: 'People can follow the path first and then go deeper into the right content without losing context.',
       }
 )
 
@@ -104,9 +114,13 @@ onMounted(fetchDetail)
 
 <template>
   <div class="min-h-screen bg-[linear-gradient(180deg,#fafaf8_0%,#f4f6f8_100%)]">
-    <div class="border-b border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.72)] backdrop-blur">
+    <div class="sticky top-0 z-20 border-b border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.72)] backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <button class="product-button-secondary !px-5 !py-3" type="button" @click="goBack">{{ copy.back }}</button>
+        <div class="flex flex-wrap gap-3">
+          <button class="product-button-secondary !px-4 !py-2.5" type="button" @click="router.push('/login')">{{ copy.login }}</button>
+          <button class="product-button-dark !px-4 !py-2.5" type="button" @click="router.push('/register')">{{ copy.start }}</button>
+        </div>
       </div>
     </div>
 
@@ -119,15 +133,20 @@ onMounted(fetchDetail)
     </div>
 
     <div v-else-if="note" class="mx-auto max-w-6xl px-6 py-8">
-      <section class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.8)] p-8 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
+      <section class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.8)] p-7 shadow-[0_18px_50px_rgba(20,33,43,0.05)] md:p-8">
         <div class="flex flex-wrap gap-2">
+          <span class="admin-chip-dark">{{ copy.shareTag }}</span>
           <span class="admin-chip-warm">{{ currentNodeTitle }}</span>
           <span class="admin-chip">{{ workspaceName }}</span>
           <span class="admin-chip">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</span>
           <span class="admin-chip">{{ readingTime }} {{ copy.readingTime }}</span>
         </div>
 
-        <h1 class="product-title mt-6 text-4xl leading-[0.96] md:text-6xl">{{ note.title }}</h1>
+        <h1 class="product-title mt-5 text-4xl leading-[0.96] md:text-6xl">{{ note.title }}</h1>
+
+        <p v-if="note.summary" class="mt-4 max-w-3xl text-base leading-8 text-[var(--ink-soft)]">
+          {{ note.summary }}
+        </p>
 
         <div v-if="note.tags?.length" class="mt-6 flex flex-wrap gap-2">
           <span
@@ -141,7 +160,7 @@ onMounted(fetchDetail)
       </section>
 
       <div class="mt-6 grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside class="space-y-6">
+        <aside class="shared-note-sidebar space-y-6">
           <section class="rounded-[1.8rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.82)] p-5 shadow-[0_14px_36px_rgba(20,33,43,0.04)]">
             <div class="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--brand)]">{{ copy.outline }}</div>
             <div class="mt-4 text-sm text-[var(--ink-main)]">
@@ -176,9 +195,24 @@ onMounted(fetchDetail)
           </section>
         </aside>
 
-        <article class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.84)] px-8 py-10 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
-          <MdPreview :modelValue="note.content" :editorId="'shared-note-preview'" theme="light" class="bg-transparent! no-padding-preview" />
-        </article>
+        <div class="space-y-6">
+          <article class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.84)] px-8 py-10 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
+            <MdPreview :modelValue="note.content" :editorId="'shared-note-preview'" theme="light" class="bg-transparent! no-padding-preview" />
+          </article>
+
+          <section class="overflow-hidden rounded-[2rem] bg-[var(--surface-dark)] px-7 py-7 text-white shadow-[0_24px_60px_rgba(20,33,43,0.16)]">
+            <div class="max-w-3xl">
+              <div class="text-sm font-semibold text-[rgba(255,255,255,0.56)]">{{ workspaceName }}</div>
+              <h2 class="mt-3 font-[var(--font-display)] text-3xl font-black tracking-[-0.05em]">{{ copy.ctaTitle }}</h2>
+              <p class="mt-4 text-sm leading-8 text-[rgba(255,255,255,0.68)]">{{ copy.ctaSummary }}</p>
+            </div>
+
+            <div class="mt-6 flex flex-wrap gap-3">
+              <button class="product-button-secondary" type="button" @click="router.push('/login')">{{ copy.login }}</button>
+              <button class="product-button-primary" type="button" @click="router.push('/register')">{{ copy.start }}</button>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   </div>
@@ -234,5 +268,13 @@ onMounted(fetchDetail)
 :deep(.md-editor-catalog-active > .md-editor-catalog-link span) {
   border-left: 2px solid var(--brand);
   padding-left: 14px;
+}
+
+@media (min-width: 1280px) {
+  .shared-note-sidebar {
+    position: sticky;
+    top: 94px;
+    align-self: start;
+  }
 }
 </style>
