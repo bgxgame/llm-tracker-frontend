@@ -78,7 +78,7 @@ const copy = computed(() =>
         editorPlaceholder: '记录背景、判断、实验、结论和下一步动作...',
         artifactsEyebrow: '关联资料',
         artifactsTitle: '把演示、仓库和文档挂到这条笔记下面',
-        artifactsSummary: '让结论和实际产出放在一起，后面回看时更完整。',
+        artifactsSummary: '让结论和实际产出放在一起，后面回看更完整。',
         remove: '移除',
         noArtifacts: '还没有关联资料。',
         artifactTitle: '资料标题',

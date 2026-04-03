@@ -4,11 +4,7 @@ import { useRouter } from 'vue-router'
 import { workspaceApi } from '@/api/workspace'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
-import type {
-  WorkspaceOnboardingChecklistItem,
-  WorkspaceOverview,
-  WorkspaceRole,
-} from '@/types'
+import type { WorkspaceOnboardingChecklistItem, WorkspaceOverview, WorkspaceRole } from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -23,7 +19,7 @@ const copy = computed(() =>
     ? {
         kicker: '总览',
         title: '先看当前推进，再决定下一步',
-        summary: '这里只回答三件事：路线图清不清楚、笔记有没有沉淀、接下来最该推进什么。',
+        summary: '这里只回答三件事：路线图是否清晰、笔记是否在沉淀、接下来最该推进什么。',
         primaryAction: authStore.hasWriteAccess ? '进入路线图' : '查看路线图',
         secondaryAction: authStore.hasWriteAccess ? '进入笔记' : '查看笔记',
         role: '当前角色',
@@ -31,7 +27,7 @@ const copy = computed(() =>
           members: '成员',
           roadmap: '节点',
           notes: '笔记',
-          completion: '完成率',
+          completion: '完成度',
         },
         focusTitle: '当前重点',
         focusRoadmap: '路线图状态',
@@ -110,9 +106,7 @@ const roleLabelMap = computed<Record<WorkspaceRole, string>>(() =>
       }
 )
 
-const onboardingCopyMap = computed<
-  Record<string, Pick<WorkspaceOnboardingChecklistItem, 'title' | 'description' | 'cta_label'>>
->(() =>
+const onboardingCopyMap = computed<Record<string, Pick<WorkspaceOnboardingChecklistItem, 'title' | 'description' | 'cta_label'>>>(() =>
   localeStore.isChinese
     ? {
         roadmap_foundation: {
@@ -127,7 +121,7 @@ const onboardingCopyMap = computed<
         },
         seed_notes: {
           title: '记录首批关键笔记',
-          description: '把结论、实验和方法沉淀下来，后续才有复用价值。',
+          description: '把结论、实验和方法沉淀下来，后面才有复用价值。',
           cta_label: '进入笔记',
         },
       }

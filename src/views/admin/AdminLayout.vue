@@ -26,10 +26,10 @@ const copy = computed(() =>
         quickSearch: '快速搜索',
         quickSearchHint: 'Ctrl + K',
         nav: [
-          { to: '/admin/roadmap', short: '图', label: '路线图', hint: '全屏查看与编辑' },
-          { to: '/admin/notes', short: '记', label: '笔记', hint: '节点下的内容沉淀' },
-          { to: '/admin/workspace', short: '队', label: '空间', hint: '成员、权限与邀请' },
-          { to: '/admin/dashboard', short: '览', label: '总览', hint: '看当前进度' },
+          { to: '/admin/roadmap', short: '图', label: '路线图', hint: '全屏查看与推进主线' },
+          { to: '/admin/notes', short: '记', label: '笔记', hint: '沉淀节点下的关键信息' },
+          { to: '/admin/workspace', short: '组', label: '空间', hint: '成员、权限与邀请' },
+          { to: '/admin/dashboard', short: '览', label: '总览', hint: '查看当前推进情况' },
         ],
       }
     : {
