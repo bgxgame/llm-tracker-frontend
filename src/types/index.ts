@@ -122,9 +122,19 @@ export interface WorkspaceShareLink {
 
 export interface WorkspaceSharedNote {
   id: number;
+  node_id: number | null;
   title: string;
   summary: string | null;
   content: string;
+  tags: string[] | null;
+  created_at: string;
+}
+
+export interface WorkspaceSharedArtifact {
+  id: number;
+  artifact_type: string;
+  title: string | null;
+  content_url: string;
   created_at: string;
 }
 
@@ -141,6 +151,14 @@ export interface WorkspaceSharedNodeNotes {
   workspace_slug: string;
   node_id: number;
   notes: WorkspaceSharedNote[];
+}
+
+export interface WorkspaceSharedNoteDetail {
+  workspace_id: number;
+  workspace_name: string;
+  workspace_slug: string;
+  note: WorkspaceSharedNote;
+  artifacts: WorkspaceSharedArtifact[];
 }
 
 export interface WorkspaceSearchRoadmapItem {

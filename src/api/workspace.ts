@@ -8,6 +8,7 @@ import type {
   WorkspaceMembership,
   WorkspaceOverview,
   WorkspaceRole,
+  WorkspaceSharedNoteDetail,
   WorkspaceSharedNodeNotes,
   WorkspaceSharedRoadmap,
   WorkspaceShareLink,
@@ -38,6 +39,8 @@ export const workspaceApi = {
     request.get<any, WorkspaceSharedRoadmap>(`/workspaces/share-links/${token}/roadmap`),
   getSharedNodeNotes: (token: string, nodeId: number) =>
     request.get<any, WorkspaceSharedNodeNotes>(`/workspaces/share-links/${token}/nodes/${nodeId}/notes`),
+  getSharedNoteDetail: (token: string, noteId: number) =>
+    request.get<any, WorkspaceSharedNoteDetail>(`/workspaces/share-links/${token}/notes/${noteId}`),
   listMembers: (workspaceId: number) =>
     request.get<any, WorkspaceMember[]>(`/workspaces/${workspaceId}/members`),
   addMember: (workspaceId: number, data: { identifier: string; role: WorkspaceRole }) =>

@@ -17,6 +17,11 @@ const router = createRouter({
       component: () => import('@/views/roadmap/SharedRoadmapView.vue'),
     },
     {
+      path: '/share/:token/notes/:noteId',
+      name: 'shared-note-detail',
+      component: () => import('@/views/roadmap/SharedNoteDetailView.vue'),
+    },
+    {
       path: '/invite/:token',
       name: 'workspace-invite',
       component: () => import('@/views/workspace/WorkspaceInviteView.vue'),

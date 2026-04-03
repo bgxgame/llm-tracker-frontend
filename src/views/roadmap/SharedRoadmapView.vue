@@ -18,12 +18,15 @@ const localeStore = useLocaleStore()
 const roadmap = ref<WorkspaceSharedRoadmap | null>(null)
 const notes = ref<WorkspaceSharedNote[]>([])
 const selectedNode = ref<RoadmapNode | null>(null)
-const selectedNoteId = ref<number | null>(null)
 const loading = ref(true)
 const loadingNotes = ref(false)
 const errorMessage = ref('')
 
 const token = computed(() => String(route.params.token || ''))
+const presetNodeId = computed(() => {
+  const value = Number(route.query.nodeId)
+  return Number.isFinite(value) && value > 0 ? value : null
+})
 
 const copy = computed(() =>
   localeStore.isChinese
@@ -37,6 +40,7 @@ const copy = computed(() =>
         noNotes: '这个节点下还没有公开笔记。',
         noDescription: '这个节点还没有补充说明。',
         emptyHint: '点一个节点，继续往下看内容。',
+        openNote: '进入阅读',
         shareTag: '公开分享',
         registerTitle: '把你的推进也放到一张图里',
         registerSummary: '路线、节点、笔记放在一起，别人一眼就能看懂你在做什么。',
@@ -60,6 +64,7 @@ const copy = computed(() =>
         noNotes: 'There are no public notes under this node yet.',
         noDescription: 'No description yet.',
         emptyHint: 'Click a node and continue into the content below.',
+        openNote: 'Open note',
         shareTag: 'Public share',
         registerTitle: 'Turn your own work into one clear roadmap',
         registerSummary: 'Keep the path, nodes, and notes in one visible view.',
@@ -101,10 +106,6 @@ const flowEdges = computed(() =>
     }))
 )
 
-const selectedNote = computed(
-  () => notes.value.find((note) => note.id === selectedNoteId.value) ?? notes.value[0] ?? null
-)
-
 const typeLabel = (type: RoadmapNode['node_type']) => {
   if (type === 'coding') return copy.value.coding
   if (type === 'project') return copy.value.project
@@ -119,7 +120,16 @@ const statusLabel = (status: RoadmapNode['status']) => {
 
 const notePreview = (note: WorkspaceSharedNote) => {
   const source = note.summary?.trim() || note.content.trim()
-  return source.length > 120 ? `${source.slice(0, 120)}...` : source
+  const normalized = source
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/[*_~>-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return normalized.length > 120 ? `${normalized.slice(0, 120)}...` : normalized
 }
 
 const loadRoadmap = async () => {
@@ -128,6 +138,13 @@ const loadRoadmap = async () => {
 
   try {
     roadmap.value = await workspaceApi.getSharedRoadmap(token.value)
+    const preset = presetNodeId.value
+    if (preset) {
+      const targetNode = roadmap.value.nodes.find((node) => node.id === preset)
+      if (targetNode) {
+        await loadNotes(targetNode)
+      }
+    }
   } catch (error: any) {
     roadmap.value = null
     errorMessage.value = error.message || copy.value.loadError
@@ -138,13 +155,11 @@ const loadRoadmap = async () => {
 
 const loadNotes = async (node: RoadmapNode) => {
   selectedNode.value = node
-  selectedNoteId.value = null
   loadingNotes.value = true
 
   try {
     const response = await workspaceApi.getSharedNodeNotes(token.value, node.id)
     notes.value = response.notes
-    selectedNoteId.value = response.notes[0]?.id ?? null
     setTimeout(() => {
       document.getElementById('shared-roadmap-notes')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 80)
@@ -157,6 +172,13 @@ const loadNotes = async (node: RoadmapNode) => {
 
 const handleNodeClick = async (payload: { node: { data: RoadmapNode } }) => {
   await loadNotes(payload.node.data)
+}
+
+const openNote = (noteId: number) => {
+  router.push({
+    path: `/share/${token.value}/notes/${noteId}`,
+    query: selectedNode.value ? { nodeId: String(selectedNode.value.id) } : {},
+  })
 }
 
 onMounted(() => {
@@ -241,25 +263,31 @@ onMounted(() => {
         <div class="mt-8 text-sm font-semibold text-[var(--ink-main)]">{{ copy.notesTitle }}</div>
 
         <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.notesLoading }}</div>
-        <div v-else-if="notes.length > 0" class="mt-4 grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <div class="space-y-3">
-            <button
-              v-for="note in notes"
-              :key="note.id"
-              type="button"
-              class="admin-list-card shared-note-card block w-full text-left"
-              :class="selectedNote?.id === note.id ? 'border-[rgba(229,106,43,0.24)] bg-[rgba(255,250,242,0.92)]' : ''"
-              @click="selectedNoteId = note.id"
-            >
-              <div class="text-base font-semibold text-[var(--ink-strong)]">{{ note.title }}</div>
-              <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ notePreview(note) }}</p>
-            </button>
-          </div>
-
-          <article v-if="selectedNote" class="shared-note-content">
-            <div class="mt-3 text-2xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">{{ selectedNote.title }}</div>
-            <p class="mt-5 whitespace-pre-wrap text-sm leading-8 text-[var(--ink-main)]">{{ selectedNote.content }}</p>
-          </article>
+        <div v-else-if="notes.length > 0" class="grid gap-4 md:grid-cols-2">
+          <button
+            v-for="note in notes"
+            :key="note.id"
+            type="button"
+            class="admin-list-card shared-note-card block text-left"
+            @click="openNote(note.id)"
+          >
+            <div class="flex flex-wrap gap-2">
+              <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
+              <span class="admin-chip">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</span>
+            </div>
+            <div class="mt-4 text-lg font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">{{ note.title }}</div>
+            <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ notePreview(note) }}</p>
+            <div v-if="note.tags?.length" class="mt-4 flex flex-wrap gap-2">
+              <span
+                v-for="tag in note.tags.slice(0, 3)"
+                :key="tag"
+                class="rounded-full bg-[rgba(15,23,42,0.05)] px-3 py-1 text-[11px] font-bold text-[var(--ink-main)]"
+              >
+                #{{ tag }}
+              </span>
+            </div>
+            <div class="mt-5 text-sm font-semibold text-[var(--ink-strong)]">{{ copy.openNote }}</div>
+          </button>
         </div>
         <div v-else class="admin-empty mt-4">{{ copy.noNotes }}</div>
       </template>
@@ -325,13 +353,6 @@ onMounted(() => {
 
 .shared-note-card {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 248, 0.96));
-}
-
-.shared-note-content {
-  border-radius: 24px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(247, 247, 245, 0.88);
-  padding: 24px;
 }
 
 :deep(.share-node) {
