@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { VueFlow } from '@vue-flow/core'
+import { ArrowUp } from 'lucide-vue-next'
 import { workspaceApi } from '@/api/workspace'
 import { useLocaleStore } from '@/store/locale'
 import type { RoadmapNode, WorkspaceSharedNote, WorkspaceSharedRoadmap } from '@/types'
@@ -18,6 +19,8 @@ const localeStore = useLocaleStore()
 const roadmap = ref<WorkspaceSharedRoadmap | null>(null)
 const notes = ref<WorkspaceSharedNote[]>([])
 const selectedNode = ref<RoadmapNode | null>(null)
+const notesSectionRef = ref<HTMLElement | null>(null)
+const showFloatingTop = ref(false)
 const loading = ref(true)
 const loadingNotes = ref(false)
 const errorMessage = ref('')
@@ -34,17 +37,18 @@ const copy = computed(() =>
         title: '路线图',
         summary: '先看主线，再点节点继续阅读对应内容。',
         loading: '正在加载路线图...',
-        notesLoading: '正在加载笔记...',
+        notesLoading: '正在加载内容...',
         loadError: '这个分享页面已失效或不存在。',
-        notesTitle: '公开内容',
+        notesTitle: '节点内容',
         noNotes: '这个节点下还没有公开笔记。',
         noDescription: '这个节点还没有补充说明。',
-        emptyHint: '点一个节点，继续往下看内容。',
+        emptyHint: '先点一个节点，再继续往下看内容。',
         openNote: '进入阅读',
         shareTag: '公开分享',
         registerAction: '立即免费使用',
         loginAction: '登录',
-        openCanvas: '点节点展开内容',
+        openCanvas: '点击节点展开内容',
+        floatingTop: '回到顶部',
         theory: '理论',
         coding: '编码',
         project: '项目',
@@ -56,9 +60,9 @@ const copy = computed(() =>
         title: 'Roadmap',
         summary: 'See the path first, then continue into the linked public content.',
         loading: 'Loading roadmap...',
-        notesLoading: 'Loading notes...',
+        notesLoading: 'Loading content...',
         loadError: 'This shared page is no longer available.',
-        notesTitle: 'Public content',
+        notesTitle: 'Node content',
         noNotes: 'There are no public notes under this node yet.',
         noDescription: 'No description yet.',
         emptyHint: 'Click a node and continue into the content below.',
@@ -67,6 +71,7 @@ const copy = computed(() =>
         registerAction: 'Start free',
         loginAction: 'Sign in',
         openCanvas: 'Click a node to open content',
+        floatingTop: 'Back to top',
         theory: 'Theory',
         coding: 'Coding',
         project: 'Project',
@@ -114,20 +119,6 @@ const statusLabel = (status: RoadmapNode['status']) => {
   return copy.value.todo
 }
 
-const notePreview = (note: WorkspaceSharedNote) => {
-  const source = note.summary?.trim() || note.content.trim()
-  const normalized = source
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/!\[[^\]]*]\([^)]*\)/g, ' ')
-    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/[*_~>-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-  return normalized.length > 120 ? `${normalized.slice(0, 120)}...` : normalized
-}
-
 const loadRoadmap = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -149,6 +140,16 @@ const loadRoadmap = async () => {
   }
 }
 
+const updateFloatingTopVisibility = () => {
+  if (!selectedNode.value || !notesSectionRef.value) {
+    showFloatingTop.value = false
+    return
+  }
+
+  const rect = notesSectionRef.value.getBoundingClientRect()
+  showFloatingTop.value = rect.top <= window.innerHeight * 0.55
+}
+
 const loadNotes = async (node: RoadmapNode) => {
   selectedNode.value = node
   loadingNotes.value = true
@@ -163,6 +164,7 @@ const loadNotes = async (node: RoadmapNode) => {
     notes.value = []
   } finally {
     loadingNotes.value = false
+    setTimeout(updateFloatingTopVisibility, 120)
   }
 }
 
@@ -177,8 +179,17 @@ const openNote = (noteId: number) => {
   })
 }
 
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 onMounted(() => {
+  window.addEventListener('scroll', updateFloatingTopVisibility, { passive: true })
   loadRoadmap()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', updateFloatingTopVisibility)
 })
 </script>
 
@@ -208,7 +219,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="shared-canvas-shell">
+      <div id="shared-roadmap-canvas" class="shared-canvas-shell">
         <div v-if="loading" class="admin-empty !border-none !bg-transparent !p-0">{{ copy.loading }}</div>
 
         <VueFlow
@@ -239,11 +250,12 @@ onMounted(() => {
 
     <section
       id="shared-roadmap-notes"
+      ref="notesSectionRef"
       class="mx-auto mt-4 max-w-6xl rounded-[32px] border border-[rgba(15,23,42,0.06)] bg-white px-6 py-6 md:px-8"
     >
       <template v-if="selectedNode">
-        <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div class="min-w-0 flex-1">
+        <div class="shared-notes-layout">
+          <div class="min-w-0">
             <div class="flex flex-wrap gap-2">
               <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
               <span :class="selectedNode.status === 'completed' ? 'admin-chip-green' : selectedNode.status === 'in_progress' ? 'admin-chip-blue' : 'admin-chip'">
@@ -253,43 +265,58 @@ onMounted(() => {
 
             <h2 class="mt-4 text-3xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">{{ selectedNode.title }}</h2>
             <p class="mt-3 max-w-3xl text-base leading-8 text-[var(--ink-soft)]">{{ selectedNode.description || copy.noDescription }}</p>
+
+            <div class="mt-8 text-sm font-semibold text-[var(--ink-main)]">{{ copy.notesTitle }}</div>
+
+            <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.notesLoading }}</div>
+            <div v-else-if="notes.length > 0" class="shared-note-list mt-4">
+              <button
+                v-for="note in notes"
+                :key="note.id"
+                type="button"
+                class="shared-note-list-item"
+                @click="openNote(note.id)"
+              >
+                <div class="shared-note-list-main">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
+                    <span class="admin-chip">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</span>
+                  </div>
+                  <div class="mt-4 text-xl font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">{{ note.title }}</div>
+                  <div v-if="note.tags?.length" class="mt-4 flex flex-wrap gap-2">
+                    <span
+                      v-for="tag in note.tags.slice(0, 4)"
+                      :key="tag"
+                      class="rounded-full bg-[rgba(15,23,42,0.05)] px-3 py-1 text-[11px] font-bold text-[var(--ink-main)]"
+                    >
+                      #{{ tag }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="shared-note-list-side">
+                  <div class="shared-note-list-count">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</div>
+                  <div class="shared-note-list-link">{{ copy.openNote }}</div>
+                </div>
+              </button>
+            </div>
+            <div v-else class="admin-empty mt-4">{{ copy.noNotes }}</div>
           </div>
         </div>
-
-        <div class="mt-8 text-sm font-semibold text-[var(--ink-main)]">{{ copy.notesTitle }}</div>
-
-        <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.notesLoading }}</div>
-        <div v-else-if="notes.length > 0" class="grid gap-4 md:grid-cols-2">
-          <button
-            v-for="note in notes"
-            :key="note.id"
-            type="button"
-            class="admin-list-card shared-note-card block text-left"
-            @click="openNote(note.id)"
-          >
-            <div class="flex flex-wrap gap-2">
-              <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
-              <span class="admin-chip">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</span>
-            </div>
-            <div class="mt-4 text-lg font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">{{ note.title }}</div>
-            <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ notePreview(note) }}</p>
-            <div v-if="note.tags?.length" class="mt-4 flex flex-wrap gap-2">
-              <span
-                v-for="tag in note.tags.slice(0, 3)"
-                :key="tag"
-                class="rounded-full bg-[rgba(15,23,42,0.05)] px-3 py-1 text-[11px] font-bold text-[var(--ink-main)]"
-              >
-                #{{ tag }}
-              </span>
-            </div>
-            <div class="mt-5 text-sm font-semibold text-[var(--ink-strong)]">{{ copy.openNote }}</div>
-          </button>
-        </div>
-        <div v-else class="admin-empty mt-4">{{ copy.noNotes }}</div>
       </template>
 
       <div v-else class="admin-empty">{{ copy.emptyHint }}</div>
     </section>
+
+    <button
+      v-if="showFloatingTop"
+      type="button"
+      class="shared-floating-top"
+      :aria-label="copy.floatingTop"
+      @click="scrollToTop"
+    >
+      <ArrowUp :size="18" />
+    </button>
   </div>
 </template>
 
@@ -330,8 +357,88 @@ onMounted(() => {
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
 }
 
-.shared-note-card {
+.shared-notes-layout {
+  display: grid;
+  gap: 24px;
+}
+
+.shared-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shared-note-list-item {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 248, 0.96));
+  padding: 22px 22px 20px;
+  text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.shared-note-list-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(229, 106, 43, 0.18);
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.06);
+}
+
+.shared-note-list-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.shared-note-list-side {
+  display: flex;
+  min-width: 132px;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.shared-note-list-count {
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-main);
+}
+
+.shared-note-list-link {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.shared-floating-top {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.94);
+  color: white;
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.2);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.shared-floating-top:hover {
+  transform: translateY(-2px);
+  background: rgba(15, 23, 42, 1);
+  box-shadow: 0 22px 36px rgba(15, 23, 42, 0.24);
 }
 
 :deep(.share-node) {
@@ -368,6 +475,24 @@ onMounted(() => {
     align-items: end;
     justify-content: space-between;
     padding: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .shared-note-list-item {
+    flex-direction: column;
+  }
+
+  .shared-note-list-side {
+    min-width: 0;
+    align-items: flex-start;
+  }
+
+  .shared-floating-top {
+    right: 16px;
+    bottom: 16px;
+    width: 44px;
+    height: 44px;
   }
 }
 </style>
