@@ -42,13 +42,11 @@ const router = createRouter({
         },
         {
           path: 'activity',
-          name: 'admin-activity',
-          component: () => import('@/views/admin/AdminActivityView.vue'),
+          redirect: '/admin/dashboard',
         },
         {
           path: 'search',
-          name: 'admin-search',
-          component: () => import('@/views/admin/AdminSearchView.vue'),
+          redirect: '/admin/roadmap',
         },
         {
           path: 'workspace',
