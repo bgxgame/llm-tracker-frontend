@@ -40,7 +40,7 @@ const copy = computed(() =>
         helperTitle: '进入后会看到',
         helperBody: '路线图、当前节点状态，以及节点下面直接接着的内容。',
         registerLead: '还没有账号？',
-        registerAction: '创建空间',
+        registerAction: '注册账号',
         error: '登录失败，请稍后重试',
       }
     : {
@@ -62,7 +62,7 @@ const copy = computed(() =>
         helperTitle: 'After sign-in you get',
         helperBody: 'The roadmap, current node status, and the content connected to each node.',
         registerLead: 'Need an account?',
-        registerAction: 'Create workspace',
+        registerAction: 'Create account',
         error: 'Unable to sign in right now',
       }
 )
