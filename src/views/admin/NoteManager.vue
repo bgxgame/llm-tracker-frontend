@@ -27,13 +27,13 @@ const copy = computed(() =>
   localeStore.isChinese
     ? {
         eyebrow: '笔记',
-        title: '把真正有用的内容留在节点下面',
+        title: '笔记',
         summaryPrefix: '当前内容属于',
-        summarySuffix: '空间，按节点沉淀，方便从路线图直接进入细节。',
+        summarySuffix: '空间，按节点沉淀方法、结论和关键过程。',
         writable: '可编辑',
         readonly: '只读',
         newNote: '新建笔记',
-        readonlyHint: '你可以查看笔记，但只有所有者、管理员和成员可以创建或修改。',
+        readonlyHint: '你可以查看笔记，只有拥有写权限的成员可以新建或编辑。',
         searchPlaceholder: '搜索标题、摘要或正文内容',
         allNodes: '全部节点',
         resultCount: '笔记',
@@ -59,13 +59,13 @@ const copy = computed(() =>
       }
     : {
         eyebrow: 'Notes',
-        title: 'Keep the useful details under the right nodes',
+        title: 'Notes',
         summaryPrefix: 'These notes belong to',
-        summarySuffix: 'workspace and stay attached to the roadmap nodes.',
+        summarySuffix: 'workspace and capture the method, finding, and key context under each node.',
         writable: 'Editable',
         readonly: 'Read only',
         newNote: 'New note',
-        readonlyHint: 'You can review notes, but only owners, admins, and members can create or update them.',
+        readonlyHint: 'You can review notes, but only members with write access can create or update them.',
         searchPlaceholder: 'Search title, summary, or content',
         allNodes: 'All nodes',
         resultCount: 'Notes',

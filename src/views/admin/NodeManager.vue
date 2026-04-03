@@ -34,7 +34,7 @@ const copy = computed(() =>
     ? {
         kicker: '路线图',
         title: '路线图',
-        summary: '先看主线，再点节点往下看内容。',
+        summary: '先看主线，再选节点编辑说明和关联内容。',
         share: '复制分享链接',
         shareDone: '链接已复制',
         addNode: '新增节点',
@@ -42,6 +42,7 @@ const copy = computed(() =>
         readonly: '只读查看',
         writable: '可编辑',
         loading: '正在加载路线图...',
+        notesLoading: '正在加载节点内容...',
         loadError: '加载路线图失败',
         noWorkspace: '当前没有可用空间。',
         emptyTitle: '选一个节点继续往下看',
@@ -79,7 +80,7 @@ const copy = computed(() =>
     : {
         kicker: 'Roadmap',
         title: 'Roadmap',
-        summary: 'See the path first, then click a node and continue into the content below.',
+        summary: 'See the path first, then edit the right node and its linked content.',
         share: 'Copy share link',
         shareDone: 'Link copied',
         addNode: 'Add node',
@@ -87,6 +88,7 @@ const copy = computed(() =>
         readonly: 'Read only',
         writable: 'Editable',
         loading: 'Loading roadmap...',
+        notesLoading: 'Loading node content...',
         loadError: 'Unable to load roadmap',
         noWorkspace: 'There is no active workspace.',
         emptyTitle: 'Select a node to continue',
@@ -352,23 +354,23 @@ watch(
           {{ shareMessage }}
         </div>
 
-        <div class="roadmap-metric-grid mt-5">
-          <article class="roadmap-metric-card">
-            <div class="admin-kpi-label">{{ copy.totalNodes }}</div>
-            <div class="roadmap-metric-value">{{ roadmapMetrics.total }}</div>
-          </article>
-          <article class="roadmap-metric-card">
-            <div class="admin-kpi-label">{{ copy.inProgress }}</div>
-            <div class="roadmap-metric-value">{{ roadmapMetrics.inProgress }}</div>
-          </article>
-          <article class="roadmap-metric-card">
-            <div class="admin-kpi-label">{{ copy.completed }}</div>
-            <div class="roadmap-metric-value">{{ roadmapMetrics.completed }}</div>
-          </article>
-          <article class="roadmap-metric-card">
-            <div class="admin-kpi-label">{{ copy.selectedNotes }}</div>
-            <div class="roadmap-metric-value">{{ roadmapMetrics.selectedNotes }}</div>
-          </article>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <div class="roadmap-stat-pill">
+            <span>{{ copy.totalNodes }}</span>
+            <strong>{{ roadmapMetrics.total }}</strong>
+          </div>
+          <div class="roadmap-stat-pill">
+            <span>{{ copy.inProgress }}</span>
+            <strong>{{ roadmapMetrics.inProgress }}</strong>
+          </div>
+          <div class="roadmap-stat-pill">
+            <span>{{ copy.completed }}</span>
+            <strong>{{ roadmapMetrics.completed }}</strong>
+          </div>
+          <div class="roadmap-stat-pill">
+            <span>{{ copy.selectedNotes }}</span>
+            <strong>{{ roadmapMetrics.selectedNotes }}</strong>
+          </div>
         </div>
 
         <div class="roadmap-canvas-shell mt-6">
@@ -428,7 +430,7 @@ watch(
             </div>
           </div>
 
-          <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.loading }}</div>
+          <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.notesLoading }}</div>
           <div v-else-if="linkedNotes.length > 0" class="mt-4 grid gap-4 md:grid-cols-2">
             <article v-for="note in linkedNotes" :key="note.id" class="admin-list-card roadmap-note-card">
               <div class="flex flex-wrap gap-2">
@@ -545,23 +547,23 @@ watch(
   line-height: 0.92;
 }
 
-.roadmap-metric-grid {
-  display: grid;
-  gap: 14px;
-}
-
-.roadmap-metric-card {
+.roadmap-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.82);
-  padding: 16px 18px;
+  border-radius: 999px;
+  background: rgba(247, 247, 245, 0.86);
+  padding: 9px 12px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.roadmap-metric-value {
-  margin-top: 10px;
+.roadmap-stat-pill strong {
   color: var(--ink-strong);
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1;
@@ -569,7 +571,7 @@ watch(
 
 .roadmap-canvas-shell {
   position: relative;
-  height: calc(100vh - 252px);
+  height: calc(100vh - 198px);
   min-height: 680px;
   overflow: hidden;
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -628,12 +630,6 @@ watch(
 @media (min-width: 768px) {
   .roadmap-detail-shell {
     padding: 28px 32px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .roadmap-metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
