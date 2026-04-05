@@ -219,6 +219,12 @@ export interface RoadmapNode {
   workspace_id?: number | null;
 }
 
+export interface RoadmapTreeMutationItem {
+  id: number;
+  parent_id: number | null;
+  sort_order: number;
+}
+
 export interface Note {
   id: number;
   node_id: number | null;

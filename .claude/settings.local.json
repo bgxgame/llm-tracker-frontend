@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/brace/Documents/work/ai/llm-tracker-backend/**)"
+    ]
+  }
+}

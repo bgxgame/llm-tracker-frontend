@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { workspaceApi } from '@/api/workspace'
 import { useAuthStore } from '@/store/auth'
@@ -22,8 +22,25 @@ const query = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 const results = ref<WorkspaceSearchResponse | null>(null)
+const activeIndex = ref(-1)
 
 let timer: ReturnType<typeof setTimeout> | null = null
+
+type PaletteResultItem =
+  | {
+      key: string
+      kind: 'roadmap'
+      id: number
+      title: string
+      summary: string
+    }
+  | {
+      key: string
+      kind: 'note'
+      id: number
+      title: string
+      summary: string
+    }
 
 const copy = computed(() =>
   localeStore.isChinese
@@ -60,12 +77,52 @@ const copy = computed(() =>
 )
 
 const hasQuery = computed(() => query.value.trim().length > 0)
+const roadmapResults = computed(() => results.value?.roadmap_results.slice(0, 6) ?? [])
+const noteResults = computed(() => results.value?.note_results.slice(0, 6) ?? [])
+const flattenedResults = computed<PaletteResultItem[]>(() => [
+  ...roadmapResults.value.map((item) => ({
+    key: `roadmap-${item.id}`,
+    kind: 'roadmap' as const,
+    id: item.id,
+    title: item.title,
+    summary: item.description || item.title,
+  })),
+  ...noteResults.value.map((item) => ({
+    key: `note-${item.id}`,
+    kind: 'note' as const,
+    id: item.id,
+    title: item.title,
+    summary: item.summary || copy.value.noSummary,
+  })),
+])
+
+const setActiveIndex = (index: number) => {
+  activeIndex.value = index
+  nextTick(() => {
+    document
+      .querySelector<HTMLElement>(`[data-palette-index="${index}"]`)
+      ?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
+const openActiveResult = () => {
+  const activeItem = flattenedResults.value[activeIndex.value]
+  if (!activeItem) return
+
+  if (activeItem.kind === 'roadmap') {
+    openRoadmap(activeItem.id)
+    return
+  }
+
+  openNote(activeItem.id)
+}
 
 const runSearch = async () => {
   const trimmed = query.value.trim()
 
   if (!props.open || !authStore.activeWorkspaceId || !trimmed) {
     results.value = null
+    activeIndex.value = -1
     errorMessage.value = ''
     loading.value = false
     return
@@ -76,8 +133,10 @@ const runSearch = async () => {
 
   try {
     results.value = await workspaceApi.searchWorkspace(authStore.activeWorkspaceId, trimmed)
+    activeIndex.value = flattenedResults.value.length > 0 ? 0 : -1
   } catch (error: any) {
     results.value = null
+    activeIndex.value = -1
     errorMessage.value = error.message || copy.value.searchError
   } finally {
     loading.value = false
@@ -94,13 +153,14 @@ const scheduleSearch = () => {
 const close = () => {
   query.value = ''
   results.value = null
+  activeIndex.value = -1
   errorMessage.value = ''
   emit('close')
 }
 
-const openRoadmap = (title?: string) => {
+const openRoadmap = (nodeId?: number) => {
   emit('close')
-  router.push({ name: 'admin-roadmap', query: title ? { search: title } : {} })
+  router.push({ name: 'roadmap', query: nodeId ? { nodeId: String(nodeId) } : {} })
 }
 
 const openNote = (id: number) => {
@@ -109,9 +169,33 @@ const openNote = (id: number) => {
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && props.open) {
+  if (!props.open) return
+
+  if (event.key === 'Escape') {
     event.preventDefault()
     close()
+    return
+  }
+
+  if (event.key === 'ArrowDown' && flattenedResults.value.length > 0) {
+    event.preventDefault()
+    const nextIndex =
+      activeIndex.value >= flattenedResults.value.length - 1 ? 0 : activeIndex.value + 1
+    setActiveIndex(nextIndex)
+    return
+  }
+
+  if (event.key === 'ArrowUp' && flattenedResults.value.length > 0) {
+    event.preventDefault()
+    const nextIndex =
+      activeIndex.value <= 0 ? flattenedResults.value.length - 1 : activeIndex.value - 1
+    setActiveIndex(nextIndex)
+    return
+  }
+
+  if (event.key === 'Enter' && activeIndex.value >= 0) {
+    event.preventDefault()
+    openActiveResult()
   }
 }
 
@@ -120,6 +204,7 @@ watch(
   (isOpen) => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
+      activeIndex.value = -1
       setTimeout(() => {
         document.getElementById('workspace-command-input')?.focus()
       }, 40)
@@ -133,6 +218,17 @@ watch(
 
 watch(query, () => {
   scheduleSearch()
+})
+
+watch(flattenedResults, (items) => {
+  if (!items.length) {
+    activeIndex.value = -1
+    return
+  }
+
+  if (activeIndex.value < 0 || activeIndex.value >= items.length) {
+    activeIndex.value = 0
+  }
 })
 
 watch(
@@ -203,11 +299,14 @@ onBeforeUnmount(() => {
                   {{ copy.roadmap }}
                 </div>
                 <button
-                  v-for="item in results.roadmap_results.slice(0, 6)"
+                  v-for="(item, index) in roadmapResults"
                   :key="`roadmap-${item.id}`"
                   type="button"
                   class="admin-list-card block w-full text-left"
-                  @click="openRoadmap(item.title)"
+                  :class="activeIndex === index ? 'palette-result-active' : ''"
+                  :data-palette-index="index"
+                  @mouseenter="activeIndex = index"
+                  @click="openRoadmap(item.id)"
                 >
                   <div class="text-base font-semibold text-[var(--ink-strong)]">{{ item.title }}</div>
                   <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ item.description || item.title }}</p>
@@ -220,10 +319,13 @@ onBeforeUnmount(() => {
                   {{ copy.notes }}
                 </div>
                 <button
-                  v-for="item in results.note_results.slice(0, 6)"
+                  v-for="(item, index) in noteResults"
                   :key="`note-${item.id}`"
                   type="button"
                   class="admin-list-card block w-full text-left"
+                  :class="activeIndex === roadmapResults.length + index ? 'palette-result-active' : ''"
+                  :data-palette-index="roadmapResults.length + index"
+                  @mouseenter="activeIndex = roadmapResults.length + index"
                   @click="openNote(item.id)"
                 >
                   <div class="text-base font-semibold text-[var(--ink-strong)]">{{ item.title }}</div>
@@ -245,6 +347,12 @@ onBeforeUnmount(() => {
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 32px 90px rgba(15, 23, 42, 0.16);
+}
+
+.palette-result-active {
+  border-color: rgba(229, 106, 43, 0.18);
+  background: rgba(255, 250, 242, 0.92);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
 }
 
 .palette-enter-active,

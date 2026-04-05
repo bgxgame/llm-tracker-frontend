@@ -52,13 +52,11 @@ const copy = computed(() =>
         untitledArtifact: 'Untitled artifact',
         openResource: 'Open resource',
         emptyArtifacts: 'No linked artifacts yet.',
-      }
+      },
 )
 
 const currentNodeTitle = computed(() => {
-  if (!note.value?.node_id) {
-    return copy.value.generalNode
-  }
+  if (!note.value?.node_id) return copy.value.generalNode
 
   return roadmapNodes.value.find((node) => node.id === note.value?.node_id)?.title ?? `${copy.value.nodeFallback} ${note.value.node_id}`
 })
@@ -100,7 +98,7 @@ const editNote = () => {
 
 <template>
   <div class="min-h-screen bg-[linear-gradient(180deg,#fafaf8_0%,#f4f6f8_100%)]">
-    <div class="border-b border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.72)] backdrop-blur">
+    <div class="sticky top-0 z-20 border-b border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.72)] backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <button class="product-button-secondary !px-5 !py-3" type="button" @click="goBack">{{ copy.back }}</button>
         <button v-if="canEdit" class="product-button-dark !px-5 !py-3" type="button" @click="editNote">
@@ -118,7 +116,7 @@ const editNote = () => {
     </div>
 
     <div v-else-if="note" class="mx-auto max-w-6xl px-6 py-8">
-      <section class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.8)] p-8 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
+      <section class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.8)] p-7 shadow-[0_18px_50px_rgba(20,33,43,0.05)] md:p-8">
         <div class="flex flex-wrap gap-2">
           <span class="admin-chip-warm">{{ currentNodeTitle }}</span>
           <span class="admin-chip">{{ currentWorkspaceName }}</span>
@@ -126,7 +124,11 @@ const editNote = () => {
           <span class="admin-chip">{{ readingTime }} {{ copy.readingTime }}</span>
         </div>
 
-        <h1 class="product-title mt-6 text-4xl leading-[0.96] md:text-6xl">{{ note.title }}</h1>
+        <h1 class="product-title mt-5 text-4xl leading-[0.96] md:text-6xl">{{ note.title }}</h1>
+
+        <p v-if="note.summary" class="mt-4 max-w-3xl text-base leading-8 text-[var(--ink-soft)]">
+          {{ note.summary }}
+        </p>
 
         <div v-if="note.tags?.length" class="mt-6 flex flex-wrap gap-2">
           <span
@@ -140,7 +142,7 @@ const editNote = () => {
       </section>
 
       <div class="mt-6 grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside class="space-y-6">
+        <aside class="note-detail-sidebar space-y-6">
           <section class="rounded-[1.8rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.82)] p-5 shadow-[0_14px_36px_rgba(20,33,43,0.04)]">
             <div class="text-[11px] font-black uppercase tracking-[0.24em] text-[var(--brand)]">{{ copy.outline }}</div>
             <div class="mt-4 text-sm text-[var(--ink-main)]">
@@ -157,6 +159,7 @@ const editNote = () => {
                 :key="artifact.id"
                 :href="artifact.content_url"
                 target="_blank"
+                rel="noreferrer"
                 class="artifact-card"
               >
                 <div class="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--accent)]">{{ artifact.artifact_type }}</div>
@@ -174,9 +177,11 @@ const editNote = () => {
           </section>
         </aside>
 
-        <article class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.84)] px-8 py-10 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
-          <MdPreview :modelValue="note.content" :editorId="'note-preview'" theme="light" class="bg-transparent! no-padding-preview" />
-        </article>
+        <div class="space-y-6">
+          <article class="rounded-[2rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.84)] px-8 py-10 shadow-[0_18px_50px_rgba(20,33,43,0.05)]">
+            <MdPreview :modelValue="note.content" :editorId="'note-preview'" theme="light" class="bg-transparent! no-padding-preview" />
+          </article>
+        </div>
       </div>
     </div>
   </div>
@@ -232,5 +237,13 @@ const editNote = () => {
 :deep(.md-editor-catalog-active > .md-editor-catalog-link span) {
   border-left: 2px solid var(--brand);
   padding-left: 14px;
+}
+
+@media (min-width: 1280px) {
+  .note-detail-sidebar {
+    position: sticky;
+    top: 94px;
+    align-self: start;
+  }
 }
 </style>

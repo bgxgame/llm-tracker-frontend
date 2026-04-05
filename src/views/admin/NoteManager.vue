@@ -53,7 +53,7 @@ const copy = computed(() =>
         open: '查看',
         edit: '编辑',
         delete: '删除',
-        openRoadmap: '进入路线图',
+        openRoadmap: hasWriteAccess.value ? '进入编辑台' : '进入路线图',
         emptyTitle: '还没有笔记',
         emptyCopy: '先从关键节点开始，把结论、方法和过程记下来。',
       }
@@ -85,7 +85,7 @@ const copy = computed(() =>
         open: 'Open',
         edit: 'Edit',
         delete: 'Delete',
-        openRoadmap: 'Open roadmap',
+        openRoadmap: hasWriteAccess.value ? 'Open editor' : 'Open roadmap',
         emptyTitle: 'No notes yet',
         emptyCopy: 'Start with the key nodes and capture the method, finding, or decision.',
       }
@@ -302,7 +302,11 @@ const confirmDelete = async () => {
           <button v-if="hasWriteAccess" class="product-button-dark" type="button" @click="createNote">
             {{ copy.newNote }}
           </button>
-          <button class="product-button-secondary" type="button" @click="router.push('/admin/roadmap')">
+          <button
+            class="product-button-secondary"
+            type="button"
+            @click="router.push(hasWriteAccess ? '/admin/roadmap' : '/roadmap')"
+          >
             {{ copy.openRoadmap }}
           </button>
         </div>

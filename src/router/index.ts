@@ -37,7 +37,7 @@ const router = createRouter({
     {
       path: '/admin',
       component: () => import('@/views/admin/AdminLayout.vue'),
-      redirect: '/admin/roadmap',
+      redirect: '/admin/dashboard',
       meta: { requiresAuth: true },
       children: [
         {
@@ -51,7 +51,8 @@ const router = createRouter({
         },
         {
           path: 'search',
-          redirect: '/admin/roadmap',
+          name: 'admin-search',
+          component: () => import('@/views/admin/AdminSearchView.vue'),
         },
         {
           path: 'workspace',

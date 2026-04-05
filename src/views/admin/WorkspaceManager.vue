@@ -10,28 +10,20 @@ const localeStore = useLocaleStore()
 
 const members = ref<WorkspaceMember[]>([])
 const loadingMembers = ref(false)
-const creatingWorkspace = ref(false)
 const creatingInviteLink = ref(false)
 const errorMessage = ref('')
 const inviteMessage = ref('')
-const createWorkspaceName = ref('')
 const inviteRole = ref<WorkspaceRole>('member')
 const inviteLink = ref<WorkspaceInviteLink | null>(null)
 
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        kicker: '空间',
-        title: '空间设置',
-        summary: '切换当前空间、邀请成员，并管理协作权限。',
-        currentTitle: '当前空间',
-        currentHint: '这里决定你当前正在推进哪一套路线图和笔记',
-        createTitle: '新建空间',
-        createPlaceholder: '例如：产品增长 / 客户交付 / 研究实验',
-        createAction: '创建空间',
-        creating: '创建中...',
+        kicker: '成员',
+        title: '成员管理',
+        summary: '只处理两件事：邀请加入，以及管理当前空间的成员权限。',
         inviteTitle: '邀请加入',
-        inviteHint: '生成链接发给对方，对方打开后可直接注册并加入当前空间',
+        inviteHint: '生成链接发给对方，对方打开后可直接注册并加入当前空间。',
         inviteAction: '生成邀请链接',
         inviteGenerating: '生成中...',
         inviteLinkLabel: '邀请链接',
@@ -42,12 +34,11 @@ const copy = computed(() =>
         copied: '链接已复制',
         inviteExpires: '链接 7 天后失效',
         membersTitle: '成员',
+        membersHint: '成员列表只保留必要信息和权限操作。',
         manageEnabled: '可管理',
         readOnly: '只读',
         loading: '正在加载成员...',
         noMembers: '当前还没有其他成员。',
-        emptyName: '空间名称不能为空',
-        createError: '创建空间失败',
         inviteError: '生成邀请链接失败',
         updateError: '更新成员角色失败',
         removeError: '移除成员失败',
@@ -58,21 +49,15 @@ const copy = computed(() =>
         remove: '移除',
         joinedAt: '加入时间',
         totalMembers: '成员',
-        totalSpaces: '空间',
-        currentBadge: '当前',
+        youBadge: '你',
+        currentWorkspace: '当前空间',
       }
     : {
-        kicker: 'Workspace',
-        title: 'Workspace settings',
-        summary: 'Switch workspace, invite people, and manage collaboration access.',
-        currentTitle: 'Current workspace',
-        currentHint: 'This controls which roadmap and notes you are actively working in',
-        createTitle: 'Create workspace',
-        createPlaceholder: 'For example: Growth / Delivery / Research',
-        createAction: 'Create workspace',
-        creating: 'Creating...',
+        kicker: 'Members',
+        title: 'Member management',
+        summary: 'Keep this page focused on two jobs: inviting people and managing access in the current workspace.',
         inviteTitle: 'Invite people',
-        inviteHint: 'Send the link and they can register or join this workspace directly',
+        inviteHint: 'Send the link and they can register or join this workspace directly.',
         inviteAction: 'Generate invite link',
         inviteGenerating: 'Generating...',
         inviteLinkLabel: 'Invite link',
@@ -83,12 +68,11 @@ const copy = computed(() =>
         copied: 'Link copied',
         inviteExpires: 'The link expires in 7 days',
         membersTitle: 'Members',
+        membersHint: 'Keep only the member info and permission controls that matter.',
         manageEnabled: 'Can manage',
         readOnly: 'Read only',
         loading: 'Loading members...',
         noMembers: 'There are no other members yet.',
-        emptyName: 'Workspace name cannot be empty',
-        createError: 'Unable to create workspace',
         inviteError: 'Unable to generate invite link',
         updateError: 'Unable to update member role',
         removeError: 'Unable to remove member',
@@ -99,9 +83,9 @@ const copy = computed(() =>
         remove: 'Remove',
         joinedAt: 'Joined',
         totalMembers: 'Members',
-        totalSpaces: 'Workspaces',
-        currentBadge: 'Current',
-      }
+        youBadge: 'You',
+        currentWorkspace: 'Current workspace',
+      },
 )
 
 const currentWorkspaceId = computed(() => authStore.activeWorkspaceId)
@@ -121,16 +105,16 @@ const roleLabel = computed<Record<WorkspaceRole, string>>(() =>
         admin: 'Admin',
         member: 'Member',
         viewer: 'Viewer',
-      }
+      },
 )
 
 const ownerCount = computed(() => members.value.filter((member) => member.role === 'owner').length)
 const roleOptions = computed<WorkspaceRole[]>(() =>
-  authStore.activeRole === 'owner' ? ['owner', 'admin', 'member', 'viewer'] : ['admin', 'member', 'viewer']
+  authStore.activeRole === 'owner' ? ['owner', 'admin', 'member', 'viewer'] : ['admin', 'member', 'viewer'],
 )
 
 const currentInviteUrl = computed(() =>
-  inviteLink.value ? `${window.location.origin}${inviteLink.value.invite_url}` : ''
+  inviteLink.value ? `${window.location.origin}${inviteLink.value.invite_url}` : '',
 )
 
 const formatDate = (value: string) =>
@@ -180,29 +164,6 @@ const fetchMembers = async () => {
     errorMessage.value = error.message || copy.value.loading
   } finally {
     loadingMembers.value = false
-  }
-}
-
-const handleCreateWorkspace = async () => {
-  if (!createWorkspaceName.value.trim()) {
-    errorMessage.value = copy.value.emptyName
-    return
-  }
-
-  creatingWorkspace.value = true
-  errorMessage.value = ''
-
-  try {
-    const workspace = await workspaceApi.createWorkspace({ name: createWorkspaceName.value.trim() })
-    authStore.appendWorkspace(workspace)
-    createWorkspaceName.value = ''
-    inviteLink.value = null
-    inviteMessage.value = ''
-    await fetchMembers()
-  } catch (error: any) {
-    errorMessage.value = error.message || copy.value.createError
-  } finally {
-    creatingWorkspace.value = false
   }
 }
 
@@ -271,7 +232,7 @@ watch(
     inviteMessage.value = ''
     fetchMembers()
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
@@ -281,51 +242,33 @@ watch(
       <div class="admin-kicker">{{ copy.kicker }}</div>
       <h1 class="admin-headline mt-3">{{ copy.title }}</h1>
       <p class="admin-subtitle mt-5">{{ copy.summary }}</p>
+
+      <div class="mt-5 flex flex-wrap gap-2">
+        <span class="workspace-meta-pill workspace-meta-pill-dark">
+          {{ copy.currentWorkspace }} {{ currentWorkspace?.workspace_name || '--' }}
+        </span>
+        <span class="workspace-meta-pill">
+          {{ copy.totalMembers }} {{ members.length }}
+        </span>
+      </div>
     </header>
 
     <div v-if="errorMessage" class="product-error mt-5 px-5 py-4 text-sm font-semibold">
       {{ errorMessage }}
     </div>
 
-    <section class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div class="space-y-6">
-        <article class="admin-card p-6">
-          <div class="flex flex-wrap items-start justify-between gap-4">
-            <div class="min-w-0">
-              <div class="admin-card-title">{{ copy.currentTitle }}</div>
-              <p class="admin-card-copy">{{ copy.currentHint }}</p>
-              <div class="mt-4 text-2xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">
-                {{ currentWorkspace?.workspace_name || '--' }}
-              </div>
+    <section class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+      <div>
+        <article class="admin-card p-6 md:p-7">
+          <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div class="admin-card-title">{{ copy.membersTitle }}</div>
+              <p class="admin-card-copy">{{ copy.membersHint }}</p>
             </div>
-
-            <div class="flex flex-wrap gap-2">
-              <span class="admin-chip">{{ copy.totalSpaces }} {{ authStore.workspaces.length }}</span>
-              <span class="admin-chip">{{ copy.totalMembers }} {{ members.length }}</span>
-              <span v-if="authStore.activeRole" class="admin-chip-dark">{{ roleLabel[authStore.activeRole] }}</span>
-            </div>
+            <span :class="canManageMembers ? 'workspace-side-pill workspace-side-pill-dark' : 'workspace-side-pill'">
+              {{ canManageMembers ? copy.manageEnabled : copy.readOnly }}
+            </span>
           </div>
-
-          <div class="mt-5 space-y-3">
-            <button
-              v-for="workspace in authStore.workspaces"
-              :key="workspace.workspace_id"
-              type="button"
-              class="workspace-switcher-card"
-              :class="authStore.activeWorkspaceId === workspace.workspace_id ? 'workspace-switcher-card-active' : ''"
-              @click="authStore.setActiveWorkspace(workspace.workspace_id)"
-            >
-              <div class="min-w-0">
-                <div class="truncate text-base font-semibold text-[var(--ink-strong)]">{{ workspace.workspace_name }}</div>
-                <div class="mt-1 text-sm text-[var(--ink-soft)]">{{ roleLabel[workspace.role] }}</div>
-              </div>
-              <span v-if="authStore.activeWorkspaceId === workspace.workspace_id" class="admin-chip-dark">{{ copy.currentBadge }}</span>
-            </button>
-          </div>
-        </article>
-
-        <article class="admin-card p-6">
-          <div class="admin-card-title">{{ copy.membersTitle }}</div>
 
           <div v-if="loadingMembers" class="admin-empty mt-5">
             {{ copy.loading }}
@@ -336,17 +279,28 @@ watch(
           </div>
 
           <div v-else class="mt-5 space-y-3">
-            <article v-for="member in members" :key="member.user_id" class="member-row">
-              <div class="min-w-0">
-                <div class="text-base font-semibold text-[var(--ink-strong)]">{{ member.username }}</div>
-                <div class="mt-1 text-sm text-[var(--ink-soft)]">{{ member.email }}</div>
+            <article v-for="member in members" :key="member.user_id" class="member-card">
+              <div class="member-avatar">
+                {{ member.username?.charAt(0)?.toUpperCase() || 'U' }}
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="text-base font-semibold text-[var(--ink-strong)]">{{ member.username }}</div>
+                  <span class="workspace-meta-pill">{{ roleLabel[member.role] }}</span>
+                  <span v-if="member.user_id === authStore.userId" class="workspace-meta-pill workspace-meta-pill-dark">
+                    {{ copy.youBadge }}
+                  </span>
+                </div>
+                <div class="mt-2 text-sm text-[var(--ink-soft)]">{{ member.email }}</div>
+                <div class="mt-2 text-sm text-[var(--ink-soft)]">{{ copy.joinedAt }} {{ formatDate(member.joined_at) }}</div>
                 <p v-if="memberHint(member)" class="mt-2 text-sm text-[var(--danger)]">{{ memberHint(member) }}</p>
               </div>
 
-              <div class="member-row-side">
+              <div class="member-actions">
                 <select
                   :value="member.role"
-                  class="admin-select !min-w-[130px]"
+                  class="admin-select !min-w-[148px]"
                   :disabled="!canEditMemberRole(member)"
                   @change="updateRole(member, ($event.target as HTMLSelectElement).value as WorkspaceRole)"
                 >
@@ -355,13 +309,9 @@ watch(
                   </option>
                 </select>
 
-                <div class="text-sm text-[var(--ink-soft)]">
-                  {{ copy.joinedAt }} {{ formatDate(member.joined_at) }}
-                </div>
-
                 <button
                   class="text-sm font-semibold"
-                  :class="canRemoveMember(member) ? 'text-[var(--danger)]' : 'cursor-not-allowed text-[rgba(15,23,42,0.3)]'"
+                  :class="canRemoveMember(member) ? 'text-[var(--danger)]' : 'cursor-not-allowed text-[rgba(15,23,42,0.28)]'"
                   type="button"
                   :disabled="!canRemoveMember(member)"
                   @click="removeMember(member)"
@@ -374,16 +324,16 @@ watch(
         </article>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-6 xl:sticky xl:top-4">
         <article class="admin-card p-6">
-          <div class="flex items-center justify-between gap-3">
-            <div>
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center justify-between gap-3">
               <div class="admin-card-title">{{ copy.inviteTitle }}</div>
-              <p class="admin-card-copy">{{ copy.inviteHint }}</p>
+              <span :class="canManageMembers ? 'workspace-side-pill workspace-side-pill-dark' : 'workspace-side-pill'">
+                {{ canManageMembers ? copy.manageEnabled : copy.readOnly }}
+              </span>
             </div>
-            <span :class="canManageMembers ? 'admin-chip-dark' : 'admin-chip'">
-              {{ canManageMembers ? copy.manageEnabled : copy.readOnly }}
-            </span>
+            <p class="text-sm leading-7 text-[var(--ink-soft)]">{{ copy.inviteHint }}</p>
           </div>
 
           <div class="mt-5 space-y-4">
@@ -414,29 +364,13 @@ watch(
               {{ copy.copyInvite }}
             </button>
 
-            <div class="text-sm text-[var(--ink-soft)]">
+            <div class="rounded-[18px] border border-[rgba(15,23,42,0.06)] bg-[rgba(247,247,245,0.72)] px-4 py-3 text-sm leading-7 text-[var(--ink-soft)]">
               {{ inviteMessage || copy.inviteFlowHint }}
             </div>
 
             <div class="text-xs font-semibold text-[var(--ink-soft)]">
               {{ copy.inviteExpires }}
             </div>
-          </div>
-        </article>
-
-        <article class="admin-card p-6">
-          <div class="admin-card-title">{{ copy.createTitle }}</div>
-          <div class="mt-4 flex flex-col gap-3">
-            <input
-              v-model="createWorkspaceName"
-              type="text"
-              class="admin-input"
-              :placeholder="copy.createPlaceholder"
-              @keyup.enter="handleCreateWorkspace"
-            />
-            <button class="product-button-secondary w-full" type="button" :disabled="creatingWorkspace" @click="handleCreateWorkspace">
-              {{ creatingWorkspace ? copy.creating : copy.createAction }}
-            </button>
           </div>
         </article>
       </div>
@@ -447,25 +381,31 @@ watch(
 <style lang="postcss" scoped>
 @reference "@/style.css";
 
-.workspace-switcher-card {
-  @apply flex w-full items-center justify-between gap-3 rounded-[20px] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.94)] px-4 py-4 text-left transition-all;
+.workspace-meta-pill {
+  @apply inline-flex items-center rounded-full border border-[rgba(15,23,42,0.06)] bg-[rgba(247,247,245,0.88)] px-3 py-1.5 text-xs font-semibold text-[var(--ink-main)];
 }
 
-.workspace-switcher-card:hover {
-  border-color: rgba(15, 23, 42, 0.14);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
+.workspace-meta-pill-dark {
+  @apply border-transparent bg-[var(--ink-strong)] text-white;
 }
 
-.workspace-switcher-card-active {
-  border-color: rgba(229, 106, 43, 0.18);
-  background: rgba(255, 250, 242, 0.92);
+.workspace-side-pill {
+  @apply inline-flex items-center rounded-full border border-[rgba(15,23,42,0.06)] bg-[rgba(247,247,245,0.88)] px-4 py-2 text-xs font-semibold whitespace-nowrap text-[var(--ink-main)];
 }
 
-.member-row {
-  @apply flex flex-col gap-4 rounded-[20px] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.94)] p-4 xl:flex-row xl:items-center xl:justify-between;
+.workspace-side-pill-dark {
+  @apply border-transparent bg-[var(--ink-strong)] text-white;
 }
 
-.member-row-side {
-  @apply flex flex-col gap-3 xl:items-end;
+.member-card {
+  @apply flex flex-col gap-4 rounded-[22px] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.96)] p-4 md:flex-row md:items-start;
+}
+
+.member-avatar {
+  @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[rgba(15,23,42,0.06)] text-sm font-bold text-[var(--ink-strong)];
+}
+
+.member-actions {
+  @apply flex shrink-0 flex-col gap-3 md:items-end;
 }
 </style>

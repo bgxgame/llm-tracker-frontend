@@ -1,73 +1,84 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Background } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
-import { VueFlow } from '@vue-flow/core'
-import { noteApi } from '@/api/note'
-import { roadmapApi } from '@/api/roadmap'
+import StatusChip from '@/components/ui/StatusChip.vue'
+import InlineEditableField from '@/components/ui/InlineEditableField.vue'
 import { workspaceApi } from '@/api/workspace'
 import { useAuthStore } from '@/store/auth'
 import { useLocaleStore } from '@/store/locale'
-import type { Note, RoadmapNode } from '@/types'
+import { useRoadmapStore } from '@/store/roadmap'
+import type { RoadmapNode } from '@/types'
+import {
+  flattenRoadmapTree,
+  getRoadmapNodeMoveState,
+  moveRoadmapNode,
+  serializeRoadmapTree,
+} from '@/utils/roadmapTree'
 
-import '@vue-flow/core/dist/style.css'
-import '@vue-flow/core/dist/theme-default.css'
+type DraftMode = 'root' | 'child' | 'sibling'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
+const roadmapStore = useRoadmapStore()
 
-const nodes = ref<RoadmapNode[]>([])
-const linkedNotes = ref<Note[]>([])
-const selectedNodeId = ref<number | null>(null)
-const loading = ref(false)
-const loadingNotes = ref(false)
-const errorMessage = ref('')
 const shareMessage = ref('')
-const isEditModalOpen = ref(false)
 const isDeleteConfirmOpen = ref(false)
-const currentEditNode = ref<Partial<RoadmapNode>>({})
+const errorMessage = ref('')
+const structureErrorMessage = ref('')
+const movingDirection = ref<'up' | 'down' | 'indent' | 'outdent' | null>(null)
+const draftNode = ref<{
+  mode: DraftMode
+  anchorId: number | null
+  title: string
+  description: string
+  node_type: RoadmapNode['node_type']
+  status: RoadmapNode['status']
+  parent_id: number | null
+  sort_order: number
+} | null>(null)
+const undoToast = ref<{
+  message: string
+  undo: () => Promise<void>
+} | null>(null)
+let undoTimer: number | null = null
+
+const selectedNodeIdFromRoute = computed(() => {
+  const value = Number(route.query.nodeId)
+  return Number.isFinite(value) && value > 0 ? value : null
+})
+
+const routeIntent = computed(() => {
+  const value = String(route.query.intent || '')
+  return value === 'root' || value === 'child' || value === 'sibling' ? value : null
+})
+
+const routeAnchorId = computed(() => {
+  const value = Number(route.query.anchorId)
+  return Number.isFinite(value) && value > 0 ? value : null
+})
 
 const copy = computed(() =>
   localeStore.isChinese
     ? {
-        kicker: '路线图',
-        title: '路线图',
-        summary: '先看主线，再选节点编辑说明和关联内容。',
+        title: '节点管理',
+        summary: '创建节点、编辑结构、复制分享链接。',
         share: '复制分享链接',
         shareDone: '链接已复制',
-        addNode: '新增节点',
-        addNote: '新增笔记',
+        addNode: '新增根节点',
+        addChild: '新增子节点',
+        addSibling: '新增同级节点',
         readonly: '只读查看',
         writable: '可编辑',
         loading: '正在加载路线图...',
-        notesLoading: '正在加载节点内容...',
         loadError: '加载路线图失败',
         noWorkspace: '当前没有可用空间。',
-        emptyTitle: '选一个节点继续往下看',
-        emptyCopy: '节点说明和关联笔记会出现在下方，方便从全局直接进入细节。',
-        linkedNotes: '节点内容',
-        noNotes: '这个节点下还没有笔记。',
-        openNote: '打开笔记',
         noDescription: '这个节点还没有补充说明。',
-        edit: '编辑节点',
-        save: '保存节点',
         delete: '删除节点',
         cancel: '取消',
-        createTitle: '新建节点',
-        editTitle: '编辑节点',
-        titleLabel: '标题',
-        descriptionLabel: '说明',
-        typeLabel: '类型',
-        statusLabel: '状态',
-        saveError: '保存节点失败',
-        deleteError: '删除节点失败',
-        deleteTitle: '确认删除这个节点吗？',
-        deleteBodyPrefix: '删除后，',
-        deleteBodySuffix: '会从路线图中移除，并重新连接后续节点。',
-        deleteAction: '永久删除',
+        deleteTitle: '删除这个节点？',
+        deleteBody: '删除后会自动把直接子节点抬升到上一层，保持路径不断裂。',
         theory: '理论',
         coding: '编码',
         project: '项目',
@@ -75,52 +86,55 @@ const copy = computed(() =>
         inProgress: '进行中',
         completed: '已完成',
         totalNodes: '节点',
-        selectedNotes: '关联笔记',
-        openCanvas: '点节点展开内容',
         firstCanvasTitle: '先把第一条主线放上来',
-        firstCanvasSummary: '哪怕先只有一个节点也没关系。先把当前最重要的方向放上来，再继续往后接。',
+        firstCanvasSummary: '这里是纯节点管理台。先建立根节点，再逐步补齐同级、子级和路径顺序。',
         firstCanvasAction: '创建第一个节点',
-        firstCanvasReadonly: '这个空间还没有路线图，等拥有写权限的成员先创建第一条主线。',
-        firstDetailTitle: '创建后，路线图会从这里开始长出来',
-        firstDetailSummary: '建议先放当前最重要的节点，再逐步接上后续节点和每个节点下面的笔记。',
-        firstDetailSteps: ['先创建一个当前节点', '再把后续节点按顺序接上', '把相关笔记补在对应节点下面'],
+        firstCanvasReadonly: '这个空间还没有路线图，等待有写权限的成员创建第一条主线。',
+        firstDetailTitle: '从这里开始搭建路径',
+        firstDetailSummary: '创建第一个节点后，右侧会作为节点检查器，持续编辑标题、描述、状态和结构。',
+        titlePlaceholder: '给这个节点一个清晰标题',
+        descriptionPlaceholder: '补充背景、目标或判断依据。Ctrl/Cmd + Enter 保存。',
+        draftTitle: '快速创建节点',
+        draftSummary: '直接在这里补一个节点，保存后继续整理整条路径。',
+        saveDraft: '保存节点',
+        saveError: '保存节点失败',
+        createError: '创建节点失败',
+        quickActions: '快捷动作',
+        pathTools: '调整路径',
+        moveEarlier: '前移',
+        moveLater: '后移',
+        moveDeeper: '下沉',
+        moveHigher: '上提',
+        undo: '撤销',
+        statusSaved: '节点状态已更新',
+        titleSaved: '节点标题已更新',
+        descriptionSaved: '节点说明已更新',
+        createChildSaved: '已新增子节点',
+        createSiblingSaved: '已新增同级节点',
+        createRootSaved: '已新增根节点',
+        pathMovedEarlier: '节点已往前调整',
+        pathMovedLater: '节点已往后调整',
+        pathMovedDeeper: '节点已向下展开',
+        pathMovedHigher: '节点已向上提级',
       }
     : {
-        kicker: 'Roadmap',
-        title: 'Roadmap',
-        summary: 'See the path first, then edit the right node and its linked content.',
+        title: 'Node manager',
+        summary: 'Create nodes, reshape structure, and copy the share link.',
         share: 'Copy share link',
         shareDone: 'Link copied',
-        addNode: 'Add node',
-        addNote: 'Add note',
+        addNode: 'Add root node',
+        addChild: 'Add child node',
+        addSibling: 'Add sibling node',
         readonly: 'Read only',
         writable: 'Editable',
         loading: 'Loading roadmap...',
-        notesLoading: 'Loading node content...',
         loadError: 'Unable to load roadmap',
         noWorkspace: 'There is no active workspace.',
-        emptyTitle: 'Select a node to continue',
-        emptyCopy: 'The node description and related notes appear below the canvas.',
-        linkedNotes: 'Node content',
-        noNotes: 'There are no notes under this node yet.',
-        openNote: 'Open note',
         noDescription: 'No description yet.',
-        edit: 'Edit node',
-        save: 'Save node',
         delete: 'Delete node',
         cancel: 'Cancel',
-        createTitle: 'Create node',
-        editTitle: 'Edit node',
-        titleLabel: 'Title',
-        descriptionLabel: 'Description',
-        typeLabel: 'Type',
-        statusLabel: 'Status',
-        saveError: 'Unable to save node',
-        deleteError: 'Unable to delete node',
         deleteTitle: 'Delete this node?',
-        deleteBodyPrefix: '',
-        deleteBodySuffix: 'will be removed from the roadmap and the chain will reconnect.',
-        deleteAction: 'Delete permanently',
+        deleteBody: 'Direct children will be lifted to the previous level so the path stays connected.',
         theory: 'Theory',
         coding: 'Coding',
         project: 'Project',
@@ -128,54 +142,67 @@ const copy = computed(() =>
         inProgress: 'In progress',
         completed: 'Completed',
         totalNodes: 'Nodes',
-        selectedNotes: 'Linked notes',
-        openCanvas: 'Click a node to open content',
         firstCanvasTitle: 'Start with the first node on the path',
-        firstCanvasSummary: 'One node is enough to begin. Put the current priority on the roadmap first, then connect the next steps.',
+        firstCanvasSummary: 'This is a pure node workbench. Start with a root node, then build the structure with siblings, children, and reordering.',
         firstCanvasAction: 'Create first node',
         firstCanvasReadonly: 'This workspace does not have a roadmap yet. Wait for someone with write access to add the first node.',
-        firstDetailTitle: 'After that, the roadmap grows from here',
-        firstDetailSummary: 'Start with the current priority, then connect the next nodes and attach notes underneath each one.',
-        firstDetailSteps: ['Create the current priority first', 'Connect the next nodes in order', 'Attach notes under the right node'],
-      }
+        firstDetailTitle: 'Build the path from here',
+        firstDetailSummary: 'Once the first node exists, the right panel becomes a stable inspector for title, description, status, and structure.',
+        titlePlaceholder: 'Give this node a clear title',
+        descriptionPlaceholder: 'Add context, goal, or decision rationale. Ctrl/Cmd + Enter saves.',
+        draftTitle: 'Quick node draft',
+        draftSummary: 'Create a node inline and keep shaping the path.',
+        saveDraft: 'Save node',
+        saveError: 'Unable to save node',
+        createError: 'Unable to create node',
+        quickActions: 'Quick actions',
+        pathTools: 'Shape path',
+        moveEarlier: 'Earlier',
+        moveLater: 'Later',
+        moveDeeper: 'Deeper',
+        moveHigher: 'Higher',
+        undo: 'Undo',
+        statusSaved: 'Node status updated',
+        titleSaved: 'Node title updated',
+        descriptionSaved: 'Node description updated',
+        createChildSaved: 'Child node created',
+        createSiblingSaved: 'Sibling node created',
+        createRootSaved: 'Root node created',
+        pathMovedEarlier: 'Node moved earlier on the path',
+        pathMovedLater: 'Node moved later on the path',
+        pathMovedDeeper: 'Node moved deeper into the path',
+        pathMovedHigher: 'Node lifted higher on the path',
+      },
 )
 
 const hasWriteAccess = computed(() => authStore.hasWriteAccess)
 const currentWorkspace = computed(() => authStore.activeWorkspace)
-const selectedNode = computed(() => nodes.value.find((node) => node.id === selectedNodeId.value) ?? null)
-const hasNodes = computed(() => nodes.value.length > 0)
-const shouldAutoCreate = computed(() => route.query.create === '1')
-const roadmapMetrics = computed(() => ({
-  total: nodes.value.length,
-  inProgress: nodes.value.filter((node) => node.status === 'in_progress').length,
-  completed: nodes.value.filter((node) => node.status === 'completed').length,
-  selectedNotes: linkedNotes.value.length,
-}))
-
-const flowNodes = computed(() =>
-  nodes.value.map((node) => ({
-    id: String(node.id),
-    label: node.title,
-    data: node,
-    position: {
-      x: node.node_type === 'theory' ? 60 : node.node_type === 'coding' ? 320 : 580,
-      y: node.sort_order * 170 + 48,
-    },
-    class: `roadmap-canvas-node roadmap-canvas-node-${node.status}`,
-  }))
+const selectedNode = computed(() => roadmapStore.selectedNode)
+const hasNodes = computed(() => roadmapStore.hasNodes)
+const flatTree = computed(() => flattenRoadmapTree(roadmapStore.tree))
+const pageSummary = computed(() =>
+  localeStore.isChinese
+    ? '这里只处理节点的创建、编辑、层级调整和删除，不承担笔记职责。'
+    : 'Manage nodes only: create, edit, reorder, and remove them from one place.',
 )
-
-const flowEdges = computed(() =>
-  nodes.value
-    .filter((node) => node.parent_id)
-    .map((node) => ({
-      id: `edge-${node.parent_id}-${node.id}`,
-      source: String(node.parent_id),
-      target: String(node.id),
-      animated: node.status === 'in_progress',
-      type: 'smoothstep',
-      style: { stroke: '#d1d5db', strokeWidth: 2.5 },
-    }))
+const shortcutSummary = computed(() =>
+  localeStore.isChinese ? '快捷键：N 新建节点，Alt + 方向键 调整路径' : 'Shortcuts: N new node, Alt + Arrow to reshape',
+)
+const detailEmptyTitle = computed(() => (localeStore.isChinese ? '先从左侧选一个节点' : 'Select a node from the left'))
+const detailEmptyCopy = computed(() =>
+  localeStore.isChinese
+    ? '右侧只负责当前节点的标题、状态、说明和路径结构调整。'
+    : 'The right panel only edits the selected node and reshapes its position on the path.',
+)
+const detailPanelLabel = computed(() => (localeStore.isChinese ? '节点检查器' : 'Node inspector'))
+const detailPanelHint = computed(() =>
+  localeStore.isChinese
+    ? '在这里直接维护节点标题、说明、状态和结构位置。'
+    : 'Edit the title, status, description, and structure from here.',
+)
+const nodeActionsLabel = computed(() => (localeStore.isChinese ? '节点动作' : 'Node actions'))
+const structureMoveState = computed(() =>
+  getRoadmapNodeMoveState(roadmapStore.nodes, selectedNode.value?.id ?? null),
 )
 
 const typeLabel = (type: RoadmapNode['node_type']) => {
@@ -184,60 +211,130 @@ const typeLabel = (type: RoadmapNode['node_type']) => {
   return copy.value.theory
 }
 
-const statusLabel = (status: RoadmapNode['status']) => {
-  if (status === 'completed') return copy.value.completed
-  if (status === 'in_progress') return copy.value.inProgress
-  return copy.value.todo
+const clearUndoToast = () => {
+  undoToast.value = null
+  if (undoTimer) {
+    window.clearTimeout(undoTimer)
+    undoTimer = null
+  }
 }
 
-const fetchNodes = async () => {
-  if (!authStore.activeWorkspaceId) {
-    nodes.value = []
-    selectedNodeId.value = null
-    linkedNotes.value = []
+const pushUndoToast = (message: string, undo: () => Promise<void>) => {
+  clearUndoToast()
+  undoToast.value = { message, undo }
+  undoTimer = window.setTimeout(() => {
+    undoToast.value = null
+    undoTimer = null
+  }, 5000)
+}
+
+const syncSelectedQuery = (nodeId: number | null, replace = false) => {
+  const nextQuery = {
+    ...route.query,
+    nodeId: nodeId ? String(nodeId) : undefined,
+  }
+
+  if (replace) {
+    router.replace({ name: 'admin-roadmap', query: nextQuery })
     return
   }
 
-  loading.value = true
+  router.push({ name: 'admin-roadmap', query: nextQuery })
+}
+
+const selectNodeById = async (nodeId: number | null, options?: { replace?: boolean }) => {
+  structureErrorMessage.value = ''
+
+  if (!nodeId) {
+    roadmapStore.selectNode(null)
+    return
+  }
+
+  const node = roadmapStore.nodes.find((item) => item.id === nodeId)
+  if (!node) return
+
+  if (roadmapStore.selectedNodeId === nodeId) {
+    syncSelectedQuery(node.id, options?.replace)
+    return
+  }
+
+  roadmapStore.selectNode(node.id)
+  syncSelectedQuery(node.id, options?.replace)
+}
+
+const resolveSiblingSortOrder = (parentId: number | null) =>
+  roadmapStore.nodes.filter((node) => (node.parent_id ?? null) === parentId).length
+
+const openDraft = (mode: DraftMode, anchorId: number | null = null) => {
+  if (!hasWriteAccess.value) return
+
+  const anchor = anchorId ? roadmapStore.nodes.find((node) => node.id === anchorId) ?? null : null
+  const parentId = mode === 'child' ? anchor?.id ?? null : anchor?.parent_id ?? null
+
+  draftNode.value = {
+    mode,
+    anchorId,
+    title: '',
+    description: '',
+    node_type: anchor?.node_type ?? 'theory',
+    status: anchor?.status ?? 'todo',
+    parent_id: parentId,
+    sort_order: resolveSiblingSortOrder(parentId),
+  }
+
+}
+
+const clearDraftRouteIntent = () => {
+  if (!routeIntent.value) return
+  const nextQuery = { ...route.query, intent: undefined, anchorId: undefined }
+  router.replace({ name: 'admin-roadmap', query: nextQuery })
+}
+
+const closeDraft = () => {
+  draftNode.value = null
+  clearDraftRouteIntent()
+}
+
+const createDraftNode = async () => {
+  if (!draftNode.value || !hasWriteAccess.value) return
+  if (!draftNode.value.title.trim()) {
+    errorMessage.value = copy.value.createError
+    return
+  }
+
   errorMessage.value = ''
 
   try {
-    nodes.value = (await roadmapApi.getNodes()).sort((a, b) => a.sort_order - b.sort_order)
+    const created = await roadmapStore.createNode({
+      title: draftNode.value.title.trim(),
+      description: draftNode.value.description.trim() || null,
+      node_type: draftNode.value.node_type,
+      parent_id: draftNode.value.parent_id,
+      sort_order: draftNode.value.sort_order,
+    })
 
-    if (selectedNodeId.value && !nodes.value.some((node) => node.id === selectedNodeId.value)) {
-      selectedNodeId.value = null
-      linkedNotes.value = []
+    if (draftNode.value.status !== 'todo') {
+      await roadmapStore.patchNode(created.id, { status: draftNode.value.status })
     }
+
+    const mode = draftNode.value.mode
+    closeDraft()
+    await roadmapStore.fetchNodes()
+    await selectNodeById(created.id)
+    pushUndoToast(
+      mode === 'child'
+        ? copy.value.createChildSaved
+        : mode === 'sibling'
+          ? copy.value.createSiblingSaved
+          : copy.value.createRootSaved,
+      async () => {
+        await roadmapStore.deleteNode(created.id)
+        await roadmapStore.fetchNodes()
+      },
+    )
   } catch (error: any) {
-    nodes.value = []
-    errorMessage.value = error.message || copy.value.loadError
-  } finally {
-    loading.value = false
+    errorMessage.value = error.message || copy.value.createError
   }
-}
-
-const loadNotes = async (nodeId: number) => {
-  loadingNotes.value = true
-
-  try {
-    linkedNotes.value = await noteApi.getNotesByNode(nodeId)
-    setTimeout(() => {
-      document.getElementById('admin-roadmap-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 80)
-  } catch {
-    linkedNotes.value = []
-  } finally {
-    loadingNotes.value = false
-  }
-}
-
-const selectNode = async (node: RoadmapNode) => {
-  selectedNodeId.value = node.id
-  await loadNotes(node.id)
-}
-
-const handleNodeClick = async (payload: { node: { data: RoadmapNode } }) => {
-  await selectNode(payload.node.data)
 }
 
 const copyShareLink = async () => {
@@ -256,100 +353,233 @@ const copyShareLink = async () => {
   }, 2200)
 }
 
-const openEdit = (node: RoadmapNode | null = null) => {
-  if (!hasWriteAccess.value) return
-
-  currentEditNode.value = node
-    ? { ...node }
-    : { title: '', description: '', node_type: 'theory', status: 'todo' }
-
-  isEditModalOpen.value = true
-  document.body.style.overflow = 'hidden'
-}
-
-const closeEdit = () => {
-  isEditModalOpen.value = false
-  isDeleteConfirmOpen.value = false
-  document.body.style.overflow = 'auto'
-}
-
-const handleSave = async () => {
-  if (!hasWriteAccess.value) return
+const persistNodePatch = async (
+  patch: Partial<RoadmapNode>,
+  message: string,
+  previous: Partial<RoadmapNode>,
+) => {
+  if (!selectedNode.value || !hasWriteAccess.value) return
+  errorMessage.value = ''
 
   try {
-    if (currentEditNode.value.id) {
-      await roadmapApi.updateNode(currentEditNode.value.id, currentEditNode.value)
-    } else {
-      const lastNode = nodes.value[nodes.value.length - 1] ?? null
-      await roadmapApi.createNode({
-        ...currentEditNode.value,
-        sort_order: nodes.value.length,
-        parent_id: lastNode?.id ?? null,
-      })
-    }
-
-    closeEdit()
-    await fetchNodes()
-  } catch {
-    errorMessage.value = copy.value.saveError
+    await roadmapStore.patchNode(selectedNode.value.id, patch)
+    const targetId = selectedNode.value.id
+    pushUndoToast(message, async () => {
+      await roadmapStore.patchNode(targetId, previous)
+    })
+  } catch (error: any) {
+    errorMessage.value = error.message || copy.value.saveError
   }
+}
+
+const saveTitle = async (value: string) => {
+  if (!selectedNode.value) return
+  const nextValue = value.trim() || selectedNode.value.title
+  if (nextValue === selectedNode.value.title) return
+
+  await persistNodePatch(
+    { title: nextValue },
+    copy.value.titleSaved,
+    { title: selectedNode.value.title },
+  )
+}
+
+const saveDescription = async (value: string) => {
+  if (!selectedNode.value) return
+  const nextValue = value.trim()
+  if ((selectedNode.value.description ?? '') === nextValue) return
+
+  await persistNodePatch(
+    { description: nextValue || null },
+    copy.value.descriptionSaved,
+    { description: selectedNode.value.description },
+  )
+}
+
+const updateStatus = async (status: RoadmapNode['status']) => {
+  if (!selectedNode.value || status === selectedNode.value.status) return
+
+  await persistNodePatch(
+    { status },
+    copy.value.statusSaved,
+    { status: selectedNode.value.status },
+  )
 }
 
 const confirmDelete = async () => {
-  if (!currentEditNode.value.id || !hasWriteAccess.value) return
+  if (!selectedNode.value || !hasWriteAccess.value) return
+
+  const deletingNodeId = selectedNode.value.id
+  const fallbackNodeId =
+    selectedNode.value.parent_id ?? roadmapStore.nodes.find((node) => node.id !== deletingNodeId)?.id ?? null
 
   try {
-    const remainingNodes = nodes.value.filter((node) => node.id !== currentEditNode.value.id)
-
-    await Promise.all(
-      remainingNodes.map((node, index) => {
-        const previousNode = index === 0 ? null : remainingNodes[index - 1] ?? null
-
-        return roadmapApi.updateNode(node.id, {
-          ...node,
-          sort_order: index,
-          parent_id: previousNode?.id ?? null,
-        })
-      })
-    )
-
-    await roadmapApi.deleteNode(currentEditNode.value.id)
-    closeEdit()
-    await fetchNodes()
-  } catch {
-    errorMessage.value = copy.value.deleteError
+    await roadmapStore.deleteNode(deletingNodeId)
+    isDeleteConfirmOpen.value = false
+    await roadmapStore.fetchNodes()
+    await selectNodeById(fallbackNodeId, { replace: true })
+  } catch (error: any) {
+    errorMessage.value = error.message || copy.value.saveError
   }
 }
 
-const openNote = (id: number) => router.push(`/note/${id}`)
+const moveMessages = computed<Record<'up' | 'down' | 'indent' | 'outdent', string>>(() => ({
+  up: copy.value.pathMovedEarlier,
+  down: copy.value.pathMovedLater,
+  indent: copy.value.pathMovedDeeper,
+  outdent: copy.value.pathMovedHigher,
+}))
 
-const createNoteForSelectedNode = () => {
-  if (!hasWriteAccess.value || !selectedNodeId.value) return
-  router.push({
-    path: '/admin/note/create',
-    query: { nodeId: String(selectedNodeId.value) },
-  })
+const syncSelectedNodeAfterTreeChange = async (targetId: number) => {
+  await roadmapStore.fetchNodes()
+  if (roadmapStore.nodes.some((node) => node.id === targetId)) {
+    await selectNodeById(targetId, { replace: true })
+  }
 }
 
-const maybeAutoCreate = () => {
-  if (!shouldAutoCreate.value || !hasWriteAccess.value || hasNodes.value || isEditModalOpen.value) return
-  openEdit()
+const moveSelectedNode = async (direction: 'up' | 'down' | 'indent' | 'outdent') => {
+  if (!selectedNode.value || !hasWriteAccess.value) return
+
+  const previousTree = serializeRoadmapTree(roadmapStore.tree)
+  const nextTree = moveRoadmapNode(roadmapStore.nodes, selectedNode.value.id, direction)
+  if (!nextTree) return
+
+  structureErrorMessage.value = ''
+  movingDirection.value = direction
+
+  try {
+    const targetId = selectedNode.value.id
+    await roadmapStore.updateTree(nextTree)
+    await syncSelectedNodeAfterTreeChange(targetId)
+    pushUndoToast(moveMessages.value[direction], async () => {
+      structureErrorMessage.value = ''
+      await roadmapStore.updateTree(previousTree)
+      await syncSelectedNodeAfterTreeChange(targetId)
+    })
+  } catch (error: any) {
+    structureErrorMessage.value = error.message || copy.value.saveError
+  } finally {
+    movingDirection.value = null
+  }
+}
+
+const handlePageShortcut = (event: KeyboardEvent) => {
+  if (event.isComposing) return
+
+  const target = event.target as HTMLElement | null
+  const isTyping =
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target?.isContentEditable
+
+  if (isTyping) return
+
+  const code = event.code
+  const key = event.key.toLowerCase()
+
+  if (event.altKey && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+    if (code === 'ArrowUp') {
+      event.preventDefault()
+      void moveSelectedNode('up')
+      return
+    }
+
+    if (code === 'ArrowDown') {
+      event.preventDefault()
+      void moveSelectedNode('down')
+      return
+    }
+
+    if (code === 'ArrowRight') {
+      event.preventDefault()
+      void moveSelectedNode('indent')
+      return
+    }
+
+    if (code === 'ArrowLeft') {
+      event.preventDefault()
+      void moveSelectedNode('outdent')
+      return
+    }
+  }
+
+  if (code === 'KeyN' && !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    event.preventDefault()
+    openDraft(selectedNode.value ? 'sibling' : 'root', selectedNode.value?.id ?? null)
+    return
+  }
+
+  if (key === 'escape') {
+    draftNode.value = null
+    isDeleteConfirmOpen.value = false
+  }
 }
 
 watch(
-  () => [authStore.activeWorkspaceId, route.query.create],
+  () => authStore.activeWorkspaceId,
   async () => {
-    await fetchNodes()
-    maybeAutoCreate()
+    await roadmapStore.fetchNodes()
   },
-  { immediate: true }
+  { immediate: true },
 )
+
+watch(
+  () => roadmapStore.nodes,
+  async (nodes) => {
+    if (!nodes.length) {
+      roadmapStore.selectNode(null)
+      return
+    }
+
+    const routeNodeId = selectedNodeIdFromRoute.value
+    if (routeNodeId && nodes.some((node) => node.id === routeNodeId)) {
+      if (roadmapStore.selectedNodeId !== routeNodeId) {
+        await selectNodeById(routeNodeId, { replace: true })
+      }
+      return
+    }
+
+    if (!roadmapStore.selectedNodeId || !nodes.some((node) => node.id === roadmapStore.selectedNodeId)) {
+      await selectNodeById(nodes[0]!.id, { replace: true })
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  [routeIntent, routeAnchorId, () => roadmapStore.nodes],
+  ([intent, anchorId, nodes]) => {
+    if (!intent || !hasWriteAccess.value) return
+    if (intent !== 'root' && (!anchorId || !nodes.some((node) => node.id === anchorId))) return
+    openDraft(intent, anchorId)
+  },
+  { immediate: true },
+)
+
+watch(
+  selectedNodeIdFromRoute,
+  async (value) => {
+    if (!value || roadmapStore.selectedNodeId === value) return
+    if (!roadmapStore.nodes.some((node) => node.id === value)) return
+    await selectNodeById(value, { replace: true })
+  },
+)
+
+onMounted(() => {
+  window.addEventListener('keydown', handlePageShortcut)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handlePageShortcut)
+  clearUndoToast()
+})
 </script>
 
 <template>
   <div class="admin-page">
-    <div v-if="errorMessage" class="product-error mb-5 px-5 py-4 text-sm font-semibold">
-      {{ errorMessage }}
+    <div v-if="errorMessage || roadmapStore.errorMessage" class="product-error mb-5 px-5 py-4 text-sm font-semibold">
+      {{ errorMessage || roadmapStore.errorMessage }}
     </div>
 
     <div v-if="!currentWorkspace" class="admin-empty">
@@ -362,43 +592,37 @@ watch(
           <div>
             <div class="admin-kicker">{{ currentWorkspace.workspace_name }}</div>
             <h1 class="roadmap-title mt-3">{{ copy.title }}</h1>
-            <p class="admin-subtitle mt-4 max-w-2xl">{{ copy.summary }}</p>
+            <p class="admin-subtitle mt-3 max-w-2xl">{{ pageSummary }}</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
-            <span :class="hasWriteAccess ? 'admin-chip-dark' : 'admin-chip'">
-              {{ hasWriteAccess ? copy.writable : copy.readonly }}
-            </span>
+            <button v-if="hasWriteAccess" class="product-button-dark" type="button" @click="openDraft('root')">{{ copy.addNode }}</button>
             <button v-if="hasNodes" class="product-button-secondary" type="button" @click="copyShareLink">{{ copy.share }}</button>
-            <button v-if="hasWriteAccess" class="product-button-dark" type="button" @click="openEdit()">{{ copy.addNode }}</button>
           </div>
         </div>
 
         <div v-if="shareMessage" class="mt-4 inline-flex rounded-full bg-[rgba(15,23,42,0.06)] px-4 py-2 text-sm font-semibold text-[var(--ink-main)]">
           {{ shareMessage }}
         </div>
+      </section>
 
-        <div class="mt-5 flex flex-wrap gap-3">
-          <div class="roadmap-stat-pill">
-            <span>{{ copy.totalNodes }}</span>
-            <strong>{{ roadmapMetrics.total }}</strong>
+      <div class="roadmap-workbench mt-6">
+        <section class="roadmap-editor-shell roadmap-panel">
+          <div class="roadmap-editor-head">
+            <div class="roadmap-editor-strip">
+              <span class="roadmap-editor-pill">{{ hasWriteAccess ? copy.writable : copy.readonly }}</span>
+              <span class="roadmap-editor-pill">
+                {{ localeStore.isChinese ? `${flatTree.length} 个节点` : `${flatTree.length} nodes` }}
+              </span>
+            </div>
+            <div class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+              {{ shortcutSummary }}
+            </div>
           </div>
-          <div class="roadmap-stat-pill">
-            <span>{{ copy.inProgress }}</span>
-            <strong>{{ roadmapMetrics.inProgress }}</strong>
-          </div>
-          <div class="roadmap-stat-pill">
-            <span>{{ copy.completed }}</span>
-            <strong>{{ roadmapMetrics.completed }}</strong>
-          </div>
-          <div class="roadmap-stat-pill">
-            <span>{{ copy.selectedNotes }}</span>
-            <strong>{{ roadmapMetrics.selectedNotes }}</strong>
-          </div>
-        </div>
 
-        <div class="roadmap-canvas-shell mt-6">
-          <div v-if="loading" class="admin-empty !border-none !bg-transparent !p-0">{{ copy.loading }}</div>
+          <div v-if="roadmapStore.loading" class="admin-empty mt-5 !border-none !bg-transparent !p-0">
+            {{ copy.loading }}
+          </div>
 
           <div v-else-if="!hasNodes" class="roadmap-empty-shell">
             <div class="roadmap-empty-card">
@@ -415,169 +639,238 @@ watch(
                   v-if="hasWriteAccess"
                   class="product-button-dark"
                   type="button"
-                  @click="openEdit()"
+                  @click="openDraft('root')"
                 >
                   {{ copy.firstCanvasAction }}
                 </button>
-                <button class="product-button-secondary" type="button" @click="router.push('/roadmap')">
-                  {{ currentWorkspace.workspace_name }}
-                </button>
               </div>
             </div>
           </div>
 
-          <VueFlow
-            v-else
-            class="h-full w-full bg-transparent"
-            :nodes="flowNodes"
-            :edges="flowEdges"
-            :default-viewport="{ x: 0, y: 0, zoom: 0.82 }"
-            :min-zoom="0.48"
-            :max-zoom="1.3"
-            :nodes-draggable="false"
-            :elements-selectable="false"
-            @node-click="handleNodeClick"
-          >
-            <Background pattern-color="#e5e7eb" :gap="26" variant="dots" />
-            <Controls />
-          </VueFlow>
+          <div v-else class="roadmap-node-list">
+            <button
+              v-for="item in flatTree"
+              :key="item.id"
+              type="button"
+              class="roadmap-node-list-item"
+              :class="selectedNode?.id === item.id ? 'roadmap-node-list-item-selected' : ''"
+              @click="selectNodeById(item.id)"
+            >
+              <span class="roadmap-node-list-depth" :style="{ width: `${item.depth * 22}px` }"></span>
+              <div class="roadmap-node-list-main">
+                <div class="flex flex-wrap items-center gap-2">
+                  <StatusChip tone="warm">{{ typeLabel(item.node.node_type) }}</StatusChip>
+                  <StatusChip :tone="item.node.status === 'completed' ? 'green' : item.node.status === 'in_progress' ? 'dark' : 'default'">
+                    {{
+                      item.node.status === 'completed'
+                        ? copy.completed
+                        : item.node.status === 'in_progress'
+                          ? copy.inProgress
+                          : copy.todo
+                    }}
+                  </StatusChip>
+                </div>
 
-          <div v-if="hasNodes" class="roadmap-canvas-hint">
-            {{ selectedNode ? selectedNode.title : copy.openCanvas }}
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                  <div class="roadmap-node-list-title">{{ item.node.title }}</div>
+                  <span v-if="selectedNode?.id === item.id" class="roadmap-node-list-active">
+                    {{ localeStore.isChinese ? '当前' : 'Current' }}
+                  </span>
+                </div>
+
+                <div class="mt-2 flex flex-wrap gap-3 text-xs font-semibold text-[var(--ink-soft)]">
+                  <span>
+                    {{
+                      localeStore.isChinese
+                        ? `层级 ${item.depth + 1}`
+                        : `Level ${item.depth + 1}`
+                    }}
+                  </span>
+                  <span v-if="item.childrenCount > 0">
+                    {{
+                      localeStore.isChinese
+                        ? `子节点 ${item.childrenCount}`
+                        : `${item.childrenCount} child ${item.childrenCount > 1 ? 'nodes' : 'node'}`
+                    }}
+                  </span>
+                </div>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <section id="admin-roadmap-detail" class="roadmap-detail-shell roadmap-panel roadmap-detail-sticky">
+        <div v-if="draftNode" class="roadmap-draft-card">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div class="admin-kicker">{{ copy.draftTitle }}</div>
+              <p class="mt-2 max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">{{ copy.draftSummary }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="product-button-secondary" type="button" @click="closeDraft">{{ copy.cancel }}</button>
+              <button class="product-button-dark" type="button" @click="createDraftNode">{{ copy.saveDraft }}</button>
+            </div>
+          </div>
+
+          <div class="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <input
+              v-model="draftNode.title"
+              type="text"
+              class="admin-input !text-lg !font-semibold"
+              :placeholder="copy.titlePlaceholder"
+            />
+            <select v-model="draftNode.node_type" class="admin-select">
+              <option value="theory">{{ copy.theory }}</option>
+              <option value="coding">{{ copy.coding }}</option>
+              <option value="project">{{ copy.project }}</option>
+            </select>
+          </div>
+
+          <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <textarea
+              v-model="draftNode.description"
+              rows="4"
+              class="admin-input"
+              :placeholder="copy.descriptionPlaceholder"
+            ></textarea>
+            <div class="grid gap-2">
+              <button type="button" class="status-toggle" :class="draftNode.status === 'todo' ? 'status-toggle-active' : ''" @click="draftNode.status = 'todo'">
+                {{ copy.todo }}
+              </button>
+              <button type="button" class="status-toggle" :class="draftNode.status === 'in_progress' ? 'status-toggle-active status-toggle-blue' : ''" @click="draftNode.status = 'in_progress'">
+                {{ copy.inProgress }}
+              </button>
+              <button type="button" class="status-toggle" :class="draftNode.status === 'completed' ? 'status-toggle-active status-toggle-green' : ''" @click="draftNode.status = 'completed'">
+                {{ copy.completed }}
+              </button>
+            </div>
           </div>
         </div>
-      </section>
 
-      <section id="admin-roadmap-detail" class="roadmap-detail-shell mt-6">
         <template v-if="selectedNode">
-          <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap gap-2">
-                <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
-                <span :class="selectedNode.status === 'completed' ? 'admin-chip-green' : selectedNode.status === 'in_progress' ? 'admin-chip-blue' : 'admin-chip'">
-                  {{ statusLabel(selectedNode.status) }}
-                </span>
-              </div>
-
-              <h2 class="mt-4 text-3xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">{{ selectedNode.title }}</h2>
-              <p class="mt-3 max-w-3xl text-base leading-8 text-[var(--ink-soft)]">{{ selectedNode.description || copy.noDescription }}</p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3">
-              <button v-if="hasWriteAccess" class="product-button-dark" type="button" @click="createNoteForSelectedNode">
-                {{ copy.addNote }}
-              </button>
-              <button v-if="hasWriteAccess" class="product-button-secondary" type="button" @click="openEdit(selectedNode)">
-                {{ copy.edit }}
-              </button>
-            </div>
+          <div class="roadmap-detail-intro">
+            <div class="admin-kicker">{{ detailPanelLabel }}</div>
+            <p class="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{{ detailPanelHint }}</p>
           </div>
 
-          <div class="mt-8 flex items-center justify-between gap-4">
-            <div class="text-sm font-semibold text-[var(--ink-main)]">{{ copy.linkedNotes }}</div>
-            <div class="admin-chip">
-              {{ linkedNotes.length }}
-            </div>
-          </div>
-
-          <div v-if="loadingNotes" class="admin-empty mt-4">{{ copy.notesLoading }}</div>
-          <div v-else-if="linkedNotes.length > 0" class="mt-4 grid gap-4 md:grid-cols-2">
-            <article v-for="note in linkedNotes" :key="note.id" class="admin-list-card roadmap-note-card">
-              <div class="flex flex-wrap gap-2">
-                <span class="admin-chip-warm">{{ typeLabel(selectedNode.node_type) }}</span>
-                <span class="admin-chip">{{ new Date(note.created_at).toLocaleDateString(localeStore.locale) }}</span>
-              </div>
-
-              <div class="mt-4 text-lg font-semibold tracking-[-0.03em] text-[var(--ink-strong)]">{{ note.title }}</div>
-              <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ note.summary || copy.noDescription }}</p>
-              <button class="mt-5 text-sm font-semibold text-[var(--ink-strong)]" type="button" @click="openNote(note.id)">
-                {{ copy.openNote }}
-              </button>
-            </article>
-          </div>
-          <div v-else class="admin-empty mt-4">
-            <div class="text-base font-semibold text-[var(--ink-strong)]">{{ copy.noNotes }}</div>
-            <button v-if="hasWriteAccess" class="product-button-secondary mt-4" type="button" @click="createNoteForSelectedNode">
-              {{ copy.addNote }}
+          <div class="mt-5 flex flex-wrap gap-2">
+            <StatusChip tone="warm">{{ typeLabel(selectedNode.node_type) }}</StatusChip>
+            <button type="button" class="status-toggle" :class="selectedNode.status === 'todo' ? 'status-toggle-active' : ''" @click="updateStatus('todo')">
+              {{ copy.todo }}
             </button>
+            <button
+              type="button"
+              class="status-toggle"
+              :class="selectedNode.status === 'in_progress' ? 'status-toggle-active status-toggle-blue' : ''"
+              @click="updateStatus('in_progress')"
+            >
+              {{ copy.inProgress }}
+            </button>
+            <button
+              type="button"
+              class="status-toggle"
+              :class="selectedNode.status === 'completed' ? 'status-toggle-active status-toggle-green' : ''"
+              @click="updateStatus('completed')"
+            >
+              {{ copy.completed }}
+            </button>
+          </div>
+
+          <div class="mt-4">
+            <InlineEditableField
+              :model-value="selectedNode.title"
+              :disabled="!hasWriteAccess"
+              :placeholder="copy.titlePlaceholder"
+              display-class="roadmap-inline-title"
+              input-class="roadmap-inline-title-input"
+              @save="saveTitle"
+            />
+          </div>
+
+          <div class="mt-3">
+            <InlineEditableField
+              :model-value="selectedNode.description || ''"
+              multiline
+              :disabled="!hasWriteAccess"
+              :empty-label="copy.noDescription"
+              :placeholder="copy.descriptionPlaceholder"
+              display-class="roadmap-inline-description"
+              input-class="roadmap-inline-description-input"
+              @save="saveDescription"
+            />
+          </div>
+
+          <div v-if="hasWriteAccess" class="roadmap-detail-section">
+            <div class="roadmap-section-heading-row">
+              <div class="roadmap-section-heading">{{ copy.pathTools }}</div>
+              <div v-if="movingDirection" class="roadmap-section-status">
+                {{ localeStore.isChinese ? '调整中...' : 'Updating...' }}
+              </div>
+            </div>
+            <p v-if="structureErrorMessage" class="roadmap-inline-feedback roadmap-inline-feedback-error">
+              {{ structureErrorMessage }}
+            </p>
+            <div class="roadmap-structure-actions">
+              <button
+                type="button"
+                class="structure-action-chip"
+                :disabled="!structureMoveState.canMoveUp || Boolean(movingDirection)"
+                @click="moveSelectedNode('up')"
+              >
+                {{ copy.moveEarlier }}
+              </button>
+              <button
+                type="button"
+                class="structure-action-chip"
+                :disabled="!structureMoveState.canMoveDown || Boolean(movingDirection)"
+                @click="moveSelectedNode('down')"
+              >
+                {{ copy.moveLater }}
+              </button>
+              <button
+                type="button"
+                class="structure-action-chip"
+                :disabled="!structureMoveState.canIndent || Boolean(movingDirection)"
+                @click="moveSelectedNode('indent')"
+              >
+                {{ copy.moveDeeper }}
+              </button>
+              <button
+                type="button"
+                class="structure-action-chip"
+                :disabled="!structureMoveState.canOutdent || Boolean(movingDirection)"
+                @click="moveSelectedNode('outdent')"
+              >
+                {{ copy.moveHigher }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="hasWriteAccess" class="roadmap-detail-section">
+            <div class="roadmap-section-heading">{{ nodeActionsLabel }}</div>
+            <div class="roadmap-detail-actions">
+              <button class="product-button-dark" type="button" @click="openDraft('child', selectedNode.id)">{{ copy.addChild }}</button>
+              <button class="product-button-secondary" type="button" @click="openDraft('sibling', selectedNode.id)">{{ copy.addSibling }}</button>
+              <button class="roadmap-danger-button" type="button" @click="isDeleteConfirmOpen = true">{{ copy.delete }}</button>
+            </div>
           </div>
         </template>
 
         <div v-else-if="!hasNodes" class="roadmap-empty-detail">
           <div class="text-base font-semibold text-[var(--ink-strong)] md:text-lg">{{ copy.firstDetailTitle }}</div>
           <p class="mt-3 max-w-3xl text-sm leading-8 text-[var(--ink-soft)] md:text-base">{{ copy.firstDetailSummary }}</p>
-
-          <div class="mt-6 grid gap-3 md:grid-cols-3">
-            <article
-              v-for="(step, index) in copy.firstDetailSteps"
-              :key="step"
-              class="rounded-[1.4rem] border border-[rgba(15,23,42,0.08)] bg-[rgba(247,247,245,0.78)] px-4 py-4"
-            >
-              <div class="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand)]">{{ index + 1 }}</div>
-              <div class="mt-3 text-sm font-semibold leading-7 text-[var(--ink-main)]">{{ step }}</div>
-            </article>
+          <div v-if="hasWriteAccess" class="mt-5">
+            <button class="product-button-dark" type="button" @click="openDraft('root')">{{ copy.firstCanvasAction }}</button>
           </div>
         </div>
 
-        <div v-else class="admin-empty !border-dashed !bg-[rgba(255,255,255,0.52)]">
-          <div class="text-base font-semibold text-[var(--ink-strong)]">{{ copy.emptyTitle }}</div>
-          <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ copy.emptyCopy }}</p>
+        <div v-else class="roadmap-empty-detail roadmap-empty-detail-dashed">
+          <div class="text-base font-semibold text-[var(--ink-strong)]">{{ detailEmptyTitle }}</div>
+          <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ detailEmptyCopy }}</p>
         </div>
-      </section>
+        </section>
+      </div>
     </template>
-
-    <Teleport to="body">
-      <Transition name="drawer">
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex justify-end overflow-hidden">
-          <div class="absolute inset-0 bg-[rgba(15,23,42,0.22)] backdrop-blur-sm" @click="closeEdit"></div>
-          <div class="drawer-panel">
-            <h2 class="border-b border-[rgba(15,23,42,0.08)] pb-5 text-2xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">
-              {{ currentEditNode.id ? copy.editTitle : copy.createTitle }}
-            </h2>
-
-            <div class="mt-6 flex-1 space-y-5 overflow-y-auto pr-2">
-              <div class="space-y-2">
-                <label class="product-label">{{ copy.titleLabel }}</label>
-                <input v-model="currentEditNode.title" type="text" class="admin-input" />
-              </div>
-
-              <div class="space-y-2">
-                <label class="product-label">{{ copy.descriptionLabel }}</label>
-                <textarea v-model="currentEditNode.description" rows="5" class="admin-input"></textarea>
-              </div>
-
-              <div class="grid gap-4 sm:grid-cols-2">
-                <div class="space-y-2">
-                  <label class="product-label">{{ copy.typeLabel }}</label>
-                  <select v-model="currentEditNode.node_type" class="admin-select">
-                    <option value="theory">{{ copy.theory }}</option>
-                    <option value="coding">{{ copy.coding }}</option>
-                    <option value="project">{{ copy.project }}</option>
-                  </select>
-                </div>
-
-                <div class="space-y-2">
-                  <label class="product-label">{{ copy.statusLabel }}</label>
-                  <select v-model="currentEditNode.status" class="admin-select">
-                    <option value="todo">{{ copy.todo }}</option>
-                    <option value="in_progress">{{ copy.inProgress }}</option>
-                    <option value="completed">{{ copy.completed }}</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-8 space-y-3">
-              <button class="product-button-dark w-full" type="button" @click="handleSave">{{ copy.save }}</button>
-              <button v-if="currentEditNode.id" class="danger-button w-full" type="button" @click="isDeleteConfirmOpen = true">
-                {{ copy.delete }}
-              </button>
-              <button class="product-button-secondary w-full" type="button" @click="closeEdit">{{ copy.cancel }}</button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
 
     <Teleport to="body">
       <Transition name="modal">
@@ -585,13 +878,9 @@ watch(
           <div class="absolute inset-0 bg-[rgba(15,23,42,0.28)] backdrop-blur-sm" @click="isDeleteConfirmOpen = false"></div>
           <div class="modal-panel">
             <h3 class="text-2xl font-bold tracking-[-0.04em] text-[var(--ink-strong)]">{{ copy.deleteTitle }}</h3>
-            <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
-              {{ copy.deleteBodyPrefix }}
-              <span class="font-semibold text-[var(--ink-strong)]">{{ currentEditNode.title }}</span>
-              {{ copy.deleteBodySuffix }}
-            </p>
+            <p class="mt-3 text-sm leading-7 text-[var(--ink-soft)]">{{ copy.deleteBody }}</p>
             <div class="mt-8 flex flex-col gap-3">
-              <button class="danger-button w-full" type="button" @click="confirmDelete">{{ copy.deleteAction }}</button>
+              <button class="danger-button w-full" type="button" @click="confirmDelete">{{ copy.delete }}</button>
               <button class="product-button-secondary w-full" type="button" @click="isDeleteConfirmOpen = false">
                 {{ copy.cancel }}
               </button>
@@ -600,6 +889,13 @@ watch(
         </div>
       </Transition>
     </Teleport>
+
+    <Transition name="toast">
+      <div v-if="undoToast" class="roadmap-undo-toast">
+        <span>{{ undoToast.message }}</span>
+        <button type="button" @click="undoToast.undo().finally(clearUndoToast)">{{ copy.undo }}</button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -613,41 +909,48 @@ watch(
   line-height: 0.92;
 }
 
-.roadmap-stat-pill {
+.roadmap-workbench {
+  display: grid;
+  gap: 20px;
+}
+
+.roadmap-panel {
+  min-width: 0;
+}
+
+.roadmap-editor-shell {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 18px;
+}
+
+.roadmap-editor-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roadmap-editor-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roadmap-editor-pill {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 999px;
-  background: rgba(247, 247, 245, 0.86);
-  padding: 9px 12px;
-  color: var(--ink-soft);
+  background: rgba(247, 247, 245, 0.92);
+  padding: 8px 12px;
+  color: var(--ink-main);
   font-size: 12px;
   font-weight: 700;
 }
 
-.roadmap-stat-pill strong {
-  color: var(--ink-strong);
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 1;
-}
-
-.roadmap-canvas-shell {
-  position: relative;
-  height: calc(100vh - 198px);
-  min-height: 680px;
-  overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 30px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 247, 245, 0.94));
-}
-
 .roadmap-empty-shell {
   display: grid;
-  min-height: 100%;
+  min-height: 360px;
   place-items: center;
   padding: 28px;
 }
@@ -672,29 +975,92 @@ watch(
   font-weight: 700;
 }
 
-.roadmap-canvas-hint {
-  position: absolute;
-  left: 24px;
-  top: 24px;
-  pointer-events: none;
+.roadmap-node-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+  max-height: min(68vh, 760px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.roadmap-node-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 12px 14px;
+  text-align: left;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.roadmap-node-list-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(229, 106, 43, 0.16);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+}
+
+.roadmap-node-list-item-selected {
+  border-color: rgba(229, 106, 43, 0.28);
+  background: rgba(255, 251, 246, 0.96);
+  box-shadow: 0 0 0 4px rgba(229, 106, 43, 0.06), 0 16px 30px rgba(15, 23, 42, 0.05);
+}
+
+.roadmap-node-list-depth {
+  display: block;
+  flex: 0 0 auto;
+  height: 100%;
+}
+
+.roadmap-node-list-main {
+  min-width: 0;
+  flex: 1;
+  border-left: 1px solid rgba(15, 23, 42, 0.08);
+  padding-left: 14px;
+}
+
+.roadmap-node-list-title {
+  color: var(--ink-strong);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.roadmap-node-list-active {
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.06);
+  padding: 6px 10px;
   color: var(--ink-main);
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .roadmap-detail-shell {
+  display: flex;
+  flex-direction: column;
   border: 1px solid rgba(15, 23, 42, 0.06);
-  border-radius: 32px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.96);
-  padding: 24px;
+  padding: 20px;
 }
 
-.roadmap-note-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 248, 0.96));
+.roadmap-detail-sticky {
+  align-self: start;
+}
+
+.roadmap-detail-intro {
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.roadmap-draft-card {
+  margin-bottom: 20px;
+  border: 1px solid rgba(229, 106, 43, 0.12);
+  border-radius: 24px;
+  background: rgba(255, 249, 242, 0.92);
+  padding: 20px;
 }
 
 .roadmap-empty-detail {
@@ -703,61 +1069,189 @@ watch(
   padding: 20px;
 }
 
-:deep(.roadmap-canvas-node) {
-  min-width: 220px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.98);
-  padding: 18px 20px;
+.roadmap-empty-detail-dashed {
+  border: 1px dashed rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.roadmap-inline-title {
   color: var(--ink-strong);
-  font-size: 15px;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.96;
+}
+
+.roadmap-inline-title-input {
+  font-size: 1.5rem;
   font-weight: 700;
-  text-align: center;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
 }
 
-:deep(.roadmap-canvas-node-in_progress) {
-  border-color: rgba(15, 23, 42, 0.36);
-  box-shadow: 0 0 0 6px rgba(15, 23, 42, 0.04), 0 14px 30px rgba(15, 23, 42, 0.08);
+.roadmap-inline-description {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.9;
 }
 
-:deep(.roadmap-canvas-node-completed) {
-  border-color: rgba(21, 128, 61, 0.2);
-  background: rgba(248, 255, 251, 0.98);
+.roadmap-inline-description-input {
+  min-height: 140px;
 }
 
-@media (min-width: 768px) {
-  .roadmap-detail-shell {
-    padding: 28px 32px;
-  }
-
-  .roadmap-empty-card {
-    padding: 40px;
-  }
+.roadmap-structure-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.drawer-enter-active,
-.drawer-leave-active {
-  transition: opacity 200ms ease;
+.roadmap-detail-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.drawer-enter-active .drawer-panel,
-.drawer-leave-active .drawer-panel {
-  transition: transform 200ms ease;
+.roadmap-section-heading {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.drawer-enter-from,
-.drawer-leave-to {
-  opacity: 0;
+.roadmap-section-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
 }
 
-.drawer-enter-from .drawer-panel,
-.drawer-leave-to .drawer-panel {
-  transform: translateX(100%);
+.roadmap-section-status {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.roadmap-inline-feedback {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.roadmap-inline-feedback-error {
+  color: var(--danger);
+}
+
+.roadmap-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.roadmap-danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(185, 28, 28, 0.12);
+  border-radius: 999px;
+  background: rgba(254, 242, 242, 0.92);
+  padding: 10px 14px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.roadmap-danger-button:hover {
+  border-color: rgba(185, 28, 28, 0.2);
+  background: rgba(254, 226, 226, 0.96);
+}
+
+.structure-action-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(247, 247, 245, 0.9);
+  padding: 8px 12px;
+  color: var(--ink-main);
+  font-size: 12px;
+  font-weight: 700;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.structure-action-chip:hover:not(:disabled) {
+  border-color: rgba(229, 106, 43, 0.2);
+  background: rgba(255, 248, 241, 0.96);
+  transform: translateY(-1px);
+}
+
+.structure-action-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.status-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 8px 12px;
+  color: var(--ink-main);
+  font-size: 12px;
+  font-weight: 700;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.status-toggle-active {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.92);
+  color: white;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+}
+
+.status-toggle-blue.status-toggle-active {
+  background: rgba(37, 99, 235, 0.92);
+}
+
+.status-toggle-green.status-toggle-active {
+  background: rgba(21, 128, 61, 0.92);
+}
+
+.roadmap-undo-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 120;
+  display: inline-flex;
+  transform: translateX(-50%);
+  align-items: center;
+  gap: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.94);
+  padding: 12px 16px;
+  color: white;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
+}
+
+.roadmap-undo-toast button {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .modal-enter-active,
-.modal-leave-active {
+.modal-leave-active,
+.toast-enter-active,
+.toast-leave-active {
   transition: opacity 180ms ease;
 }
 
@@ -766,13 +1260,63 @@ watch(
   transition: transform 180ms ease;
 }
 
+.toast-enter-active .roadmap-undo-toast,
+.toast-leave-active .roadmap-undo-toast {
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
 .modal-enter-from,
-.modal-leave-to {
+.modal-leave-to,
+.toast-enter-from,
+.toast-leave-to {
   opacity: 0;
 }
 
 .modal-enter-from .modal-panel,
 .modal-leave-to .modal-panel {
   transform: scale(0.96);
+}
+
+.toast-enter-from .roadmap-undo-toast,
+.toast-leave-to .roadmap-undo-toast {
+  transform: translate(-50%, 12px);
+}
+
+@media (min-width: 768px) {
+  .roadmap-workbench {
+    grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .roadmap-editor-shell {
+    padding: 20px;
+  }
+
+  .roadmap-detail-shell {
+    padding: 24px 28px;
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+
+  .roadmap-empty-card {
+    padding: 40px;
+  }
+}
+
+@media (max-width: 767px) {
+  .roadmap-workbench {
+    gap: 16px;
+  }
+
+  .roadmap-node-list-main {
+    padding-left: 14px;
+  }
+
+  .roadmap-undo-toast {
+    width: calc(100% - 24px);
+    justify-content: space-between;
+  }
 }
 </style>
