@@ -169,7 +169,7 @@ watch(
             <button
               class="product-button-dark"
               type="button"
-              @click="router.push(authStore.hasWriteAccess ? '/admin/roadmap' : '/roadmap')"
+              @click="router.push('/roadmap')"
             >
               {{ copy.primaryAction }}
             </button>
@@ -192,10 +192,6 @@ watch(
         <article class="admin-kpi-card">
           <div class="admin-kpi-label">{{ copy.metrics.notes }}</div>
           <div class="admin-kpi-value">{{ metrics?.notes_total ?? 0 }}</div>
-        </article>
-        <article class="admin-kpi-card">
-          <div class="admin-kpi-label">{{ copy.metrics.completion }}</div>
-          <div class="admin-kpi-value">{{ metrics?.completion_rate ?? 0 }}%</div>
         </article>
       </section>
 

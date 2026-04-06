@@ -89,13 +89,10 @@ const copy = computed(() =>
 
         <div class="flex items-center gap-3">
           <LanguageSwitcher />
-          <router-link :to="secondaryHref" class="hidden rounded-full px-4 py-2 text-sm font-semibold text-[var(--ink-main)] transition-colors hover:bg-white/70 md:inline-flex">
-            {{ copy.secondary }}
-          </router-link>
         </div>
       </header>
 
-      <div class="product-shell relative z-10 grid gap-10 pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.98fr)] lg:items-center">
+      <div class="product-shell relative z-10 pt-10">
         <div>
           <div class="product-eyebrow border border-[rgba(229,106,43,0.14)] bg-white/82 text-[var(--brand)]">
             <span class="h-2.5 w-2.5 rounded-full bg-[var(--brand)]"></span>
@@ -105,10 +102,6 @@ const copy = computed(() =>
           <h1 class="product-title mt-8 max-w-4xl text-5xl leading-[0.92] md:text-6xl xl:text-7xl">
             {{ copy.title }}
           </h1>
-
-          <p class="product-body mt-6 max-w-2xl text-lg md:text-[1.08rem]">
-            {{ copy.summary }}
-          </p>
 
           <div class="mt-9 flex flex-col gap-4 sm:flex-row">
             <router-link :to="primaryHref" class="product-button-primary">
@@ -126,91 +119,13 @@ const copy = computed(() =>
             </article>
           </div>
         </div>
-
-        <div class="relative">
-          <div class="absolute -left-6 top-10 h-40 w-40 rounded-full bg-[rgba(229,106,43,0.16)] blur-3xl"></div>
-          <div class="absolute -right-5 bottom-10 h-44 w-44 rounded-full bg-[rgba(37,99,235,0.18)] blur-3xl"></div>
-
-          <div class="relative overflow-hidden rounded-[2.3rem] bg-[var(--surface-dark)] p-6 text-white shadow-[0_40px_120px_rgba(20,33,43,0.2)] md:p-8">
-            <div class="flex items-start justify-between gap-5">
-              <div>
-                <p class="text-[11px] font-semibold tracking-[0.08em] text-[rgba(255,255,255,0.56)]">
-                  {{ copy.previewTitle }}
-                </p>
-                <h2 class="mt-3 font-[var(--font-display)] text-3xl font-black tracking-[-0.05em]">
-                  {{ copy.previewName }}
-                </h2>
-                <p class="mt-4 max-w-md text-sm leading-7 text-[rgba(255,255,255,0.68)]">
-                  {{ copy.previewSummary }}
-                </p>
-              </div>
-              <span class="rounded-full bg-white/10 px-4 py-2 text-[11px] font-semibold text-[rgba(255,255,255,0.76)]">
-                {{ localeStore.isChinese ? '路线图优先' : 'Roadmap first' }}
-              </span>
-            </div>
-
-            <div class="mt-8 grid gap-4 md:grid-cols-3">
-              <div
-                v-for="metric in copy.previewMetrics"
-                :key="metric.label"
-                class="rounded-[1.5rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-5"
-              >
-                <div class="text-[11px] font-semibold tracking-[0.08em] text-[rgba(255,255,255,0.54)]">
-                  {{ metric.label }}
-                </div>
-                <div class="mt-3 font-[var(--font-display)] text-4xl font-black tracking-[-0.06em]">
-                  {{ metric.value }}
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-5 rounded-[1.6rem] border border-white/10 bg-[rgba(255,255,255,0.06)] p-5">
-              <div class="text-[11px] font-semibold tracking-[0.08em] text-[rgba(255,255,255,0.56)]">
-                {{ copy.pathTitle }}
-              </div>
-              <div class="mt-4 space-y-3">
-                <div
-                  v-for="(step, index) in copy.previewSteps"
-                  :key="step"
-                  class="flex items-center gap-3 rounded-[1.2rem] border border-white/10 bg-[rgba(255,255,255,0.06)] px-4 py-3"
-                >
-                  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-black text-white/88">
-                    {{ index + 1 }}
-                  </span>
-                  <span class="text-sm font-semibold leading-6 text-[rgba(255,255,255,0.78)]">
-                    {{ step }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
-    <section class="px-5 pb-20 md:px-8 md:pb-24">
-      <div class="product-shell overflow-hidden rounded-[2.4rem] bg-[var(--ink-strong)] px-8 py-10 text-white shadow-[0_34px_120px_rgba(20,33,43,0.18)] md:px-12 md:py-14">
-        <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div class="max-w-4xl">
-            <div class="text-sm font-semibold text-[rgba(255,255,255,0.56)]">
-              {{ BRAND.name }}
-            </div>
-            <h2 class="mt-5 font-[var(--font-display)] text-4xl font-black leading-[0.95] tracking-[-0.06em] md:text-6xl">
-              {{ copy.ctaTitle }}
-            </h2>
-            <p class="mt-5 text-base leading-8 text-[rgba(255,255,255,0.68)]">{{ copy.ctaSummary }}</p>
-          </div>
-
-          <div class="flex flex-col gap-4 sm:flex-row lg:flex-col">
-            <router-link :to="primaryHref" class="product-button-primary">
-              {{ copy.primary }}
-            </router-link>
-            <router-link :to="secondaryHref" class="product-button-dark">
-              {{ copy.secondary }}
-            </router-link>
-          </div>
-        </div>
-      </div>
-    </section>
+    <footer class="flex justify-center py-6 text-xs text-[var(--ink-soft)]">
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="hover:text-[var(--ink-strong)] transition-colors">
+        陕ICP备2026003348号-2
+      </a>
+    </footer>
   </div>
 </template>

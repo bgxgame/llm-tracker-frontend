@@ -59,7 +59,6 @@ const router = createRouter({
           name: 'admin-workspace',
           component: () => import('@/views/admin/WorkspaceManager.vue'),
         },
-        { path: 'roadmap', name: 'admin-roadmap', component: () => import('@/views/admin/NodeManager.vue') },
         { path: 'notes', name: 'admin-notes', component: () => import('@/views/admin/NoteManager.vue') },
         {
           path: 'note/create',

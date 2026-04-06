@@ -292,8 +292,9 @@ watch(
                     {{ copy.youBadge }}
                   </span>
                 </div>
-                <div class="mt-2 text-sm text-[var(--ink-soft)]">{{ member.email }}</div>
-                <div class="mt-2 text-sm text-[var(--ink-soft)]">{{ copy.joinedAt }} {{ formatDate(member.joined_at) }}</div>
+                <div class="mt-1 text-xs text-[var(--ink-soft)]">
+                  {{ member.email }} · {{ copy.joinedAt }} {{ formatDate(member.joined_at) }}
+                </div>
                 <p v-if="memberHint(member)" class="mt-2 text-sm text-[var(--danger)]">{{ memberHint(member) }}</p>
               </div>
 
@@ -398,7 +399,7 @@ watch(
 }
 
 .member-card {
-  @apply flex flex-col gap-4 rounded-[22px] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.96)] p-4 md:flex-row md:items-start;
+  @apply flex flex-row items-center gap-4 rounded-[22px] border border-[rgba(15,23,42,0.08)] bg-[rgba(255,255,255,0.96)] p-4;
 }
 
 .member-avatar {
@@ -406,6 +407,6 @@ watch(
 }
 
 .member-actions {
-  @apply flex shrink-0 flex-col gap-3 md:items-end;
+  @apply flex shrink-0 flex-row gap-3 items-center ml-auto;
 }
 </style>

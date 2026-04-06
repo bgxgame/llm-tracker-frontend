@@ -27,7 +27,6 @@ const copy = computed(() =>
         expand: '展开导航',
         nav: [
           { to: '/admin/dashboard', short: '览', label: '总览' },
-          { to: '/admin/roadmap', short: '编', label: '编辑' },
           { to: '/admin/notes', short: '记', label: '笔记' },
           { to: '/admin/workspace', short: '员', label: '成员管理' },
         ],
@@ -43,7 +42,6 @@ const copy = computed(() =>
         expand: 'Expand navigation',
         nav: [
           { to: '/admin/dashboard', short: 'OV', label: 'Overview' },
-          { to: '/admin/roadmap', short: 'ED', label: 'Edit' },
           { to: '/admin/notes', short: 'NT', label: 'Notes' },
           { to: '/admin/workspace', short: 'MB', label: 'Members' },
         ],

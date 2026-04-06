@@ -178,7 +178,7 @@ const hasNodes = computed(() => roadmapStore.hasNodes)
 const flatTree = computed(() => flattenRoadmapTree(roadmapStore.tree))
 const pageSummary = computed(() =>
   localeStore.isChinese
-    ? '这里只处理节点的创建、编辑、层级调整和删除，不承担笔记职责。'
+    ? '这里只处理节点的创建、编辑、层级调整和删除。'
     : 'Manage nodes only: create, edit, reorder, and remove them from one place.',
 )
 const shortcutSummary = computed(() =>

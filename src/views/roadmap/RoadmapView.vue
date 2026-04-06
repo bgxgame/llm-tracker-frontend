@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, markRaw, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Background } from '@vue-flow/background'
 import { VueFlow } from '@vue-flow/core'
@@ -224,7 +224,7 @@ const flowEdges = computed(() =>
     }))
 )
 const edgeTypes = {
-  'roadmap-smart': RoadmapSmartEdge,
+  'roadmap-smart': markRaw(RoadmapSmartEdge),
 }
 
 const typeLabel = (type: RoadmapNode['node_type']) => {
@@ -683,7 +683,7 @@ onUnmounted(() => {
             v-if="authStore.hasWriteAccess"
             class="roadmap-action-button product-button-dark"
             type="button"
-            @click="router.push('/admin/roadmap')"
+            @click="router.push('/admin/dashboard')"
           >
             {{ copy.manageAction }}
           </button>

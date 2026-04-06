@@ -16,7 +16,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "moduleDetection": "force",
-    
+    "ignoreDeprecations": "6.0",
+
     /* Path mapping */
     "baseUrl": ".",
     "paths": {

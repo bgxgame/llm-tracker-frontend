@@ -351,10 +351,4 @@ const confirmDelete = async () => {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 248, 0.96));
   padding: 22px;
 }
-
-@media (min-width: 1280px) {
-  .note-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 </style>
